@@ -48,9 +48,15 @@ export const addProject = async (path: string): Promise<Project> => {
   return response.data;
 };
 
-export const uploadProject = async (file: File): Promise<Project> => {
+export const uploadProject = async (file: File, name?: string, replace?: boolean): Promise<Project> => {
   const formData = new FormData();
   formData.append('file', file);
+  if (name) {
+    formData.append('name', name);
+  }
+  if (replace !== undefined) {
+    formData.append('replace', replace.toString());
+  }
   const response = await api.post('/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',

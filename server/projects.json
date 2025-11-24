@@ -3,5 +3,10 @@
     "id": "94d3f252-cb82-4e97-bc81-a5592c4646e8",
     "path": "/Users/ckaatz/development/git-intelligence/server",
     "name": "server"
+  },
+  {
+    "id": "e4ca68fe-04e8-4aa1-bfc4-b583662842c3",
+    "path": "/Users/ckaatz/development/git-intelligence/server/uploads/691781298032d6097840c93ed5158a66_extracted/withings-stats",
+    "name": "test"
   }
 ]

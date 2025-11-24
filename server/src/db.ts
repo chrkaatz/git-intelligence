@@ -24,19 +24,54 @@ export async function getProjects(): Promise<Project[]> {
   return JSON.parse(data);
 }
 
-export async function addProject(repoPath: string): Promise<Project> {
+export async function addProject(repoPath: string, name?: string, replace?: boolean): Promise<Project> {
   await ensureDb();
   const projects = await getProjects();
 
-  // Check if already exists
-  const existing = projects.find(p => p.path === repoPath);
-  if (existing) return existing;
+  const projectName = name || path.basename(repoPath);
 
-  const name = path.basename(repoPath);
+  // Check if project with same name exists
+  const existingByName = projects.find(p => p.name === projectName);
+  if (existingByName) {
+    if (replace) {
+      // Remove the existing project with the same name
+      const filtered = projects.filter(p => p.id !== existingByName.id);
+      const updatedProject: Project = {
+        ...existingByName,
+        path: repoPath,
+        name: projectName
+      };
+      filtered.push(updatedProject);
+      await fs.writeFile(DB_FILE, JSON.stringify(filtered, null, 2));
+      return updatedProject;
+    } else {
+      // Return existing project if not replacing
+      return existingByName;
+    }
+  }
+
+  // Check if project with same path exists
+  const existingByPath = projects.find(p => p.path === repoPath);
+  if (existingByPath) {
+    if (replace) {
+      // Update the existing project's name
+      const updatedProject: Project = {
+        ...existingByPath,
+        name: projectName
+      };
+      const filtered = projects.filter(p => p.id !== existingByPath.id);
+      filtered.push(updatedProject);
+      await fs.writeFile(DB_FILE, JSON.stringify(filtered, null, 2));
+      return updatedProject;
+    } else {
+      return existingByPath;
+    }
+  }
+
   const newProject: Project = {
     id: uuidv4(),
     path: repoPath,
-    name
+    name: projectName
   };
 
   projects.push(newProject);
