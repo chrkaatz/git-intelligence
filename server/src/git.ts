@@ -85,6 +85,49 @@ export async function getStats(repoPath: string) {
       extensions[ext] = (extensions[ext] || 0) + 1;
     });
 
+    // LOC History
+    // This is an approximation using numstat
+    const locLog = await git.log(['--all', '--numstat', '--date=iso']);
+    // The previous `locLog` variable was not used for its `all` property,
+    // but rather for its `total` property, which is already captured by `totalCommits`.
+    // The actual LOC history is derived from `rawLog` below.
+
+    // Alternative efficient approach for LOC history:
+    const rawLog = await git.raw(['log', '--all', '--pretty=tformat:%ad', '--date=iso', '--numstat']);
+    const lines = rawLog.split('\n');
+    const historyMap = new Map<string, number>();
+
+    let currentLoc = 0;
+    let currentDate = '';
+
+    lines.forEach(line => {
+      if (!line) return;
+
+      // Date line
+      if (line.match(/^\d{4}-\d{2}-\d{2}/)) {
+        currentDate = line.split('T')[0];
+        return;
+      }
+
+      // Numstat line: added deleted file
+      const parts = line.split('\t');
+      if (parts.length === 3) {
+        const added = parseInt(parts[0]) || 0;
+        const deleted = parseInt(parts[1]) || 0;
+        currentLoc += (added - deleted);
+
+        // Keep the last value for the day
+        historyMap.set(currentDate, currentLoc);
+      }
+    });
+
+    const sortedHistory = Array.from(historyMap.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, loc]) => ({ date, loc }));
+
+    // Ensure we don't have negative LOC (can happen with binary files or renames sometimes)
+    const normalizedHistory = sortedHistory.map(h => ({ ...h, loc: Math.max(0, h.loc) }));
+
     return {
       summary: {
         totalCommits,
@@ -93,7 +136,8 @@ export async function getStats(repoPath: string) {
       },
       authors: authorList,
       activity,
-      extensions
+      extensions,
+      locHistory: normalizedHistory
     };
   } catch (error) {
     console.error('Git error:', error);
