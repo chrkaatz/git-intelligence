@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "install:all": "npm install && npm install --prefix server && npm install --prefix client",
-    "package-repo": "node scripts/package-repo.js"
+    "package-repo": "node scripts/package-repo.js",
+    "format": "npm run format --prefix client && npm run format --prefix server",
+    "format:check": "npm run format:check --prefix client && npm run format:check --prefix server"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

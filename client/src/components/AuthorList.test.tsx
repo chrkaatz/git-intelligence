@@ -38,7 +38,7 @@ describe('AuthorList', () => {
 
   it('displays all authors in the list', () => {
     render(<AuthorList authors={mockAuthors} />);
-    
+
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('john@example.com')).toBeInTheDocument();
     expect(screen.getByText('Jane Smith')).toBeInTheDocument();
@@ -49,7 +49,7 @@ describe('AuthorList', () => {
 
   it('displays commit counts correctly', () => {
     render(<AuthorList authors={mockAuthors} />);
-    
+
     expect(screen.getByText('150')).toBeInTheDocument();
     expect(screen.getByText('100')).toBeInTheDocument();
     expect(screen.getByText('50')).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('AuthorList', () => {
 
   it('displays percentage values', () => {
     render(<AuthorList authors={mockAuthors} />);
-    
+
     expect(screen.getByText('45.5%')).toBeInTheDocument();
     expect(screen.getByText('30.3%')).toBeInTheDocument();
     expect(screen.getByText('15.2%')).toBeInTheDocument();
@@ -74,7 +74,7 @@ describe('AuthorList', () => {
     }));
 
     render(<AuthorList authors={manyAuthors} />);
-    
+
     // Should only show first 10
     expect(screen.getByText('Author 1')).toBeInTheDocument();
     expect(screen.getByText('Author 10')).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('AuthorList', () => {
 
   it('handles empty authors list', () => {
     render(<AuthorList authors={[]} />);
-    
+
     expect(screen.getByText('Top Contributors')).toBeInTheDocument();
     // Table headers should still be present
     expect(screen.getByText('Author')).toBeInTheDocument();

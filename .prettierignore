@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Generated files
+*.min.js
+*.min.css
+routeTree.gen.ts
+
+# Database files
+*.json
+!package.json
+!tsconfig.json
+!tsconfig.*.json
+
+# Uploads
+server/uploads/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
