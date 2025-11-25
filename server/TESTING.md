@@ -33,4 +33,3 @@ npm run test:coverage
 ## Coverage
 
 Coverage reports are generated in the `coverage/` directory when running `npm run test:coverage`.
-

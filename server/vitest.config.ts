@@ -6,7 +6,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
+    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache', 'uploads'],
     setupFiles: ['./test/setup.ts'],
     coverage: {
       provider: 'v8',
@@ -17,6 +17,8 @@ export default defineConfig({
         'src/index.ts',
         '**/*.config.*',
         '**/__tests__/**',
+        'uploads/',
+        'dist/',
       ],
     },
     testTimeout: 10000,
@@ -33,4 +35,3 @@ export default defineConfig({
     },
   },
 });
-
