@@ -1,0 +1,227 @@
+import { Router, Request, Response } from 'express';
+import {
+  getStats,
+  getDeveloperAnalytics,
+  getCrossRepoDeveloperAnalytics,
+  getCodebaseHealth,
+  getCrossRepoCodebaseHealth,
+  getRepositoryEvolution,
+  getCrossRepoRepositoryEvolution,
+  getBusFactorAndOwnership,
+  getCrossRepoBusFactorAndOwnership,
+  getSocialNetworkAnalysis,
+  getCrossRepoSocialNetworkAnalysis,
+} from '../git';
+import { getRepository } from '../db';
+
+const router = Router();
+
+// Helper function to resolve repository ID to path
+async function resolveRepositoryPath(repoId: string): Promise<string> {
+  const repository = await getRepository(repoId);
+  if (!repository) {
+    throw new Error('Repository not found');
+  }
+  return repository.path;
+}
+
+// Basic statistics
+router.get('/stats', async (req: Request, res: Response) => {
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
+  }
+  try {
+    const repoPath = await resolveRepositoryPath(repoId);
+    const useCache = refresh !== 'true';
+    const stats = await getStats(repoPath, useCache);
+    res.json(stats);
+  } catch (error: any) {
+    console.error(error);
+    if (error.message === 'Repository not found') {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
+    res.status(500).json({ error: 'Failed to analyze project' });
+  }
+});
+
+// Developer analytics
+router.get('/developer-analytics', async (req: Request, res: Response) => {
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
+  }
+  try {
+    const repoPath = await resolveRepositoryPath(repoId);
+    const useCache = refresh !== 'true';
+    const analytics = await getDeveloperAnalytics(repoPath, useCache);
+    res.json(analytics);
+  } catch (error: any) {
+    console.error(error);
+    if (error.message === 'Repository not found') {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
+    res.status(500).json({ error: 'Failed to get developer analytics' });
+  }
+});
+
+router.get('/cross-repo-developer-analytics', async (req: Request, res: Response) => {
+  const { projectId, refresh } = req.query;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+  try {
+    const useCache = refresh !== 'true';
+    const analytics = await getCrossRepoDeveloperAnalytics(projectId, useCache);
+    res.json(analytics);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get cross-repo developer analytics' });
+  }
+});
+
+// Codebase health
+router.get('/codebase-health', async (req: Request, res: Response) => {
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
+  }
+  try {
+    const repoPath = await resolveRepositoryPath(repoId);
+    const useCache = refresh !== 'true';
+    const health = await getCodebaseHealth(repoPath, useCache);
+    res.json(health);
+  } catch (error: any) {
+    console.error(error);
+    if (error.message === 'Repository not found') {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
+    res.status(500).json({ error: 'Failed to get codebase health metrics' });
+  }
+});
+
+router.get('/cross-repo-codebase-health', async (req: Request, res: Response) => {
+  const { projectId, refresh } = req.query;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+  try {
+    const useCache = refresh !== 'true';
+    const health = await getCrossRepoCodebaseHealth(projectId, useCache);
+    res.json(health);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get cross-repo codebase health metrics' });
+  }
+});
+
+// Repository evolution
+router.get('/repository-evolution', async (req: Request, res: Response) => {
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
+  }
+  try {
+    const repoPath = await resolveRepositoryPath(repoId);
+    const useCache = refresh !== 'true';
+    const evolution = await getRepositoryEvolution(repoPath, useCache);
+    res.json(evolution);
+  } catch (error: any) {
+    console.error(error);
+    if (error.message === 'Repository not found') {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
+    res.status(500).json({ error: 'Failed to get repository evolution metrics' });
+  }
+});
+
+router.get('/cross-repo-repository-evolution', async (req: Request, res: Response) => {
+  const { projectId, refresh } = req.query;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+  try {
+    const useCache = refresh !== 'true';
+    const evolution = await getCrossRepoRepositoryEvolution(projectId, useCache);
+    res.json(evolution);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get cross-repo repository evolution metrics' });
+  }
+});
+
+// Bus factor and ownership
+router.get('/bus-factor-and-ownership', async (req: Request, res: Response) => {
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
+  }
+  try {
+    const repoPath = await resolveRepositoryPath(repoId);
+    const useCache = refresh !== 'true';
+    const analytics = await getBusFactorAndOwnership(repoPath, useCache);
+    res.json(analytics);
+  } catch (error: any) {
+    console.error(error);
+    if (error.message === 'Repository not found') {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
+    res.status(500).json({ error: 'Failed to get bus factor and ownership metrics' });
+  }
+});
+
+router.get('/cross-repo-bus-factor-and-ownership', async (req: Request, res: Response) => {
+  const { projectId, refresh } = req.query;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+  try {
+    const useCache = refresh !== 'true';
+    const analytics = await getCrossRepoBusFactorAndOwnership(projectId, useCache);
+    res.json(analytics);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: 'Failed to get cross-repo bus factor and ownership metrics',
+    });
+  }
+});
+
+// Social network analysis
+router.get('/social-network-analysis', async (req: Request, res: Response) => {
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
+  }
+  try {
+    const repoPath = await resolveRepositoryPath(repoId);
+    const useCache = refresh !== 'true';
+    const analysis = await getSocialNetworkAnalysis(repoPath, useCache);
+    res.json(analysis);
+  } catch (error: any) {
+    console.error(error);
+    if (error.message === 'Repository not found') {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
+    res.status(500).json({ error: 'Failed to get social network analysis' });
+  }
+});
+
+router.get('/cross-repo-social-network-analysis', async (req: Request, res: Response) => {
+  const { projectId, refresh } = req.query;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+  try {
+    const useCache = refresh !== 'true';
+    const analysis = await getCrossRepoSocialNetworkAnalysis(projectId, useCache);
+    res.json(analysis);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: 'Failed to get cross-repo social network analysis',
+    });
+  }
+});
+
+export default router;

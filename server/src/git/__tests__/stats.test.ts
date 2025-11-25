@@ -73,6 +73,9 @@ describe('stats', () => {
     });
 
     it('should throw error for non-git repository', async () => {
+      // Suppress console.error for expected error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       mockGetCachedStats.mockResolvedValue(null);
 
       const mockGit = {
@@ -82,6 +85,8 @@ describe('stats', () => {
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
 
       await expect(getStats('/test/repo', false)).rejects.toThrow('Not a git repository');
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should cache results after calculation', async () => {

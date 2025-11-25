@@ -17,6 +17,9 @@ describe('developerAnalytics', () => {
 
   describe('getDeveloperAnalytics', () => {
     it('should throw error for non-git repository', async () => {
+      // Suppress console.error for expected error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const mockGit = {
         checkIsRepo: vi.fn().mockResolvedValue(false),
       };
@@ -26,6 +29,8 @@ describe('developerAnalytics', () => {
       await expect(getDeveloperAnalytics('/test/repo', false)).rejects.toThrow(
         'Not a git repository'
       );
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should process commits and calculate analytics', async () => {

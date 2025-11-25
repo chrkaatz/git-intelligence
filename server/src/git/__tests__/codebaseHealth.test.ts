@@ -64,6 +64,9 @@ describe('codebaseHealth', () => {
     });
 
     it('should throw error for non-git repository', async () => {
+      // Suppress console.error for expected error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       mockGetCachedCodebaseHealth.mockResolvedValue(null);
 
       const mockGit = {
@@ -73,6 +76,8 @@ describe('codebaseHealth', () => {
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
 
       await expect(getCodebaseHealth('/test/repo', false)).rejects.toThrow('Not a git repository');
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should identify file hotspots', async () => {

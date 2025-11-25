@@ -17,6 +17,9 @@ describe('repositoryEvolution', () => {
 
   describe('getRepositoryEvolution', () => {
     it('should throw error for non-git repository', async () => {
+      // Suppress console.error for expected error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const mockGit = {
         checkIsRepo: vi.fn().mockResolvedValue(false),
       };
@@ -26,6 +29,8 @@ describe('repositoryEvolution', () => {
       await expect(getRepositoryEvolution('/test/repo', false)).rejects.toThrow(
         'Not a git repository'
       );
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should calculate evolution metrics', async () => {
