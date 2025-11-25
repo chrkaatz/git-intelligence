@@ -26,7 +26,7 @@ Derive this entirely from commits:
 
 ---
 
-# ✅ **2. Codebase Health & Architecture Signals (Cross-Repo)**
+# ✅ **2. Codebase Health & Architecture Signals (Single & Cross-Repo)**
 
 These metrics detect design, complexity, and maintainability problems — without needing to parse or build the code.
 

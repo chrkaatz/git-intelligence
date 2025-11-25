@@ -13,6 +13,7 @@ import {
   XMarkIcon,
   CodeBracketIcon,
   FolderOpenIcon,
+  HeartIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
@@ -22,6 +23,12 @@ const navigation = [
     to: '/developer-analytics',
     icon: CodeBracketIcon,
     id: 'developer-analytics',
+  },
+  {
+    name: 'Codebase Health',
+    to: '/codebase-health',
+    icon: HeartIcon,
+    id: 'codebase-health',
   },
   {
     name: 'Projects',

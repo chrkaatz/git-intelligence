@@ -202,3 +202,76 @@ export const getCrossRepoDeveloperAnalytics = async (projectId: string): Promise
   const response = await api.get('/cross-repo-developer-analytics', { params: { projectId } });
   return response.data;
 };
+
+export interface FileHotspot {
+  file: string;
+  commits: number;
+}
+
+export interface DirectoryHotspot {
+  directory: string;
+  commits: number;
+}
+
+export interface Hotspots {
+  files: FileHotspot[];
+  directories: DirectoryHotspot[];
+}
+
+export interface ChangeCouplingPair {
+  file1: string;
+  file2: string;
+  coChanges: number;
+  coChangePercentage: number;
+}
+
+export interface ChangeCoupling {
+  pairs: ChangeCouplingPair[];
+}
+
+export interface StabilityFile {
+  file: string;
+  ageDays: number;
+  changeFrequency: number;
+  status: 'stable' | 'evolving' | 'unstable';
+}
+
+export interface Stability {
+  files: StabilityFile[];
+}
+
+export interface ComplexityFile {
+  file: string;
+  averageDiffSize: number;
+}
+
+export interface LargestDiff {
+  file: string;
+  linesChanged: number;
+  commitHash: string;
+}
+
+export interface MostRewritten {
+  file: string;
+  rewritePercentage: number;
+  totalLines: number;
+  rewrittenLines: number;
+}
+
+export interface Complexity {
+  averageDiffSizes: ComplexityFile[];
+  largestDiffs: LargestDiff[];
+  mostRewritten: MostRewritten[];
+}
+
+export interface CodebaseHealth {
+  hotspots: Hotspots;
+  changeCoupling: ChangeCoupling;
+  stability: Stability;
+  complexity: Complexity;
+}
+
+export const getCodebaseHealth = async (path: string, refresh: boolean = false): Promise<CodebaseHealth> => {
+  const response = await api.get('/codebase-health', { params: { path, refresh: refresh ? 'true' : 'false' } });
+  return response.data;
+};

@@ -12,10 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as DeveloperAnalyticsRouteImport } from './routes/developer-analytics'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CodebaseHealthRouteImport } from './routes/codebase-health'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DeveloperAnalyticsRepoPathRouteImport } from './routes/developer-analytics.$repoPath'
 import { Route as DashboardRepoPathRouteImport } from './routes/dashboard.$repoPath'
 import { Route as CrossRepoAnalyticsProjectIdRouteImport } from './routes/cross-repo-analytics.$projectId'
+import { Route as CodebaseHealthRepoPathRouteImport } from './routes/codebase-health.$repoPath'
 
 const ProjectsRoute = ProjectsRouteImport.update({
   id: '/projects',
@@ -30,6 +32,11 @@ const DeveloperAnalyticsRoute = DeveloperAnalyticsRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodebaseHealthRoute = CodebaseHealthRouteImport.update({
+  id: '/codebase-health',
+  path: '/codebase-health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -54,21 +61,30 @@ const CrossRepoAnalyticsProjectIdRoute =
     path: '/cross-repo-analytics/$projectId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const CodebaseHealthRepoPathRoute = CodebaseHealthRepoPathRouteImport.update({
+  id: '/$repoPath',
+  path: '/$repoPath',
+  getParentRoute: () => CodebaseHealthRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/codebase-health': typeof CodebaseHealthRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/developer-analytics': typeof DeveloperAnalyticsRouteWithChildren
   '/projects': typeof ProjectsRoute
+  '/codebase-health/$repoPath': typeof CodebaseHealthRepoPathRoute
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
   '/dashboard/$repoPath': typeof DashboardRepoPathRoute
   '/developer-analytics/$repoPath': typeof DeveloperAnalyticsRepoPathRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/codebase-health': typeof CodebaseHealthRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/developer-analytics': typeof DeveloperAnalyticsRouteWithChildren
   '/projects': typeof ProjectsRoute
+  '/codebase-health/$repoPath': typeof CodebaseHealthRepoPathRoute
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
   '/dashboard/$repoPath': typeof DashboardRepoPathRoute
   '/developer-analytics/$repoPath': typeof DeveloperAnalyticsRepoPathRoute
@@ -76,9 +92,11 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/codebase-health': typeof CodebaseHealthRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/developer-analytics': typeof DeveloperAnalyticsRouteWithChildren
   '/projects': typeof ProjectsRoute
+  '/codebase-health/$repoPath': typeof CodebaseHealthRepoPathRoute
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
   '/dashboard/$repoPath': typeof DashboardRepoPathRoute
   '/developer-analytics/$repoPath': typeof DeveloperAnalyticsRepoPathRoute
@@ -87,27 +105,33 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/codebase-health'
     | '/dashboard'
     | '/developer-analytics'
     | '/projects'
+    | '/codebase-health/$repoPath'
     | '/cross-repo-analytics/$projectId'
     | '/dashboard/$repoPath'
     | '/developer-analytics/$repoPath'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/codebase-health'
     | '/dashboard'
     | '/developer-analytics'
     | '/projects'
+    | '/codebase-health/$repoPath'
     | '/cross-repo-analytics/$projectId'
     | '/dashboard/$repoPath'
     | '/developer-analytics/$repoPath'
   id:
     | '__root__'
     | '/'
+    | '/codebase-health'
     | '/dashboard'
     | '/developer-analytics'
     | '/projects'
+    | '/codebase-health/$repoPath'
     | '/cross-repo-analytics/$projectId'
     | '/dashboard/$repoPath'
     | '/developer-analytics/$repoPath'
@@ -115,6 +139,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CodebaseHealthRoute: typeof CodebaseHealthRouteWithChildren
   DashboardRoute: typeof DashboardRouteWithChildren
   DeveloperAnalyticsRoute: typeof DeveloperAnalyticsRouteWithChildren
   ProjectsRoute: typeof ProjectsRoute
@@ -142,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codebase-health': {
+      id: '/codebase-health'
+      path: '/codebase-health'
+      fullPath: '/codebase-health'
+      preLoaderRoute: typeof CodebaseHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -172,8 +204,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrossRepoAnalyticsProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/codebase-health/$repoPath': {
+      id: '/codebase-health/$repoPath'
+      path: '/$repoPath'
+      fullPath: '/codebase-health/$repoPath'
+      preLoaderRoute: typeof CodebaseHealthRepoPathRouteImport
+      parentRoute: typeof CodebaseHealthRoute
+    }
   }
 }
+
+interface CodebaseHealthRouteChildren {
+  CodebaseHealthRepoPathRoute: typeof CodebaseHealthRepoPathRoute
+}
+
+const CodebaseHealthRouteChildren: CodebaseHealthRouteChildren = {
+  CodebaseHealthRepoPathRoute: CodebaseHealthRepoPathRoute,
+}
+
+const CodebaseHealthRouteWithChildren = CodebaseHealthRoute._addFileChildren(
+  CodebaseHealthRouteChildren,
+)
 
 interface DashboardRouteChildren {
   DashboardRepoPathRoute: typeof DashboardRepoPathRoute
@@ -200,6 +251,7 @@ const DeveloperAnalyticsRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CodebaseHealthRoute: CodebaseHealthRouteWithChildren,
   DashboardRoute: DashboardRouteWithChildren,
   DeveloperAnalyticsRoute: DeveloperAnalyticsRouteWithChildren,
   ProjectsRoute: ProjectsRoute,

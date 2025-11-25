@@ -19,7 +19,7 @@ export function ProjectsSidebar() {
         return decodeURIComponent(routeParams.repoPath);
       }
       // Fallback: try to extract from pathname
-      const pathMatch = location.pathname.match(/\/(dashboard|developer-analytics)\/(.+)$/);
+      const pathMatch = location.pathname.match(/\/(dashboard|developer-analytics|codebase-health)\/(.+)$/);
       if (pathMatch && pathMatch[2]) {
         return decodeURIComponent(pathMatch[2]);
       }
@@ -51,6 +51,8 @@ export function ProjectsSidebar() {
     const currentPath = router.location.pathname;
     if (currentPath.startsWith('/developer-analytics')) {
       navigate({ to: '/developer-analytics/$repoPath', params: { repoPath: encodedPath } });
+    } else if (currentPath.startsWith('/codebase-health')) {
+      navigate({ to: '/codebase-health/$repoPath', params: { repoPath: encodedPath } });
     } else {
       navigate({ to: '/dashboard/$repoPath', params: { repoPath: encodedPath } });
     }

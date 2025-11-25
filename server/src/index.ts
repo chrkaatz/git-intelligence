@@ -5,7 +5,7 @@ import AdmZip from 'adm-zip';
 import path from 'path';
 import fs from 'fs';
 import simpleGit from 'simple-git';
-import { getStats, getDeveloperAnalytics, getCrossRepoDeveloperAnalytics } from './git';
+import { getStats, getDeveloperAnalytics, getCrossRepoDeveloperAnalytics, getCodebaseHealth } from './git';
 import {
   getProjects,
   getProject,
@@ -308,6 +308,22 @@ app.get('/cross-repo-developer-analytics', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to get cross-repo developer analytics' });
+  }
+});
+
+app.get('/codebase-health', async (req, res) => {
+  const { path, refresh } = req.query;
+  if (!path || typeof path !== 'string') {
+    return res.status(400).json({ error: 'Path is required' });
+  }
+  try {
+    // Use cache by default, unless refresh=true
+    const useCache = refresh !== 'true';
+    const health = await getCodebaseHealth(path, useCache);
+    res.json(health);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get codebase health metrics' });
   }
 });
 
