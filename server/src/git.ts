@@ -17,6 +17,12 @@ export interface DeveloperAuthorStats {
   };
   signedCommits: number;
   signedCommitsPercentage: string;
+  fixCommits: number;
+  fixCommitRatio: string;
+  revertCommits: number;
+  revertCommitRatio: string;
+  churn: number;
+  churnRatio: string;
 }
 
 export interface AuthorActivityOverTime {
@@ -229,10 +235,10 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
     const log = await git.log(['--all', '--date=iso']);
     const totalCommits = log.total;
 
-    // Get numstat data with commit info
-    // Format: commit_hash|author_name|author_email|date|gpg_status
+    // Get numstat data with commit info including commit message
+    // Format: commit_hash|author_name|author_email|date|gpg_status|message
     // Followed by numstat lines: added\tdeleted\tfile
-    const numstatRaw = await git.raw(['log', '--all', '--numstat', '--pretty=format:%H|%an|%ae|%ad|%G?', '--date=iso']);
+    const numstatRaw = await git.raw(['log', '--all', '--numstat', '--pretty=format:%H|%an|%ae|%ad|%G?|%s', '--date=iso']);
 
     // Use email (normalized) as key to deduplicate authors with different names
     const authors = new Map<string, {
@@ -250,23 +256,31 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
       signedCommits: number;
       nameVariants: Map<string, number>; // Track name variants and their frequency
       emails: Set<string>; // Track all emails for this author
+      fixCommits: number;
+      revertCommits: number;
     }>();
+
+    // Track file first commits and churn
+    // Map: file path -> { firstCommitDate: Date, firstAuthorEmail: string }
+    const fileFirstCommits = new Map<string, { firstCommitDate: Date; firstAuthorEmail: string }>();
+    // Map: author email -> { churnLines: number, totalLines: number }
+    const authorChurn = new Map<string, { churnLines: number; totalLines: number }>();
 
     // Track all commits for longitudinal analysis
     const allCommits: Array<{ authorName: string; authorEmail: string; date: Date }> = [];
 
     const lines = numstatRaw.split('\n');
-    let currentCommit: { authorName: string; authorEmail: string; date: Date; isSigned: boolean } | null = null;
+    let currentCommit: { authorName: string; authorEmail: string; date: Date; isSigned: boolean; message: string } | null = null;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
 
-      // Check if this is a commit header line (hash|name|email|date|gpg)
+      // Check if this is a commit header line (hash|name|email|date|gpg|message)
       // The format should be: 40-char hash, then |, then fields
-      const commitMatch = line.match(/^([a-f0-9]{40})\|(.+)\|(.+)\|(.+)\|([UGBNX])$/);
+      const commitMatch = line.match(/^([a-f0-9]{40})\|(.+)\|(.+)\|(.+)\|([UGBNX])\|(.+)$/);
       if (commitMatch) {
-        const [, , authorName, authorEmail, dateStr, gpgStatus] = commitMatch;
+        const [, , authorName, authorEmail, dateStr, gpgStatus, commitMessage] = commitMatch;
         let date: Date;
         try {
           date = new Date(dateStr);
@@ -280,7 +294,7 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
         }
         const isSigned = gpgStatus === 'G' || gpgStatus === 'U'; // G = valid, U = valid but untrusted
 
-        currentCommit = { authorName, authorEmail, date, isSigned };
+        currentCommit = { authorName, authorEmail, date, isSigned, message: commitMessage };
 
         // Track commit for longitudinal analysis
         allCommits.push({ authorName, authorEmail, date });
@@ -310,10 +324,23 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
             signedCommits: 0,
             nameVariants: new Map(),
             emails: new Set([authorEmail]),
+            fixCommits: 0,
+            revertCommits: 0,
           });
         }
 
         const author = authors.get(normalizedEmail)!;
+
+        // Check for fix commits (commits starting with "fix", "bug", "hotfix", etc.)
+        const messageLower = commitMessage.toLowerCase();
+        if (messageLower.match(/^(fix|bug|hotfix|patch|repair|resolve|correct)/)) {
+          author.fixCommits++;
+        }
+
+        // Check for revert commits
+        if (messageLower.match(/^(revert|undo|rollback)/)) {
+          author.revertCommits++;
+        }
 
         // Track name variants to use the most common one
         author.nameVariants.set(authorName, (author.nameVariants.get(authorName) || 0) + 1);
@@ -348,11 +375,13 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
         const numstatMatch = line.match(/^(\d+|-)\t(\d+|-)\t/);
         if (numstatMatch) {
           const parts = line.split('\t');
-          if (parts.length >= 2) {
+          if (parts.length >= 3) {
             const addedStr = parts[0];
             const deletedStr = parts[1];
+            const filePath = parts[2];
             const added = addedStr === '-' ? 0 : parseInt(addedStr, 10) || 0;
             const deleted = deletedStr === '-' ? 0 : parseInt(deletedStr, 10) || 0;
+            const totalChanged = added + deleted;
 
             // Use normalized email to find author
             const normalizedEmail = normalizeEmail(currentCommit.authorEmail);
@@ -360,6 +389,40 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
             if (author) {
               author.linesAdded += added;
               author.linesRemoved += deleted;
+            }
+
+            // Track file first commits and churn
+            if (filePath && totalChanged > 0) {
+              const fileFirstCommit = fileFirstCommits.get(filePath);
+
+              // Initialize churn tracking for this author
+              if (!authorChurn.has(normalizedEmail)) {
+                authorChurn.set(normalizedEmail, { churnLines: 0, totalLines: 0 });
+              }
+              const churnData = authorChurn.get(normalizedEmail)!;
+
+              if (!fileFirstCommit) {
+                // First time this file is seen - record it and count lines for creator
+                fileFirstCommits.set(filePath, {
+                  firstCommitDate: currentCommit.date,
+                  firstAuthorEmail: normalizedEmail,
+                });
+                // Count as total lines for the creator (not churn)
+                churnData.totalLines += totalChanged;
+              } else {
+                // File already exists - check for churn
+                // Churn: lines modified within 30 days of first commit by a different author
+                const daysSinceFirstCommit = (currentCommit.date.getTime() - fileFirstCommit.firstCommitDate.getTime()) / (1000 * 60 * 60 * 24);
+                const CHURN_WINDOW_DAYS = 30;
+
+                // Always count as total lines
+                churnData.totalLines += totalChanged;
+
+                if (daysSinceFirstCommit <= CHURN_WINDOW_DAYS && fileFirstCommit.firstAuthorEmail !== normalizedEmail) {
+                  // This is churn - another author modifying the file shortly after it was created
+                  churnData.churnLines += totalChanged;
+                }
+              }
             }
           }
         }
@@ -371,20 +434,34 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
 
     // Convert to array and format
     const authorList: DeveloperAuthorStats[] = Array.from(mergedAuthors.values())
-      .map(a => ({
-        name: a.name,
-        email: a.email,
-        commits: a.commits,
-        linesAdded: a.linesAdded,
-        linesRemoved: a.linesRemoved,
-        netLines: a.linesAdded - a.linesRemoved,
-        firstCommit: a.firstCommit.toISOString(),
-        lastCommit: a.lastCommit.toISOString(),
-        percentage: totalCommits > 0 ? ((a.commits / totalCommits) * 100).toFixed(1) : '0.0',
-        activeTimeWindows: a.activeTimeWindows,
-        signedCommits: a.signedCommits,
-        signedCommitsPercentage: a.commits > 0 ? ((a.signedCommits / a.commits) * 100).toFixed(1) : '0.0',
-      }))
+      .map(a => {
+        const normalizedEmail = normalizeEmail(a.email);
+        const churnData = authorChurn.get(normalizedEmail) || { churnLines: 0, totalLines: 0 };
+        const churnRatio = churnData.totalLines > 0
+          ? ((churnData.churnLines / churnData.totalLines) * 100).toFixed(1)
+          : '0.0';
+
+        return {
+          name: a.name,
+          email: a.email,
+          commits: a.commits,
+          linesAdded: a.linesAdded,
+          linesRemoved: a.linesRemoved,
+          netLines: a.linesAdded - a.linesRemoved,
+          firstCommit: a.firstCommit.toISOString(),
+          lastCommit: a.lastCommit.toISOString(),
+          percentage: totalCommits > 0 ? ((a.commits / totalCommits) * 100).toFixed(1) : '0.0',
+          activeTimeWindows: a.activeTimeWindows,
+          signedCommits: a.signedCommits,
+          signedCommitsPercentage: a.commits > 0 ? ((a.signedCommits / a.commits) * 100).toFixed(1) : '0.0',
+          fixCommits: a.fixCommits,
+          fixCommitRatio: a.commits > 0 ? ((a.fixCommits / a.commits) * 100).toFixed(1) : '0.0',
+          revertCommits: a.revertCommits,
+          revertCommitRatio: a.commits > 0 ? ((a.revertCommits / a.commits) * 100).toFixed(1) : '0.0',
+          churn: churnData.churnLines,
+          churnRatio,
+        };
+      })
       .sort((a, b) => b.commits - a.commits);
 
     // Calculate longitudinal patterns (use merged authors)
@@ -500,6 +577,8 @@ type AuthorData = {
   signedCommits: number;
   nameVariants: Map<string, number>;
   emails: Set<string>; // Track all emails for this author
+  fixCommits: number;
+  revertCommits: number;
 };
 
 // Merge authors by email and name similarity
@@ -527,13 +606,15 @@ function mergeAuthorsBySimilarity(
       const canonicalKey = emailMap.get(normalizedEmail)!;
       const existing = merged.get(canonicalKey)!;
 
-      // Merge data
-      existing.commits += author.commits;
-      existing.linesAdded += author.linesAdded;
-      existing.linesRemoved += author.linesRemoved;
-      existing.signedCommits += author.signedCommits;
-      if (author.firstCommit < existing.firstCommit) existing.firstCommit = author.firstCommit;
-      if (author.lastCommit > existing.lastCommit) existing.lastCommit = author.lastCommit;
+        // Merge data
+        existing.commits += author.commits;
+        existing.linesAdded += author.linesAdded;
+        existing.linesRemoved += author.linesRemoved;
+        existing.signedCommits += author.signedCommits;
+        existing.fixCommits += author.fixCommits;
+        existing.revertCommits += author.revertCommits;
+        if (author.firstCommit < existing.firstCommit) existing.firstCommit = author.firstCommit;
+        if (author.lastCommit > existing.lastCommit) existing.lastCommit = author.lastCommit;
 
       // Merge name variants
       author.nameVariants.forEach((count, name) => {
@@ -600,6 +681,8 @@ function mergeAuthorsBySimilarity(
         author1.linesAdded += author2.linesAdded;
         author1.linesRemoved += author2.linesRemoved;
         author1.signedCommits += author2.signedCommits;
+        author1.fixCommits += author2.fixCommits;
+        author1.revertCommits += author2.revertCommits;
         if (author2.firstCommit < author1.firstCommit) author1.firstCommit = author2.firstCommit;
         if (author2.lastCommit > author1.lastCommit) author1.lastCommit = author2.lastCommit;
 

@@ -25,6 +25,12 @@ export interface DeveloperAuthorStats {
   };
   signedCommits: number;
   signedCommitsPercentage: string;
+  fixCommits: number;
+  fixCommitRatio: string;
+  revertCommits: number;
+  revertCommitRatio: string;
+  churn: number;
+  churnRatio: string;
 }
 
 export interface AuthorActivityOverTime {

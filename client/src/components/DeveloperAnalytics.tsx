@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { DeveloperAuthorStats, LongitudinalPatterns } from '../api';
-import { Code, GitCommit, TrendingUp, Shield, Mail } from 'lucide-react';
+import { Code, GitCommit, TrendingUp, Shield, Mail, AlertTriangle, RotateCcw, Activity } from 'lucide-react';
 import { LongitudinalPatterns as LongitudinalPatternsComponent } from './LongitudinalPatterns';
 
 interface DeveloperAnalyticsProps {
@@ -104,6 +104,66 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
               </p>
             </div>
             <Shield className="w-8 h-8 text-purple-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Quality-Adjacent Signals Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Fix Commits</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {authors.reduce((sum, a) => sum + a.fixCommits, 0).toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {authors.length > 0
+                  ? (
+                      (authors.reduce((sum, a) => sum + a.fixCommits, 0) /
+                        authors.reduce((sum, a) => sum + a.commits, 0)) *
+                      100
+                    ).toFixed(1)
+                  : '0.0'}
+                % of total commits
+              </p>
+            </div>
+            <AlertTriangle className="w-8 h-8 text-orange-500" />
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Revert Commits</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {authors.reduce((sum, a) => sum + a.revertCommits, 0).toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {authors.length > 0
+                  ? (
+                      (authors.reduce((sum, a) => sum + a.revertCommits, 0) /
+                        authors.reduce((sum, a) => sum + a.commits, 0)) *
+                      100
+                    ).toFixed(1)
+                  : '0.0'}
+                % of total commits
+              </p>
+            </div>
+            <RotateCcw className="w-8 h-8 text-red-500" />
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Churn</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {authors.reduce((sum, a) => sum + a.churn, 0).toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Lines modified shortly after creation
+              </p>
+            </div>
+            <Activity className="w-8 h-8 text-yellow-500" />
           </div>
         </div>
       </div>
@@ -211,6 +271,15 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
                   Signed
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Fix Ratio
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Revert Ratio
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Churn
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   First Commit
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -280,6 +349,30 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                       {author.signedCommitsPercentage}%
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 dark:text-white">
+                      {author.fixCommits.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {author.fixCommitRatio}%
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 dark:text-white">
+                      {author.revertCommits.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {author.revertCommitRatio}%
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 dark:text-white">
+                      {author.churn.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {author.churnRatio}%
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
