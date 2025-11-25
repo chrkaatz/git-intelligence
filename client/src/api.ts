@@ -300,3 +300,77 @@ export const getCrossRepoCodebaseHealth = async (projectId: string, refresh: boo
   const response = await api.get('/cross-repo-codebase-health', { params: { projectId, refresh: refresh ? 'true' : 'false' } });
   return response.data;
 };
+
+// Repository Evolution Analytics Types
+export interface CommitFrequency {
+  date: string;
+  commits: number;
+}
+
+export interface ReleaseInfo {
+  tag: string;
+  date: string;
+  commitHash: string;
+  message?: string;
+}
+
+export interface GrowthCurve {
+  date: string;
+  loc: number;
+  files: number;
+}
+
+export interface ChangeBurst {
+  date: string;
+  commits: number;
+  linesAdded: number;
+  linesRemoved: number;
+  netChange: number;
+  isRefactor: boolean;
+}
+
+export interface ChurnMetrics {
+  date: string;
+  additions: number;
+  deletions: number;
+  netChange: number;
+  churnRatio: number;
+}
+
+export interface RepositoryEvolution {
+  commitFrequency: CommitFrequency[];
+  releases: ReleaseInfo[];
+  growthCurve: GrowthCurve[];
+  changeBursts: ChangeBurst[];
+  churnMetrics: ChurnMetrics[];
+  totalCommits: number;
+  totalReleases: number;
+  averageCommitsPerDay: number;
+  averageChurnRatio: number;
+  refactorCount: number;
+}
+
+export interface CrossRepoRepositoryEvolution {
+  repositories: {
+    repoName: string;
+    repoPath: string;
+    evolution: RepositoryEvolution;
+  }[];
+  synchronization: {
+    date: string;
+    repos: string[];
+    commitCounts: Record<string, number>;
+  }[];
+  totalRepos: number;
+  repoNames: string[];
+}
+
+export const getRepositoryEvolution = async (path: string, refresh?: boolean): Promise<RepositoryEvolution> => {
+  const response = await api.get('/repository-evolution', { params: { path, refresh: refresh ? 'true' : undefined } });
+  return response.data;
+};
+
+export const getCrossRepoRepositoryEvolution = async (projectId: string, refresh?: boolean): Promise<CrossRepoRepositoryEvolution> => {
+  const response = await api.get('/cross-repo-repository-evolution', { params: { projectId, refresh: refresh ? 'true' : undefined } });
+  return response.data;
+};

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
-import { Plus, Trash2, FolderGit2, FolderOpen, ChevronDown, ChevronRight, BarChart3, Heart } from 'lucide-react';
+import { Plus, Trash2, FolderGit2, FolderOpen, ChevronDown, ChevronRight, BarChart3, Heart, TrendingUp } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export function ProjectsSidebar() {
@@ -19,7 +19,7 @@ export function ProjectsSidebar() {
         return decodeURIComponent(routeParams.repoPath);
       }
       // Fallback: try to extract from pathname
-      const pathMatch = location.pathname.match(/\/(dashboard|developer-analytics|codebase-health)\/(.+)$/);
+      const pathMatch = location.pathname.match(/\/(dashboard|developer-analytics|codebase-health|repository-evolution)\/(.+)$/);
       if (pathMatch && pathMatch[2]) {
         return decodeURIComponent(pathMatch[2]);
       }
@@ -53,6 +53,8 @@ export function ProjectsSidebar() {
       navigate({ to: '/developer-analytics/$repoPath', params: { repoPath: encodedPath } });
     } else if (currentPath.startsWith('/codebase-health')) {
       navigate({ to: '/codebase-health/$repoPath', params: { repoPath: encodedPath } });
+    } else if (currentPath.startsWith('/repository-evolution')) {
+      navigate({ to: '/repository-evolution/$repoPath', params: { repoPath: encodedPath } });
     } else {
       navigate({ to: '/dashboard/$repoPath', params: { repoPath: encodedPath } });
     }
@@ -124,6 +126,15 @@ export function ProjectsSidebar() {
                         className="p-1 hover:bg-orange-50 dark:hover:bg-orange-900/20 text-gray-400 hover:text-orange-500 rounded transition-all"
                         title="View Cross-Repo Codebase Health">
                         <Heart className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate({ to: '/cross-repo-repository-evolution/$projectId', params: { projectId: project.id } });
+                        }}
+                        className="p-1 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-400 hover:text-purple-500 rounded transition-all"
+                        title="View Cross-Repo Repository Evolution">
+                        <TrendingUp className="w-3 h-3" />
                       </button>
                     </>
                   )}

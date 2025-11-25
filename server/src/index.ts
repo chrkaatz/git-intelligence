@@ -5,7 +5,7 @@ import AdmZip from 'adm-zip';
 import path from 'path';
 import fs from 'fs';
 import simpleGit from 'simple-git';
-import { getStats, getDeveloperAnalytics, getCrossRepoDeveloperAnalytics, getCodebaseHealth, getCrossRepoCodebaseHealth } from './git';
+import { getStats, getDeveloperAnalytics, getCrossRepoDeveloperAnalytics, getCodebaseHealth, getCrossRepoCodebaseHealth, getRepositoryEvolution, getCrossRepoRepositoryEvolution } from './git';
 import {
   getProjects,
   getProject,
@@ -340,6 +340,38 @@ app.get('/cross-repo-codebase-health', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to get cross-repo codebase health metrics' });
+  }
+});
+
+app.get('/repository-evolution', async (req, res) => {
+  const { path, refresh } = req.query;
+  if (!path || typeof path !== 'string') {
+    return res.status(400).json({ error: 'Path is required' });
+  }
+  try {
+    // Use cache by default, unless refresh=true
+    const useCache = refresh !== 'true';
+    const evolution = await getRepositoryEvolution(path, useCache);
+    res.json(evolution);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get repository evolution metrics' });
+  }
+});
+
+app.get('/cross-repo-repository-evolution', async (req, res) => {
+  const { projectId, refresh } = req.query;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+  try {
+    // Use cache by default, unless refresh=true
+    const useCache = refresh !== 'true';
+    const evolution = await getCrossRepoRepositoryEvolution(projectId, useCache);
+    res.json(evolution);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get cross-repo repository evolution metrics' });
   }
 });
 

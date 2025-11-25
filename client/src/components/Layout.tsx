@@ -14,6 +14,7 @@ import {
   CodeBracketIcon,
   FolderOpenIcon,
   HeartIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
@@ -29,6 +30,12 @@ const navigation = [
     to: '/codebase-health',
     icon: HeartIcon,
     id: 'codebase-health',
+  },
+  {
+    name: 'Repository Evolution',
+    to: '/repository-evolution',
+    icon: ChartBarIcon,
+    id: 'repository-evolution',
   },
   {
     name: 'Projects',
@@ -53,8 +60,18 @@ export default function Layout({ children, sidebar }: LayoutProps) {
   const router = useRouterState();
 
   const currentPath = router.location.pathname;
+  // Map cross-repo routes to their base navigation items
+  const normalizedPath = currentPath.startsWith(
+    '/cross-repo-repository-evolution'
+  )
+    ? '/repository-evolution'
+    : currentPath.startsWith('/cross-repo-analytics')
+      ? '/developer-analytics'
+      : currentPath.startsWith('/cross-repo-codebase-health')
+        ? '/codebase-health'
+        : currentPath;
   const currentView =
-    navigation.find((item) => currentPath.startsWith(item.to))?.id ||
+    navigation.find((item) => normalizedPath.startsWith(item.to))?.id ||
     'dashboard';
 
   return (
