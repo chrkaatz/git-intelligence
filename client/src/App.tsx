@@ -5,23 +5,31 @@ import { ActivityChart } from './components/ActivityChart';
 import { AuthorList } from './components/AuthorList';
 import { ExtensionChart } from './components/ExtensionChart';
 import { LocChart } from './components/LocChart';
+import { DeveloperAnalytics } from './components/DeveloperAnalytics';
+import { ProjectsList } from './components/ProjectsList';
 import { UploadProjectModal } from './components/UploadProjectModal';
 import {
   getStats,
+  getDeveloperAnalytics,
   getProjects,
   removeProject,
   type GitStats,
   type Project,
+  type DeveloperAnalytics as DeveloperAnalyticsType,
 } from './api';
 import { Loader2, AlertCircle, Plus, Trash2, FolderGit2 } from 'lucide-react';
 
 function App() {
   const [stats, setStats] = useState<GitStats | null>(null);
+  const [developerAnalytics, setDeveloperAnalytics] =
+    useState<DeveloperAnalyticsType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('');
   const [isAddingProject, setIsAddingProject] = useState(false);
+  const [currentView, setCurrentView] = useState<string>('dashboard');
 
   useEffect(() => {
     loadProjects();
@@ -57,6 +65,28 @@ function App() {
 
     fetchStats();
   }, [currentPath]);
+
+  useEffect(() => {
+    if (!currentPath || currentView !== 'developer-analytics') {
+      setDeveloperAnalytics(null);
+      return;
+    }
+
+    const fetchAnalytics = async () => {
+      setAnalyticsLoading(true);
+      setError(null);
+      try {
+        const data = await getDeveloperAnalytics(currentPath);
+        setDeveloperAnalytics(data);
+      } catch (err) {
+        setError('Failed to load developer analytics');
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, [currentPath, currentView]);
 
   const handleUploadSuccess = async () => {
     await loadProjects();
@@ -141,57 +171,119 @@ function App() {
     </div>
   );
 
-  return (
-    <Layout sidebar={sidebar}>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Dashboard
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
-          {currentPath
-            ? `Analyzing ${currentPath}`
-            : 'Select a project to view statistics'}
-        </p>
-      </div>
+  const renderContent = () => {
+    if (currentView === 'projects') {
+      return (
+        <ProjectsList
+          projects={projects}
+          currentPath={currentPath}
+          onSelectProject={(path) => {
+            setCurrentPath(path);
+            setCurrentView('dashboard');
+          }}
+          onDeleteProject={handleDeleteProject}
+          onAddProject={() => setIsAddingProject(true)}
+        />
+      );
+    }
 
+    if (currentView === 'developer-analytics') {
+      return (
+        <>
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Developer Analytics
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
+              {currentPath
+                ? `Analyzing developer contributions for ${currentPath}`
+                : 'Select a project to view developer analytics'}
+            </p>
+          </div>
+
+          {analyticsLoading && !developerAnalytics ? (
+            <div className="flex items-center justify-center h-96">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg flex items-center gap-3 text-red-700 dark:text-red-400">
+              <AlertCircle className="w-5 h-5" />
+              {error}
+            </div>
+          ) : developerAnalytics ? (
+            <DeveloperAnalytics authors={developerAnalytics.authors} />
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              No project selected. Select a project from the list to view
+              developer analytics.
+            </div>
+          )}
+        </>
+      );
+    }
+
+    // Default dashboard view
+    return (
+      <>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Dashboard
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            {currentPath
+              ? `Analyzing ${currentPath}`
+              : 'Select a project to view statistics'}
+          </p>
+        </div>
+
+        {loading && !stats ? (
+          <div className="flex items-center justify-center h-96">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg flex items-center gap-3 text-red-700 dark:text-red-400">
+            <AlertCircle className="w-5 h-5" />
+            {error}
+          </div>
+        ) : stats ? (
+          <>
+            <SummaryCards stats={stats} />
+
+            <LocChart data={stats.locHistory} />
+
+            <ActivityChart activity={stats.activity} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <AuthorList authors={stats.authors} />
+              </div>
+              <div>
+                <ExtensionChart extensions={stats.extensions} />
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            No project selected. Select a project from the list to view
+            statistics.
+          </div>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <Layout
+      sidebar={sidebar}
+      currentView={currentView}
+      onViewChange={setCurrentView}>
       <UploadProjectModal
         isOpen={isAddingProject}
         onClose={() => setIsAddingProject(false)}
         onSuccess={handleUploadSuccess}
       />
 
-      {loading && !stats ? (
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 p-4 rounded-lg flex items-center gap-3 text-red-700">
-          <AlertCircle className="w-5 h-5" />
-          {error}
-        </div>
-      ) : stats ? (
-        <>
-          <SummaryCards stats={stats} />
-
-          <LocChart data={stats.locHistory} />
-
-          <ActivityChart activity={stats.activity} />
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <AuthorList authors={stats.authors} />
-            </div>
-            <div>
-              <ExtensionChart extensions={stats.extensions} />
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="text-center py-12 text-gray-500">
-          No project selected. Select a project from the list to view
-          statistics.
-        </div>
-      )}
+      {renderContent()}
     </Layout>
   );
 }

@@ -1,47 +1,72 @@
-import { useState, type ReactNode } from 'react'
-import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from '@headlessui/react'
+import { useState, type ReactNode } from 'react';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  TransitionChild,
+} from '@headlessui/react';
 import {
   Bars3Icon,
-  CalendarIcon,
-  ChartPieIcon,
-  DocumentDuplicateIcon,
   FolderIcon,
   HomeIcon,
-  UsersIcon,
   XMarkIcon,
-} from '@heroicons/react/24/outline'
+  CodeBracketIcon,
+  FolderOpenIcon,
+} from '@heroicons/react/24/outline';
 
 const navigation = [
-  { name: 'Dashboard', href: '#', icon: HomeIcon, current: true },
-  { name: 'Team', href: '#', icon: UsersIcon, current: false },
-  { name: 'Projects', href: '#', icon: FolderIcon, current: false },
-  { name: 'Calendar', href: '#', icon: CalendarIcon, current: false },
-  { name: 'Documents', href: '#', icon: DocumentDuplicateIcon, current: false },
-  { name: 'Reports', href: '#', icon: ChartPieIcon, current: false },
-]
-const teams = [
-  { id: 1, name: 'Heroicons', href: '#', initial: 'H', current: false },
-  { id: 2, name: 'Tailwind Labs', href: '#', initial: 'T', current: false },
-  { id: 3, name: 'Workcation', href: '#', initial: 'W', current: false },
-]
+  { name: 'Dashboard', href: '#', icon: HomeIcon, id: 'dashboard' },
+  {
+    name: 'Developer Analytics',
+    href: '#',
+    icon: CodeBracketIcon,
+    id: 'developer-analytics',
+  },
+  {
+    name: 'Projects',
+    href: '#',
+    icon: FolderOpenIcon,
+    id: 'projects',
+  },
+];
 
 function classNames(...classes: (string | boolean | undefined | null)[]) {
-  return classes.filter(Boolean).join(' ')
+  return classes.filter(Boolean).join(' ');
 }
 
 interface LayoutProps {
   children: ReactNode;
   sidebar?: ReactNode;
+  currentView?: string;
+  onViewChange?: (view: string) => void;
 }
 
-export default function Layout({ children, sidebar }: LayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [projectsSidebarOpen, setProjectsSidebarOpen] = useState(false)
+export default function Layout({
+  children,
+  sidebar,
+  currentView = 'dashboard',
+  onViewChange,
+}: LayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [projectsSidebarOpen, setProjectsSidebarOpen] = useState(false);
+
+  const handleNavigationClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    item: (typeof navigation)[0]
+  ) => {
+    e.preventDefault();
+    if (onViewChange) {
+      onViewChange(item.id);
+    }
+  };
 
   return (
     <>
       <div>
-        <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="relative z-50 lg:hidden">
+        <Dialog
+          open={sidebarOpen}
+          onClose={setSidebarOpen}
+          className="relative z-50 lg:hidden">
           <DialogBackdrop
             transition
             className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear data-closed:opacity-0"
@@ -50,13 +75,18 @@ export default function Layout({ children, sidebar }: LayoutProps) {
           <div className="fixed inset-0 flex">
             <DialogPanel
               transition
-              className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out data-closed:-translate-x-full"
-            >
+              className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out data-closed:-translate-x-full">
               <TransitionChild>
                 <div className="absolute top-0 left-full flex w-16 justify-center pt-5 duration-300 ease-in-out data-closed:opacity-0">
-                  <button type="button" onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(false)}
+                    className="-m-2.5 p-2.5">
                     <span className="sr-only">Close sidebar</span>
-                    <XMarkIcon aria-hidden="true" className="size-6 text-white" />
+                    <XMarkIcon
+                      aria-hidden="true"
+                      className="size-6 text-white"
+                    />
                   </button>
                 </div>
               </TransitionChild>
@@ -69,66 +99,41 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                     alt="Git Intelligence"
                     className="h-8 w-auto rounded-lg"
                   />
-                  <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">Git Intelligence</h1>
+                  <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                    Git Intelligence
+                  </h1>
                 </div>
                 <nav className="relative flex flex-1 flex-col">
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">
                     <li>
                       <ul role="list" className="-mx-2 space-y-1">
-                        {navigation.map((item) => (
-                          <li key={item.name}>
-                            <a
-                              href={item.href}
-                              className={classNames(
-                                item.current
-                                  ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
-                                  : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
-                                'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
-                              )}
-                            >
-                              <item.icon
-                                aria-hidden="true"
+                        {navigation.map((item) => {
+                          const isCurrent = currentView === item.id;
+                          return (
+                            <li key={item.name}>
+                              <a
+                                href={item.href}
+                                onClick={(e) => handleNavigationClick(e, item)}
                                 className={classNames(
-                                  item.current
-                                    ? 'text-indigo-600 dark:text-white'
-                                    : 'text-gray-400 group-hover:text-indigo-600 dark:text-gray-500 dark:group-hover:text-white',
-                                  'size-6 shrink-0',
-                                )}
-                              />
-                              {item.name}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                    <li>
-                      <div className="text-xs/6 font-semibold text-gray-400 dark:text-gray-500">Your teams</div>
-                      <ul role="list" className="-mx-2 mt-2 space-y-1">
-                        {teams.map((team) => (
-                          <li key={team.name}>
-                            <a
-                              href={team.href}
-                              className={classNames(
-                                team.current
-                                  ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
-                                  : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
-                                'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
-                              )}
-                            >
-                              <span
-                                className={classNames(
-                                  team.current
-                                    ? 'border-indigo-600 text-indigo-600 dark:border-white/20 dark:text-white'
-                                    : 'border-gray-200 text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600 dark:border-white/10 dark:group-hover:border-white/20 dark:group-hover:text-white',
-                                  'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium dark:bg-white/5',
-                                )}
-                              >
-                                {team.initial}
-                              </span>
-                              <span className="truncate">{team.name}</span>
-                            </a>
-                          </li>
-                        ))}
+                                  isCurrent
+                                    ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
+                                    : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+                                  'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold'
+                                )}>
+                                <item.icon
+                                  aria-hidden="true"
+                                  className={classNames(
+                                    isCurrent
+                                      ? 'text-indigo-600 dark:text-white'
+                                      : 'text-gray-400 group-hover:text-indigo-600 dark:text-gray-500 dark:group-hover:text-white',
+                                    'size-6 shrink-0'
+                                  )}
+                                />
+                                {item.name}
+                              </a>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </li>
                   </ul>
@@ -147,40 +152,47 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                 alt="Git Intelligence"
                 className="h-8 w-auto rounded-lg"
               />
-              <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">Git Intelligence</h1>
+              <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                Git Intelligence
+              </h1>
             </div>
             <nav className="relative flex flex-1 flex-col">
               <ul role="list" className="flex flex-1 flex-col gap-y-7">
                 <li>
                   <ul role="list" className="-mx-2 space-y-1">
-                    {navigation.map((item) => (
-                      <li key={item.name}>
-                        <a
-                          href={item.href}
-                          className={classNames(
-                            item.current
-                              ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
-                              : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
-                            'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
-                          )}
-                        >
-                          <item.icon
-                            aria-hidden="true"
+                    {navigation.map((item) => {
+                      const isCurrent = currentView === item.id;
+                      return (
+                        <li key={item.name}>
+                          <a
+                            href={item.href}
+                            onClick={(e) => handleNavigationClick(e, item)}
                             className={classNames(
-                              item.current
-                                ? 'text-indigo-600 dark:text-white'
-                                : 'text-gray-400 group-hover:text-indigo-600 dark:text-gray-500 dark:group-hover:text-white',
-                              'size-6 shrink-0',
-                            )}
-                          />
-                          {item.name}
-                        </a>
-                      </li>
-                    ))}
+                              isCurrent
+                                ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
+                                : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+                              'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold'
+                            )}>
+                            <item.icon
+                              aria-hidden="true"
+                              className={classNames(
+                                isCurrent
+                                  ? 'text-indigo-600 dark:text-white'
+                                  : 'text-gray-400 group-hover:text-indigo-600 dark:text-gray-500 dark:group-hover:text-white',
+                                'size-6 shrink-0'
+                              )}
+                            />
+                            {item.name}
+                          </a>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </li>
-                <li>
-                  <div className="text-xs/6 font-semibold text-gray-400 dark:text-gray-500">Your teams</div>
+                {/*<li>
+                  <div className="text-xs/6 font-semibold text-gray-400 dark:text-gray-500">
+                    Your teams
+                  </div>
                   <ul role="list" className="-mx-2 mt-2 space-y-1">
                     {teams.map((team) => (
                       <li key={team.name}>
@@ -190,17 +202,15 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                             team.current
                               ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
                               : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
-                            'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
-                          )}
-                        >
+                            'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold'
+                          )}>
                           <span
                             className={classNames(
                               team.current
                                 ? 'border-indigo-600 text-indigo-600 dark:border-white/20 dark:text-white'
                                 : 'border-gray-200 text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600 dark:border-white/10 dark:group-hover:border-white/20 dark:group-hover:text-white',
-                              'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium dark:bg-white/5',
-                            )}
-                          >
+                              'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium dark:bg-white/5'
+                            )}>
                             {team.initial}
                           </span>
                           <span className="truncate">{team.name}</span>
@@ -208,12 +218,11 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                       </li>
                     ))}
                   </ul>
-                </li>
+                </li>*/}
                 <li className="-mx-6 mt-auto">
                   <a
                     href="#"
-                    className="flex items-center gap-x-4 px-6 py-3 text-sm/6 font-semibold text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-white/5"
-                  >
+                    className="flex items-center gap-x-4 px-6 py-3 text-sm/6 font-semibold text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-white/5">
                     <img
                       alt=""
                       src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
@@ -232,19 +241,20 @@ export default function Layout({ children, sidebar }: LayoutProps) {
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="relative -m-2.5 p-2.5 text-gray-700 lg:hidden dark:text-gray-400"
-          >
+            className="relative -m-2.5 p-2.5 text-gray-700 lg:hidden dark:text-gray-400">
             <span className="sr-only">Open sidebar</span>
             <Bars3Icon aria-hidden="true" className="size-6" />
           </button>
-          <div className="relative flex-1 text-sm/6 font-semibold text-gray-900 dark:text-white">Dashboard</div>
+          <div className="relative flex-1 text-sm/6 font-semibold text-gray-900 dark:text-white">
+            {navigation.find((item) => item.id === currentView)?.name ||
+              'Dashboard'}
+          </div>
           {sidebar && (
             <button
               type="button"
               onClick={() => setProjectsSidebarOpen(true)}
               className="relative -m-2.5 p-2.5 text-gray-700 dark:text-gray-400"
-              title="Open projects"
-            >
+              title="Open projects">
               <span className="sr-only">Open projects</span>
               <FolderIcon aria-hidden="true" className="size-6" />
             </button>
@@ -261,7 +271,10 @@ export default function Layout({ children, sidebar }: LayoutProps) {
 
         {/* Projects sidebar mobile dialog */}
         {sidebar && (
-          <Dialog open={projectsSidebarOpen} onClose={setProjectsSidebarOpen} className="relative z-50 xl:hidden">
+          <Dialog
+            open={projectsSidebarOpen}
+            onClose={setProjectsSidebarOpen}
+            className="relative z-50 xl:hidden">
             <DialogBackdrop
               transition
               className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear data-closed:opacity-0"
@@ -270,13 +283,18 @@ export default function Layout({ children, sidebar }: LayoutProps) {
             <div className="fixed inset-0 flex">
               <DialogPanel
                 transition
-                className="relative ml-auto flex w-full max-w-sm flex-1 transform transition duration-300 ease-in-out data-closed:translate-x-full"
-              >
+                className="relative ml-auto flex w-full max-w-sm flex-1 transform transition duration-300 ease-in-out data-closed:translate-x-full">
                 <TransitionChild>
                   <div className="absolute top-0 right-full flex w-16 justify-center pt-5 duration-300 ease-in-out data-closed:opacity-0">
-                    <button type="button" onClick={() => setProjectsSidebarOpen(false)} className="-m-2.5 p-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setProjectsSidebarOpen(false)}
+                      className="-m-2.5 p-2.5">
                       <span className="sr-only">Close projects</span>
-                      <XMarkIcon aria-hidden="true" className="size-6 text-white" />
+                      <XMarkIcon
+                        aria-hidden="true"
+                        className="size-6 text-white"
+                      />
                     </button>
                   </div>
                 </TransitionChild>
@@ -300,8 +318,7 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                     type="button"
                     onClick={() => setProjectsSidebarOpen(true)}
                     className="flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-indigo-500 dark:hover:bg-indigo-600"
-                    title="Open projects"
-                  >
+                    title="Open projects">
                     <FolderIcon aria-hidden="true" className="size-5" />
                     <span>Projects</span>
                   </button>
@@ -320,5 +337,5 @@ export default function Layout({ children, sidebar }: LayoutProps) {
         )}
       </div>
     </>
-  )
+  );
 }

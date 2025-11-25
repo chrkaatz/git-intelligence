@@ -9,6 +9,28 @@ export interface AuthorStats {
   percentage: string;
 }
 
+export interface DeveloperAuthorStats {
+  name: string;
+  email: string;
+  commits: number;
+  linesAdded: number;
+  linesRemoved: number;
+  netLines: number;
+  firstCommit: string;
+  lastCommit: string;
+  percentage: string;
+  activeTimeWindows: {
+    hourOfDay: Record<number, number>;
+    dayOfWeek: Record<number, number>;
+  };
+  signedCommits: number;
+  signedCommitsPercentage: string;
+}
+
+export interface DeveloperAnalytics {
+  authors: DeveloperAuthorStats[];
+}
+
 export interface ActivityStats {
   hourOfDay: Record<number, number>;
   dayOfWeek: Record<number, number>;
@@ -32,6 +54,8 @@ export interface Project {
   id: string;
   path: string;
   name: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const api = axios.create({
@@ -71,5 +95,10 @@ export const removeProject = async (id: string): Promise<void> => {
 
 export const getStats = async (path: string): Promise<GitStats> => {
   const response = await api.get('/stats', { params: { path } });
+  return response.data;
+};
+
+export const getDeveloperAnalytics = async (path: string): Promise<DeveloperAnalytics> => {
+  const response = await api.get('/developer-analytics', { params: { path } });
   return response.data;
 };

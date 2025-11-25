@@ -5,8 +5,8 @@ import AdmZip from 'adm-zip';
 import path from 'path';
 import fs from 'fs';
 import simpleGit from 'simple-git';
-import { getStats } from './git';
-import { getProjects, addProject, removeProject } from './db';
+import { getStats, getDeveloperAnalytics } from './git';
+import { getProjects, addProject, removeProject, clearCache } from './db';
 
 const app = express();
 const port = 3001;
@@ -166,17 +166,47 @@ app.delete('/projects/:id', async (req, res) => {
   }
 });
 
+app.post('/cache/clear', async (req, res) => {
+  const { path } = req.body;
+  try {
+    await clearCache(path);
+    res.json({
+      message: path ? 'Cache cleared for project' : 'All cache cleared',
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to clear cache' });
+  }
+});
+
 app.get('/stats', async (req, res) => {
-  const { path } = req.query;
+  const { path, refresh } = req.query;
   if (!path || typeof path !== 'string') {
     return res.status(400).json({ error: 'Path is required' });
   }
   try {
-    const stats = await getStats(path);
+    // Use cache by default, unless refresh=true
+    const useCache = refresh !== 'true';
+    const stats = await getStats(path, useCache);
     res.json(stats);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to analyze project' });
+  }
+});
+
+app.get('/developer-analytics', async (req, res) => {
+  const { path, refresh } = req.query;
+  if (!path || typeof path !== 'string') {
+    return res.status(400).json({ error: 'Path is required' });
+  }
+  try {
+    // Use cache by default, unless refresh=true
+    const useCache = refresh !== 'true';
+    const analytics = await getDeveloperAnalytics(path, useCache);
+    res.json(analytics);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get developer analytics' });
   }
 });
 
