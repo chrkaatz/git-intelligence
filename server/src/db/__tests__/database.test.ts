@@ -15,10 +15,16 @@ vi.mock('fs', () => ({
   },
 }));
 
-// Mock lowdb JSONFile adapter
-vi.mock('lowdb/node', () => ({
-  JSONFile: vi.fn(),
-}));
+// Mock lowdb JSONFile adapter - return Memory adapter when instantiated
+vi.mock('lowdb/node', async () => {
+  const { Memory } = await import('lowdb');
+  function JSONFile() {
+    return new Memory();
+  }
+  return {
+    JSONFile,
+  };
+});
 
 const mockFs = vi.mocked(fs);
 
@@ -36,10 +42,6 @@ describe('database', () => {
     it('should return same instance on subsequent calls', async () => {
       mockFs.existsSync.mockReturnValue(true);
 
-      const MemoryAdapter = Memory;
-      const { JSONFile } = await import('lowdb/node');
-      vi.mocked(JSONFile).mockImplementation(() => new MemoryAdapter() as any);
-
       const db1 = await getDb();
       const db2 = await getDb();
 
@@ -48,10 +50,6 @@ describe('database', () => {
 
     it('should create default database file if it does not exist', async () => {
       mockFs.existsSync.mockReturnValue(false);
-
-      const MemoryAdapter = Memory;
-      const { JSONFile } = await import('lowdb/node');
-      vi.mocked(JSONFile).mockImplementation(() => new MemoryAdapter() as any);
 
       await getDb();
 
@@ -84,10 +82,6 @@ describe('database', () => {
 
       mockFs.readFileSync.mockReturnValue(JSON.stringify(oldProjects));
 
-      const MemoryAdapter = Memory;
-      const { JSONFile } = await import('lowdb/node');
-      vi.mocked(JSONFile).mockImplementation(() => new MemoryAdapter() as any);
-
       await getDb();
 
       expect(mockFs.readFileSync).toHaveBeenCalledWith(
@@ -112,10 +106,6 @@ describe('database', () => {
         throw new Error('Read error');
       });
 
-      const MemoryAdapter = Memory;
-      const { JSONFile } = await import('lowdb/node');
-      vi.mocked(JSONFile).mockImplementation(() => new MemoryAdapter() as any);
-
       await expect(getDb()).resolves.toBeDefined();
 
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
@@ -126,10 +116,6 @@ describe('database', () => {
 
     it('should ensure all required data structures exist', async () => {
       mockFs.existsSync.mockReturnValue(true);
-
-      const MemoryAdapter = Memory;
-      const { JSONFile } = await import('lowdb/node');
-      vi.mocked(JSONFile).mockImplementation(() => new MemoryAdapter() as any);
 
       const db = await getDb();
 
@@ -228,10 +214,6 @@ describe('database', () => {
   describe('resetDb', () => {
     it('should reset database instance', async () => {
       mockFs.existsSync.mockReturnValue(true);
-
-      const MemoryAdapter = Memory;
-      const { JSONFile } = await import('lowdb/node');
-      vi.mocked(JSONFile).mockImplementation(() => new MemoryAdapter() as any);
 
       const db1 = await getDb();
       resetDb();
