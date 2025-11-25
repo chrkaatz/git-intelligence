@@ -275,3 +275,28 @@ export const getCodebaseHealth = async (path: string, refresh: boolean = false):
   const response = await api.get('/codebase-health', { params: { path, refresh: refresh ? 'true' : 'false' } });
   return response.data;
 };
+
+export interface CrossRepoHotspot {
+  repoName: string;
+  repoPath: string;
+  totalCommits: number;
+  totalFiles: number;
+  totalDirectories: number;
+  topFiles: FileHotspot[];
+  topDirectories: DirectoryHotspot[];
+}
+
+export interface CrossRepoCodebaseHealth {
+  hotspots: {
+    repositories: CrossRepoHotspot[];
+    aggregatedFiles: FileHotspot[];
+    aggregatedDirectories: DirectoryHotspot[];
+  };
+  totalRepos: number;
+  repoNames: string[];
+}
+
+export const getCrossRepoCodebaseHealth = async (projectId: string, refresh: boolean = false): Promise<CrossRepoCodebaseHealth> => {
+  const response = await api.get('/cross-repo-codebase-health', { params: { projectId, refresh: refresh ? 'true' : 'false' } });
+  return response.data;
+};

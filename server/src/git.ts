@@ -1407,3 +1407,111 @@ export async function getCodebaseHealth(repoPath: string, useCache: boolean = tr
     throw error;
   }
 }
+
+export interface CrossRepoHotspot {
+  repoName: string;
+  repoPath: string;
+  totalCommits: number;
+  totalFiles: number;
+  totalDirectories: number;
+  topFiles: FileHotspot[];
+  topDirectories: DirectoryHotspot[];
+}
+
+export interface CrossRepoCodebaseHealth {
+  hotspots: {
+    repositories: CrossRepoHotspot[];
+    aggregatedFiles: FileHotspot[];
+    aggregatedDirectories: DirectoryHotspot[];
+  };
+  totalRepos: number;
+  repoNames: string[];
+}
+
+export async function getCrossRepoCodebaseHealth(
+  projectId: string,
+  useCache: boolean = true
+): Promise<CrossRepoCodebaseHealth> {
+  console.log(`Calculating cross-repo codebase health for project ${projectId}`);
+
+  // Get all repositories for this project
+  const repositories = await getRepositories(projectId);
+
+  if (repositories.length === 0) {
+    return {
+      hotspots: {
+        repositories: [],
+        aggregatedFiles: [],
+        aggregatedDirectories: [],
+      },
+      totalRepos: 0,
+      repoNames: [],
+    };
+  }
+
+  // Aggregate hotspots across all repositories
+  const repoHotspots: CrossRepoHotspot[] = [];
+  const aggregatedFileCommits = new Map<string, number>(); // file path -> total commits across all repos
+  const aggregatedDirectoryCommits = new Map<string, number>(); // directory path -> total commits across all repos
+
+  // Process each repository
+  for (const repo of repositories) {
+    try {
+      const health = await getCodebaseHealth(repo.path, useCache);
+
+      // Aggregate file commits (prefix with repo name to avoid collisions)
+      health.hotspots.files.forEach(file => {
+        const key = `${repo.name}:${file.file}`;
+        aggregatedFileCommits.set(key, (aggregatedFileCommits.get(key) || 0) + file.commits);
+      });
+
+      // Aggregate directory commits
+      health.hotspots.directories.forEach(dir => {
+        const key = `${repo.name}:${dir.directory}`;
+        aggregatedDirectoryCommits.set(key, (aggregatedDirectoryCommits.get(key) || 0) + dir.commits);
+      });
+
+      // Calculate totals for this repo
+      const totalCommits = health.hotspots.files.reduce((sum, f) => sum + f.commits, 0);
+      const totalFiles = health.hotspots.files.length;
+      const totalDirectories = health.hotspots.directories.length;
+
+      repoHotspots.push({
+        repoName: repo.name,
+        repoPath: repo.path,
+        totalCommits,
+        totalFiles,
+        totalDirectories,
+        topFiles: health.hotspots.files.slice(0, 10), // Top 10 files per repo
+        topDirectories: health.hotspots.directories.slice(0, 10), // Top 10 directories per repo
+      });
+    } catch (error) {
+      console.error(`Failed to analyze repository ${repo.path}:`, error);
+      // Continue with other repositories
+    }
+  }
+
+  // Sort repositories by total commits (most churn first)
+  repoHotspots.sort((a, b) => b.totalCommits - a.totalCommits);
+
+  // Create aggregated file and directory lists
+  const aggregatedFiles: FileHotspot[] = Array.from(aggregatedFileCommits.entries())
+    .map(([file, commits]) => ({ file, commits }))
+    .sort((a, b) => b.commits - a.commits)
+    .slice(0, 50); // Top 50 files across all repos
+
+  const aggregatedDirectories: DirectoryHotspot[] = Array.from(aggregatedDirectoryCommits.entries())
+    .map(([directory, commits]) => ({ directory, commits }))
+    .sort((a, b) => b.commits - a.commits)
+    .slice(0, 30); // Top 30 directories across all repos
+
+  return {
+    hotspots: {
+      repositories: repoHotspots,
+      aggregatedFiles,
+      aggregatedDirectories,
+    },
+    totalRepos: repositories.length,
+    repoNames: repositories.map(r => r.name),
+  };
+}

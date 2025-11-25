@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
-import { Plus, Trash2, FolderGit2, FolderOpen, ChevronDown, ChevronRight, BarChart3 } from 'lucide-react';
+import { Plus, Trash2, FolderGit2, FolderOpen, ChevronDown, ChevronRight, BarChart3, Heart } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export function ProjectsSidebar() {
@@ -106,15 +106,26 @@ export function ProjectsSidebar() {
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {projectRepos.length > 1 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate({ to: '/cross-repo-analytics/$projectId', params: { projectId: project.id } });
-                      }}
-                      className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 rounded transition-all"
-                      title="View Cross-Repo Analytics">
-                      <BarChart3 className="w-3 h-3" />
-                    </button>
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate({ to: '/cross-repo-analytics/$projectId', params: { projectId: project.id } });
+                        }}
+                        className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 rounded transition-all"
+                        title="View Cross-Repo Developer Analytics">
+                        <BarChart3 className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate({ to: '/cross-repo-codebase-health/$projectId', params: { projectId: project.id } });
+                        }}
+                        className="p-1 hover:bg-orange-50 dark:hover:bg-orange-900/20 text-gray-400 hover:text-orange-500 rounded transition-all"
+                        title="View Cross-Repo Codebase Health">
+                        <Heart className="w-3 h-3" />
+                      </button>
+                    </>
                   )}
                   <button
                     onClick={(e) => {

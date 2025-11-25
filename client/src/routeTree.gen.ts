@@ -16,6 +16,7 @@ import { Route as CodebaseHealthRouteImport } from './routes/codebase-health'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DeveloperAnalyticsRepoPathRouteImport } from './routes/developer-analytics.$repoPath'
 import { Route as DashboardRepoPathRouteImport } from './routes/dashboard.$repoPath'
+import { Route as CrossRepoCodebaseHealthProjectIdRouteImport } from './routes/cross-repo-codebase-health.$projectId'
 import { Route as CrossRepoAnalyticsProjectIdRouteImport } from './routes/cross-repo-analytics.$projectId'
 import { Route as CodebaseHealthRepoPathRouteImport } from './routes/codebase-health.$repoPath'
 
@@ -55,6 +56,12 @@ const DashboardRepoPathRoute = DashboardRepoPathRouteImport.update({
   path: '/$repoPath',
   getParentRoute: () => DashboardRoute,
 } as any)
+const CrossRepoCodebaseHealthProjectIdRoute =
+  CrossRepoCodebaseHealthProjectIdRouteImport.update({
+    id: '/cross-repo-codebase-health/$projectId',
+    path: '/cross-repo-codebase-health/$projectId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CrossRepoAnalyticsProjectIdRoute =
   CrossRepoAnalyticsProjectIdRouteImport.update({
     id: '/cross-repo-analytics/$projectId',
@@ -75,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/projects': typeof ProjectsRoute
   '/codebase-health/$repoPath': typeof CodebaseHealthRepoPathRoute
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
+  '/cross-repo-codebase-health/$projectId': typeof CrossRepoCodebaseHealthProjectIdRoute
   '/dashboard/$repoPath': typeof DashboardRepoPathRoute
   '/developer-analytics/$repoPath': typeof DeveloperAnalyticsRepoPathRoute
 }
@@ -86,6 +94,7 @@ export interface FileRoutesByTo {
   '/projects': typeof ProjectsRoute
   '/codebase-health/$repoPath': typeof CodebaseHealthRepoPathRoute
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
+  '/cross-repo-codebase-health/$projectId': typeof CrossRepoCodebaseHealthProjectIdRoute
   '/dashboard/$repoPath': typeof DashboardRepoPathRoute
   '/developer-analytics/$repoPath': typeof DeveloperAnalyticsRepoPathRoute
 }
@@ -98,6 +107,7 @@ export interface FileRoutesById {
   '/projects': typeof ProjectsRoute
   '/codebase-health/$repoPath': typeof CodebaseHealthRepoPathRoute
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
+  '/cross-repo-codebase-health/$projectId': typeof CrossRepoCodebaseHealthProjectIdRoute
   '/dashboard/$repoPath': typeof DashboardRepoPathRoute
   '/developer-analytics/$repoPath': typeof DeveloperAnalyticsRepoPathRoute
 }
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/codebase-health/$repoPath'
     | '/cross-repo-analytics/$projectId'
+    | '/cross-repo-codebase-health/$projectId'
     | '/dashboard/$repoPath'
     | '/developer-analytics/$repoPath'
   fileRoutesByTo: FileRoutesByTo
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/codebase-health/$repoPath'
     | '/cross-repo-analytics/$projectId'
+    | '/cross-repo-codebase-health/$projectId'
     | '/dashboard/$repoPath'
     | '/developer-analytics/$repoPath'
   id:
@@ -133,6 +145,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/codebase-health/$repoPath'
     | '/cross-repo-analytics/$projectId'
+    | '/cross-repo-codebase-health/$projectId'
     | '/dashboard/$repoPath'
     | '/developer-analytics/$repoPath'
   fileRoutesById: FileRoutesById
@@ -144,6 +157,7 @@ export interface RootRouteChildren {
   DeveloperAnalyticsRoute: typeof DeveloperAnalyticsRouteWithChildren
   ProjectsRoute: typeof ProjectsRoute
   CrossRepoAnalyticsProjectIdRoute: typeof CrossRepoAnalyticsProjectIdRoute
+  CrossRepoCodebaseHealthProjectIdRoute: typeof CrossRepoCodebaseHealthProjectIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -196,6 +210,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/$repoPath'
       preLoaderRoute: typeof DashboardRepoPathRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/cross-repo-codebase-health/$projectId': {
+      id: '/cross-repo-codebase-health/$projectId'
+      path: '/cross-repo-codebase-health/$projectId'
+      fullPath: '/cross-repo-codebase-health/$projectId'
+      preLoaderRoute: typeof CrossRepoCodebaseHealthProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/cross-repo-analytics/$projectId': {
       id: '/cross-repo-analytics/$projectId'
@@ -256,6 +277,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeveloperAnalyticsRoute: DeveloperAnalyticsRouteWithChildren,
   ProjectsRoute: ProjectsRoute,
   CrossRepoAnalyticsProjectIdRoute: CrossRepoAnalyticsProjectIdRoute,
+  CrossRepoCodebaseHealthProjectIdRoute: CrossRepoCodebaseHealthProjectIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
