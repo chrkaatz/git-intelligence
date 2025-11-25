@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { Link, useRouterState } from '@tanstack/react-router';
 import {
   Dialog,
   DialogBackdrop,
@@ -15,16 +16,16 @@ import {
 } from '@heroicons/react/24/outline';
 
 const navigation = [
-  { name: 'Dashboard', href: '#', icon: HomeIcon, id: 'dashboard' },
+  { name: 'Dashboard', to: '/dashboard', icon: HomeIcon, id: 'dashboard' },
   {
     name: 'Developer Analytics',
-    href: '#',
+    to: '/developer-analytics',
     icon: CodeBracketIcon,
     id: 'developer-analytics',
   },
   {
     name: 'Projects',
-    href: '#',
+    to: '/projects',
     icon: FolderOpenIcon,
     id: 'projects',
   },
@@ -37,28 +38,17 @@ function classNames(...classes: (string | boolean | undefined | null)[]) {
 interface LayoutProps {
   children: ReactNode;
   sidebar?: ReactNode;
-  currentView?: string;
-  onViewChange?: (view: string) => void;
 }
 
-export default function Layout({
-  children,
-  sidebar,
-  currentView = 'dashboard',
-  onViewChange,
-}: LayoutProps) {
+export default function Layout({ children, sidebar }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [projectsSidebarOpen, setProjectsSidebarOpen] = useState(false);
+  const router = useRouterState();
 
-  const handleNavigationClick = (
-    e: React.MouseEvent<HTMLAnchorElement>,
-    item: (typeof navigation)[0]
-  ) => {
-    e.preventDefault();
-    if (onViewChange) {
-      onViewChange(item.id);
-    }
-  };
+  const currentPath = router.location.pathname;
+  const currentView =
+    navigation.find((item) => currentPath.startsWith(item.to))?.id ||
+    'dashboard';
 
   return (
     <>
@@ -111,9 +101,8 @@ export default function Layout({
                           const isCurrent = currentView === item.id;
                           return (
                             <li key={item.name}>
-                              <a
-                                href={item.href}
-                                onClick={(e) => handleNavigationClick(e, item)}
+                              <Link
+                                to={item.to}
                                 className={classNames(
                                   isCurrent
                                     ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
@@ -130,7 +119,7 @@ export default function Layout({
                                   )}
                                 />
                                 {item.name}
-                              </a>
+                              </Link>
                             </li>
                           );
                         })}
@@ -164,9 +153,8 @@ export default function Layout({
                       const isCurrent = currentView === item.id;
                       return (
                         <li key={item.name}>
-                          <a
-                            href={item.href}
-                            onClick={(e) => handleNavigationClick(e, item)}
+                          <Link
+                            to={item.to}
                             className={classNames(
                               isCurrent
                                 ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
@@ -183,7 +171,7 @@ export default function Layout({
                               )}
                             />
                             {item.name}
-                          </a>
+                          </Link>
                         </li>
                       );
                     })}

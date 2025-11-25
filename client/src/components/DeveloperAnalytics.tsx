@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { DeveloperAuthorStats, LongitudinalPatterns } from '../api';
-import { Calendar, Clock, Code, GitCommit, TrendingUp, TrendingDown, Shield, Mail } from 'lucide-react';
+import { Code, GitCommit, TrendingUp, Shield, Mail } from 'lucide-react';
 import { LongitudinalPatterns as LongitudinalPatternsComponent } from './LongitudinalPatterns';
 
 interface DeveloperAnalyticsProps {

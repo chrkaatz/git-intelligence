@@ -1,5 +1,5 @@
 import type { Project, Repository } from '../api';
-import { FolderGit2, Trash2, ExternalLink, Calendar, MapPin, Plus, ChevronDown, ChevronRight, FolderOpen } from 'lucide-react';
+import { FolderGit2, Trash2, ExternalLink, MapPin, Plus, ChevronDown, ChevronRight, FolderOpen } from 'lucide-react';
 import { useState } from 'react';
 
 interface ProjectsListProps {

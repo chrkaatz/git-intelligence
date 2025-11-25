@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Area, AreaChart } from 'recharts';
+import { LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Area } from 'recharts';
 import type { LongitudinalPatterns } from '../api';
 import { TrendingUp, Users, Clock, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 
