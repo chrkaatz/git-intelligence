@@ -5,7 +5,17 @@ import AdmZip from 'adm-zip';
 import path from 'path';
 import fs from 'fs';
 import simpleGit from 'simple-git';
-import { getStats, getDeveloperAnalytics, getCrossRepoDeveloperAnalytics, getCodebaseHealth, getCrossRepoCodebaseHealth, getRepositoryEvolution, getCrossRepoRepositoryEvolution } from './git';
+import {
+  getStats,
+  getDeveloperAnalytics,
+  getCrossRepoDeveloperAnalytics,
+  getCodebaseHealth,
+  getCrossRepoCodebaseHealth,
+  getRepositoryEvolution,
+  getCrossRepoRepositoryEvolution,
+  getBusFactorAndOwnership,
+  getCrossRepoBusFactorAndOwnership,
+} from './git';
 import {
   getProjects,
   getProject,
@@ -158,7 +168,14 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     return res.status(400).json({ error: 'Project ID is required' });
   }
 
-  console.log('Project ID:', projectId, 'Repository name:', repoName, 'Replace:', replace);
+  console.log(
+    'Project ID:',
+    projectId,
+    'Repository name:',
+    repoName,
+    'Replace:',
+    replace
+  );
 
   let extractPath: string | null = null;
 
@@ -211,7 +228,12 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     }
 
     console.log('Adding repository to database...');
-    const repository = await addRepository(projectId, repoPath, repoName, replace);
+    const repository = await addRepository(
+      projectId,
+      repoPath,
+      repoName,
+      replace
+    );
     console.log('Repository added successfully:', repository.id);
 
     res.json(repository);
@@ -249,7 +271,6 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     }
   }
 });
-
 
 app.post('/cache/clear', async (req, res) => {
   const { path } = req.body;
@@ -307,7 +328,9 @@ app.get('/cross-repo-developer-analytics', async (req, res) => {
     res.json(analytics);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to get cross-repo developer analytics' });
+    res
+      .status(500)
+      .json({ error: 'Failed to get cross-repo developer analytics' });
   }
 });
 
@@ -339,7 +362,9 @@ app.get('/cross-repo-codebase-health', async (req, res) => {
     res.json(health);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to get cross-repo codebase health metrics' });
+    res
+      .status(500)
+      .json({ error: 'Failed to get cross-repo codebase health metrics' });
   }
 });
 
@@ -355,7 +380,9 @@ app.get('/repository-evolution', async (req, res) => {
     res.json(evolution);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to get repository evolution metrics' });
+    res
+      .status(500)
+      .json({ error: 'Failed to get repository evolution metrics' });
   }
 });
 
@@ -367,11 +394,55 @@ app.get('/cross-repo-repository-evolution', async (req, res) => {
   try {
     // Use cache by default, unless refresh=true
     const useCache = refresh !== 'true';
-    const evolution = await getCrossRepoRepositoryEvolution(projectId, useCache);
+    const evolution = await getCrossRepoRepositoryEvolution(
+      projectId,
+      useCache
+    );
     res.json(evolution);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to get cross-repo repository evolution metrics' });
+    res
+      .status(500)
+      .json({ error: 'Failed to get cross-repo repository evolution metrics' });
+  }
+});
+
+app.get('/bus-factor-and-ownership', async (req, res) => {
+  const { path, refresh } = req.query;
+  if (!path || typeof path !== 'string') {
+    return res.status(400).json({ error: 'Path is required' });
+  }
+  try {
+    // Use cache by default, unless refresh=true
+    const useCache = refresh !== 'true';
+    const analytics = await getBusFactorAndOwnership(path, useCache);
+    res.json(analytics);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: 'Failed to get bus factor and ownership metrics' });
+  }
+});
+
+app.get('/cross-repo-bus-factor-and-ownership', async (req, res) => {
+  const { projectId, refresh } = req.query;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+  try {
+    // Use cache by default, unless refresh=true
+    const useCache = refresh !== 'true';
+    const analytics = await getCrossRepoBusFactorAndOwnership(
+      projectId,
+      useCache
+    );
+    res.json(analytics);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: 'Failed to get cross-repo bus factor and ownership metrics',
+    });
   }
 });
 

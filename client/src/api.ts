@@ -374,3 +374,100 @@ export const getCrossRepoRepositoryEvolution = async (projectId: string, refresh
   const response = await api.get('/cross-repo-repository-evolution', { params: { projectId, refresh: refresh ? 'true' : undefined } });
   return response.data;
 };
+
+// Bus Factor & Ownership Analytics Types
+export interface SingleMaintainerFile {
+  file: string;
+  primaryAuthor: string;
+  primaryAuthorEmail: string;
+  primaryAuthorCommits: number;
+  totalCommits: number;
+  ownershipPercentage: number;
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface SingleMaintainerRepo {
+  repoName: string;
+  repoPath: string;
+  primaryAuthor: string;
+  primaryAuthorEmail: string;
+  primaryAuthorCommits: number;
+  totalCommits: number;
+  ownershipPercentage: number;
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface FragmentedFile {
+  file: string;
+  authorCount: number;
+  totalCommits: number;
+  averageCommitsPerAuthor: number;
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface OwnerChurn {
+  file: string;
+  previousOwner: string;
+  previousOwnerEmail: string;
+  previousOwnerLastCommit: string;
+  currentOwner: string;
+  currentOwnerEmail: string;
+  currentOwnerFirstCommit: string;
+  daysSinceTransition: number;
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface BusFactorAndOwnership {
+  singleMaintainerRisk: {
+    files: SingleMaintainerFile[];
+    repoRisk?: {
+      primaryAuthor: string;
+      primaryAuthorEmail: string;
+      primaryAuthorCommits: number;
+      totalCommits: number;
+      ownershipPercentage: number;
+      riskLevel: 'low' | 'medium' | 'high';
+    };
+  };
+  fragmentation: {
+    files: FragmentedFile[];
+  };
+  ownerChurn: {
+    files: OwnerChurn[];
+  };
+}
+
+export interface CrossRepoBusFactorAndOwnership {
+  singleMaintainerRisk: {
+    repositories: SingleMaintainerRepo[];
+    aggregatedFiles: SingleMaintainerFile[];
+  };
+  fragmentation: {
+    repositories: {
+      repoName: string;
+      repoPath: string;
+      fragmentedFiles: FragmentedFile[];
+    }[];
+    aggregatedFiles: FragmentedFile[];
+  };
+  ownerChurn: {
+    repositories: {
+      repoName: string;
+      repoPath: string;
+      churnFiles: OwnerChurn[];
+    }[];
+    aggregatedFiles: OwnerChurn[];
+  };
+  totalRepos: number;
+  repoNames: string[];
+}
+
+export const getBusFactorAndOwnership = async (path: string, refresh?: boolean): Promise<BusFactorAndOwnership> => {
+  const response = await api.get('/bus-factor-and-ownership', { params: { path, refresh: refresh ? 'true' : undefined } });
+  return response.data;
+};
+
+export const getCrossRepoBusFactorAndOwnership = async (projectId: string, refresh?: boolean): Promise<CrossRepoBusFactorAndOwnership> => {
+  const response = await api.get('/cross-repo-bus-factor-and-ownership', { params: { projectId, refresh: refresh ? 'true' : undefined } });
+  return response.data;
+};

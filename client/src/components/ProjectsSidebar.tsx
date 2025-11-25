@@ -54,7 +54,7 @@ export function ProjectsSidebar({
       }
       // Fallback: try to extract from pathname
       const pathMatch = location.pathname.match(
-        /\/(dashboard|developer-analytics|codebase-health|repository-evolution)\/(.+)$/
+        /\/(dashboard|developer-analytics|codebase-health|repository-evolution|bus-factor-and-ownership)\/(.+)$/
       );
       if (pathMatch && pathMatch[2]) {
         return decodeURIComponent(pathMatch[2]);
@@ -98,6 +98,11 @@ export function ProjectsSidebar({
     } else if (currentPath.startsWith('/repository-evolution')) {
       navigate({
         to: '/repository-evolution/$repoPath',
+        params: { repoPath: encodedPath },
+      });
+    } else if (currentPath.startsWith('/bus-factor-and-ownership')) {
+      navigate({
+        to: '/bus-factor-and-ownership/$repoPath',
         params: { repoPath: encodedPath },
       });
     } else {

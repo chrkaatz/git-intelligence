@@ -19,6 +19,7 @@ import {
   ChartBarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
@@ -40,6 +41,12 @@ const navigation = [
     to: '/repository-evolution',
     icon: ChartBarIcon,
     id: 'repository-evolution',
+  },
+  {
+    name: 'Bus Factor & Ownership',
+    to: '/bus-factor-and-ownership',
+    icon: ExclamationTriangleIcon,
+    id: 'bus-factor-and-ownership',
   },
   {
     name: 'Projects',
@@ -98,7 +105,9 @@ export default function Layout({ children, sidebar }: LayoutProps) {
       ? '/developer-analytics'
       : currentPath.startsWith('/cross-repo-codebase-health')
         ? '/codebase-health'
-        : currentPath;
+        : currentPath.startsWith('/cross-repo-bus-factor-and-ownership')
+          ? '/bus-factor-and-ownership'
+          : currentPath;
   const currentView =
     navigation.find((item) => normalizedPath.startsWith(item.to))?.id ||
     'dashboard';
@@ -398,13 +407,7 @@ export default function Layout({ children, sidebar }: LayoutProps) {
           <div
             className={classNames(
               'transition-all duration-300',
-              !sidebar || projectsSidebarCollapsed
-                ? navSidebarCollapsed
-                  ? 'xl:pl-32'
-                  : 'xl:pl-[22rem]'
-                : navSidebarCollapsed
-                  ? 'xl:pl-[28rem]'
-                  : 'xl:pl-[42rem]'
+              !sidebar || projectsSidebarCollapsed ? '' : 'xl:pl-96'
             )}>
             <div className="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
               {/* Floating button for projects sidebar on lg screens (not xl) */}
