@@ -344,7 +344,10 @@ function App() {
               {error}
             </div>
           ) : developerAnalytics ? (
-            <DeveloperAnalytics authors={developerAnalytics.authors} />
+            <DeveloperAnalytics
+              authors={developerAnalytics.authors}
+              longitudinalPatterns={developerAnalytics.longitudinalPatterns}
+            />
           ) : (
             <div className="text-center py-12 text-gray-500">
               No repository selected. Select a repository from the list to view

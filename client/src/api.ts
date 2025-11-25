@@ -27,8 +27,38 @@ export interface DeveloperAuthorStats {
   signedCommitsPercentage: string;
 }
 
+export interface AuthorActivityOverTime {
+  authorName: string;
+  authorEmail: string;
+  weeklyActivity: { week: string; commits: number }[];
+  monthlyActivity: { month: string; commits: number }[];
+}
+
+export interface OnboardingData {
+  date: string;
+  newAuthors: number;
+  authorNames: string[];
+}
+
+export interface DormancyData {
+  authorName: string;
+  authorEmail: string;
+  firstCommit: string;
+  lastCommit: string;
+  daysSinceLastCommit: number;
+  totalCommits: number;
+  status: 'active' | 'dormant' | 'inactive';
+}
+
+export interface LongitudinalPatterns {
+  authorActivityOverTime: AuthorActivityOverTime[];
+  onboardingCurve: OnboardingData[];
+  dormancyDetection: DormancyData[];
+}
+
 export interface DeveloperAnalytics {
   authors: DeveloperAuthorStats[];
+  longitudinalPatterns?: LongitudinalPatterns;
 }
 
 export interface ActivityStats {

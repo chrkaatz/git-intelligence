@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import type { DeveloperAuthorStats } from '../api';
+import type { DeveloperAuthorStats, LongitudinalPatterns } from '../api';
 import { Calendar, Clock, Code, GitCommit, TrendingUp, TrendingDown, Shield, Mail } from 'lucide-react';
+import { LongitudinalPatterns as LongitudinalPatternsComponent } from './LongitudinalPatterns';
 
 interface DeveloperAnalyticsProps {
   authors: DeveloperAuthorStats[];
+  longitudinalPatterns?: LongitudinalPatterns;
   loading?: boolean;
 }
 
-export function DeveloperAnalytics({ authors, loading }: DeveloperAnalyticsProps) {
+export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: DeveloperAnalyticsProps) {
   const [selectedAuthor, setSelectedAuthor] = useState<DeveloperAuthorStats | null>(null);
+  const [selectedAuthorForLongitudinal, setSelectedAuthorForLongitudinal] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -229,9 +232,18 @@ export function DeveloperAnalytics({ authors, loading }: DeveloperAnalyticsProps
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        <button
+                          onClick={() => {
+                            setSelectedAuthorForLongitudinal(author.name);
+                            // Scroll to longitudinal patterns section
+                            setTimeout(() => {
+                              const element = document.getElementById('longitudinal-patterns');
+                              element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 100);
+                          }}
+                          className="text-sm font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left">
                           {author.name}
-                        </div>
+                        </button>
                         <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                           <Mail className="w-3 h-3" />
                           {author.email}
@@ -294,6 +306,17 @@ export function DeveloperAnalytics({ authors, loading }: DeveloperAnalyticsProps
           </table>
         </div>
       </div>
+
+      {/* Longitudinal Patterns */}
+      {longitudinalPatterns && (
+        <div id="longitudinal-patterns" className="mt-8">
+          <LongitudinalPatternsComponent
+            patterns={longitudinalPatterns}
+            selectedAuthorName={selectedAuthorForLongitudinal}
+            onAuthorSelect={setSelectedAuthorForLongitudinal}
+          />
+        </div>
+      )}
     </div>
   );
 }
