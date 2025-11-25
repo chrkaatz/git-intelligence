@@ -7,17 +7,25 @@ This document provides essential context and guidelines for AI assistants workin
 **Git Intelligence** is a full-stack web application that analyzes and visualizes Git repository statistics. It provides a comprehensive dashboard to track project activity, contributor performance, and codebase growth over time.
 
 ### Key Features
+
 - **Dashboard Overview**: Key metrics (commits, contributors, file counts)
 - **Activity Analysis**: Commit patterns by hour, day, month, and year
 - **Contributor Insights**: Top contributors with commit counts and percentages
 - **File Composition**: Language distribution via file extension charts
 - **Growth Tracking**: Lines of Code (LOC) history over time
-- **Multi-Project Support**: Manage and switch between multiple Git repositories
+- **Multi-Project Support**: Manage projects containing multiple Git repositories
 - **Repository Upload**: Upload ZIP archives of Git repositories for analysis
+- **Developer Analytics**: Detailed contributor metrics including activity patterns, churn, fix/revert ratios, and longitudinal patterns
+- **Codebase Health**: Hotspots, change coupling, stability, and complexity analysis
+- **Repository Evolution**: Commit frequency, releases, growth curves, change bursts, and churn metrics
+- **Bus Factor & Ownership**: Single maintainer risk, fragmentation, and owner churn analysis
+- **Social Network Analysis**: Collaboration graphs, knowledge silos, and orphaned code detection
+- **Cross-Repository Analytics**: Aggregated analysis across all repositories in a project
 
 ## Architecture
 
 ### Monorepo Structure
+
 The project is organized as a monorepo with three main directories:
 
 ```
@@ -30,6 +38,7 @@ git-intelligence/
 ### Technology Stack
 
 #### Frontend (`client/`)
+
 - **Framework**: React 19.2.0 with TypeScript
 - **Build Tool**: Vite 7.2.4
 - **Styling**: Tailwind CSS 4.1.17 (via `@tailwindcss/vite` plugin)
@@ -39,11 +48,18 @@ git-intelligence/
 - **UI Components**:
   - @headlessui/react 2.2.9
   - @heroicons/react 2.2.0
-- **Routing**: @tanstack/react-router 1.139.3 (configured but not actively used in current implementation)
-- **State Management**: React hooks (useState, useEffect) - no external state management library
+- **Routing**: @tanstack/react-router 1.139.3 (actively used with file-based routing)
+- **State Management**:
+  - React Context API (`AppContext`, `NotificationContext`)
+  - React hooks (useState, useEffect) for local component state
+- **Tables**: @tanstack/react-table 8.21.3
+- **Utilities**:
+  - clsx 2.1.1 (conditional class names)
+  - tailwind-merge 3.4.0 (Tailwind class merging)
 - **Dark Mode**: System preference-based (via Tailwind's `darkMode: 'media'`)
 
 #### Backend (`server/`)
+
 - **Runtime**: Node.js (v18+)
 - **Framework**: Express 5.1.0
 - **Language**: TypeScript 5.9.3
@@ -51,8 +67,11 @@ git-intelligence/
 - **File Upload**: multer 2.0.2
 - **ZIP Handling**: adm-zip 0.5.16
 - **CORS**: cors 2.8.5
-- **Persistence**: JSON file-based storage (`projects.json`)
+- **Persistence**: LowDB 7.0.1 (JSON file-based database with schema versioning)
+- **Database File**: `server/db.json` (replaces `projects.json`)
 - **Dev Server**: nodemon 3.1.11 with ts-node 10.9.2
+- **Testing**: Vitest 2.1.8 with coverage support
+- **UUID**: uuid 13.0.0 for generating IDs
 
 ## Project Structure
 
@@ -61,17 +80,66 @@ git-intelligence/
 ```
 src/
 ├── api.ts                    # API client with TypeScript interfaces
-├── App.tsx                   # Main application component
-├── main.tsx                  # React entry point
+├── main.tsx                  # React entry point with TanStack Router
 ├── index.css                 # Global styles
-├── App.css                   # App-specific styles
+├── routeTree.gen.ts          # Auto-generated route tree (TanStack Router)
+├── context/
+│   ├── AppContext.tsx        # Global app state (projects, repositories)
+│   └── NotificationContext.tsx # Notification system
+├── routes/                    # File-based routing (TanStack Router)
+│   ├── __root.tsx            # Root route with layout
+│   ├── index.tsx             # Home/landing page
+│   ├── projects.tsx          # Projects management view
+│   ├── dashboard.tsx         # Dashboard route (no repo selected)
+│   ├── dashboard.$repoPath.tsx # Dashboard for specific repository
+│   ├── developer-analytics.tsx # Developer analytics route
+│   ├── developer-analytics.$repoPath.tsx # Repo-specific developer analytics
+│   ├── codebase-health.tsx   # Codebase health route
+│   ├── codebase-health.$repoPath.tsx # Repo-specific codebase health
+│   ├── repository-evolution.tsx # Repository evolution route
+│   ├── repository-evolution.$repoPath.tsx # Repo-specific evolution
+│   ├── bus-factor-and-ownership.tsx # Bus factor route
+│   ├── bus-factor-and-ownership.$repoPath.tsx # Repo-specific bus factor
+│   ├── social-network-analysis.tsx # Social network analysis route
+│   ├── social-network-analysis.$repoPath.tsx # Repo-specific SNA
+│   ├── cross-repo-analytics.$projectId.tsx # Cross-repo developer analytics
+│   ├── cross-repo-codebase-health.$projectId.tsx # Cross-repo health
+│   ├── cross-repo-repository-evolution.$projectId.tsx # Cross-repo evolution
+│   ├── cross-repo-bus-factor-and-ownership.$projectId.tsx # Cross-repo bus factor
+│   └── cross-repo-social-network-analysis.$projectId.tsx # Cross-repo SNA
 └── components/
     ├── Layout.tsx            # Main layout with sidebar (Headless UI)
-    ├── SummaryCards.tsx      # Summary metrics cards
-    ├── ActivityChart.tsx     # Activity visualization charts
-    ├── AuthorList.tsx        # Contributor list component
-    ├── ExtensionChart.tsx    # File extension distribution chart
-    └── LocChart.tsx          # Lines of Code history chart
+    ├── ProjectsSidebar.tsx   # Sidebar for project/repository selection
+    ├── ProjectsList.tsx      # List of projects
+    ├── ProjectsView.tsx     # Projects management view
+    ├── UploadProjectModal.tsx # Modal for uploading repositories
+    ├── DashboardView.tsx    # Main dashboard view
+    ├── SummaryCards.tsx     # Summary metrics cards
+    ├── ActivityChart.tsx    # Activity visualization charts
+    ├── AuthorList.tsx       # Contributor list component
+    ├── ExtensionChart.tsx   # File extension distribution chart
+    ├── LocChart.tsx         # Lines of Code history chart
+    ├── DeveloperAnalytics.tsx # Developer analytics component
+    ├── DeveloperAnalyticsView.tsx # Developer analytics view wrapper
+    ├── LongitudinalPatterns.tsx # Longitudinal patterns visualization
+    ├── CodebaseHealth.tsx   # Codebase health component
+    ├── CodebaseHealthView.tsx # Codebase health view wrapper
+    ├── RepositoryEvolution.tsx # Repository evolution component
+    ├── RepositoryEvolutionView.tsx # Repository evolution view wrapper
+    ├── BusFactorAndOwnership.tsx # Bus factor component
+    ├── BusFactorAndOwnershipView.tsx # Bus factor view wrapper
+    ├── SocialNetworkAnalysis.tsx # Social network analysis component
+    ├── SocialNetworkAnalysisView.tsx # Social network analysis view wrapper
+    ├── CrossRepoDeveloperAnalytics.tsx # Cross-repo developer analytics
+    ├── CrossRepoDeveloperAnalyticsView.tsx # Cross-repo developer analytics view
+    ├── CrossRepoCodebaseHealth.tsx # Cross-repo codebase health
+    ├── CrossRepoCodebaseHealthView.tsx # Cross-repo codebase health view
+    ├── CrossRepoRepositoryEvolution.tsx # Cross-repo evolution
+    ├── CrossRepoRepositoryEvolutionView.tsx # Cross-repo evolution view
+    ├── CrossRepoBusFactorAndOwnership.tsx # Cross-repo bus factor
+    ├── CrossRepoBusFactorAndOwnershipView.tsx # Cross-repo bus factor view
+    ├── CrossRepoSocialNetworkAnalysis.tsx # Cross-repo SNA
+    └── CrossRepoSocialNetworkAnalysisView.tsx # Cross-repo SNA view
 ```
 
 ### Backend Structure (`server/src/`)
@@ -79,13 +147,48 @@ src/
 ```
 src/
 ├── index.ts                  # Express server setup and routes
-├── git.ts                    # Git analysis logic (getStats function)
-└── db.ts                     # JSON-based project persistence
+├── db.ts                     # Re-exports from db/ module (backward compatibility)
+├── git/                      # Git analysis modules
+│   ├── index.ts             # Re-exports all git analysis functions
+│   ├── types.ts             # TypeScript interfaces for all analytics
+│   ├── stats.ts             # Basic repository statistics
+│   ├── developerAnalytics.ts # Developer analytics (churn, patterns, etc.)
+│   ├── codebaseHealth.ts    # Codebase health metrics
+│   ├── repositoryEvolution.ts # Repository evolution analysis
+│   ├── busFactor.ts         # Bus factor and ownership analysis
+│   ├── socialNetwork.ts     # Social network analysis
+│   ├── utils.ts             # Shared utility functions
+│   └── __tests__/          # Test files for git analysis
+│       ├── stats.test.ts
+│       ├── developerAnalytics.test.ts
+│       ├── codebaseHealth.test.ts
+│       ├── repositoryEvolution.test.ts
+│       ├── busFactor.test.ts
+│       └── utils.test.ts
+└── db/                       # Database modules
+    ├── database.ts          # LowDB initialization and migrations
+    ├── types.ts             # Database schema types
+    ├── projects.ts          # Project CRUD operations
+    ├── repositories.ts      # Repository CRUD operations
+    ├── cache.ts             # Analysis result caching
+    └── __tests__/          # Test files for database
+        ├── database.test.ts
+        ├── projects.test.ts
+        ├── repositories.test.ts
+        └── cache.test.ts
 ```
 
 ### Data Storage
 
-- **Projects Database**: `server/projects.json` - Stores project metadata (id, path, name)
+- **Database**: `server/db.json` - LowDB JSON database with schema versioning
+  - **Schema Version**: Currently v2 (supports automatic migration from v1)
+  - **Structure**:
+    - `projects`: Array of project objects (id, name, description, timestamps)
+    - `repositories`: Array of repository objects (id, projectId, path, name, timestamps)
+    - `analysisCache`: Cached analysis results keyed by repository path
+    - `codebaseHealthCache`: Cached codebase health results keyed by repository path
+    - `schemaVersion`: Current schema version number
+  - **Migration**: Automatic migration from old `projects.json` format (repositories as projects)
 - **Upload Directory**: `server/uploads/` - Temporary storage for uploaded ZIP files and extracted repositories
 
 ## Key Patterns and Conventions
@@ -93,93 +196,260 @@ src/
 ### Frontend Patterns
 
 1. **Component Structure**
+
    - Functional components with TypeScript
    - Props interfaces defined inline or imported from `api.ts`
    - React.FC type annotation for components
    - Icons from `lucide-react` library
 
 2. **Styling Approach**
+
    - Tailwind CSS utility classes
    - Dark mode support via `dark:` prefix
    - Responsive design with `md:`, `lg:`, `xl:` breakpoints
    - Consistent color scheme: blue (primary), gray (neutral), indigo (brand)
 
 3. **API Communication**
+
    - Centralized API client in `api.ts` using Axios
    - Base URL: `http://localhost:3001`
    - All API functions return typed Promises
    - Error handling in components via try/catch
 
 4. **State Management**
-   - Local component state with `useState`
-   - Side effects with `useEffect`
-   - No global state management (Redux, Zustand, etc.)
+
+   - **Global State**: React Context API
+     - `AppContext`: Manages projects and repositories list, loading states, and CRUD operations
+     - `NotificationContext`: Manages toast notifications (info, success, error, loading)
+   - **Local State**: Component-level state with `useState` and `useEffect`
+   - **Routing State**: TanStack Router manages route parameters and navigation state
 
 5. **Type Definitions**
    - Shared types/interfaces in `client/src/api.ts`:
-     - `GitStats` - Complete statistics object
-     - `AuthorStats` - Contributor information
+     - `GitStats` - Basic repository statistics
+     - `AuthorStats` - Basic contributor information
+     - `DeveloperAuthorStats` - Extended contributor metrics
+     - `DeveloperAnalytics` - Developer analytics with longitudinal patterns
+     - `CrossRepoDeveloperAnalytics` - Cross-repository developer analytics
+     - `CodebaseHealth` - Codebase health metrics (hotspots, coupling, stability, complexity)
+     - `CrossRepoCodebaseHealth` - Cross-repository codebase health
+     - `RepositoryEvolution` - Repository evolution metrics
+     - `CrossRepoRepositoryEvolution` - Cross-repository evolution
+     - `BusFactorAndOwnership` - Bus factor and ownership analysis
+     - `CrossRepoBusFactorAndOwnership` - Cross-repository bus factor
+     - `SocialNetworkAnalysis` - Social network analysis
+     - `CrossRepoSocialNetworkAnalysis` - Cross-repository social network analysis
      - `ActivityStats` - Activity patterns
      - `Project` - Project metadata
+     - `Repository` - Repository metadata
 
 ### Backend Patterns
 
 1. **API Routes** (`server/src/index.ts`)
-   - `GET /projects` - List all projects
-   - `POST /projects` - Add project by path
-   - `POST /upload` - Upload ZIP archive (multipart/form-data)
-   - `DELETE /projects/:id` - Remove project
-   - `GET /stats?path=<repo-path>` - Get repository statistics
 
-2. **Git Analysis** (`server/src/git.ts`)
+   - **Projects**:
+     - `GET /projects` - List all projects
+     - `GET /projects/:id` - Get project by ID
+     - `POST /projects` - Create new project (requires name, optional description)
+     - `PUT /projects/:id` - Update project (name, description)
+     - `DELETE /projects/:id` - Delete project
+   - **Repositories**:
+     - `GET /repositories` - List repositories (optional `?projectId=<id>` filter)
+     - `GET /repositories/:id` - Get repository by ID
+     - `POST /repositories` - Add repository (requires projectId, path, optional name, replace flag)
+     - `DELETE /repositories/:id` - Remove repository
+   - **Upload**:
+     - `POST /upload` - Upload ZIP archive (multipart/form-data, requires projectId)
+   - **Analytics** (all support `?refresh=true` to bypass cache):
+     - `GET /stats?path=<repo-path>` - Basic repository statistics
+     - `GET /developer-analytics?path=<repo-path>` - Developer analytics
+     - `GET /cross-repo-developer-analytics?projectId=<id>` - Cross-repo developer analytics
+     - `GET /codebase-health?path=<repo-path>` - Codebase health metrics
+     - `GET /cross-repo-codebase-health?projectId=<id>` - Cross-repo codebase health
+     - `GET /repository-evolution?path=<repo-path>` - Repository evolution
+     - `GET /cross-repo-repository-evolution?projectId=<id>` - Cross-repo evolution
+     - `GET /bus-factor-and-ownership?path=<repo-path>` - Bus factor analysis
+     - `GET /cross-repo-bus-factor-and-ownership?projectId=<id>` - Cross-repo bus factor
+     - `GET /social-network-analysis?path=<repo-path>` - Social network analysis
+     - `GET /cross-repo-social-network-analysis?projectId=<id>` - Cross-repo SNA
+   - **Cache**:
+     - `POST /cache/clear` - Clear analysis cache (optional `path` in body)
+
+2. **Git Analysis** (`server/src/git/`)
+
+   - Modular structure with separate files for each analysis type
    - Uses `simple-git` for Git operations
-   - Analyzes commit history, authors, activity patterns
-   - Calculates LOC history from `git log --numstat`
-   - File extension analysis from `git ls-files`
-   - Returns normalized data structures
+   - **stats.ts**: Basic statistics (commits, authors, activity, extensions, LOC)
+   - **developerAnalytics.ts**: Extended developer metrics (churn, fix/revert ratios, signed commits, longitudinal patterns)
+   - **codebaseHealth.ts**: Hotspots, change coupling, stability, complexity
+   - **repositoryEvolution.ts**: Commit frequency, releases, growth curves, change bursts, churn metrics
+   - **busFactor.ts**: Single maintainer risk, fragmentation, owner churn
+   - **socialNetwork.ts**: Collaboration graphs, knowledge silos, orphaned code
+   - **utils.ts**: Shared utilities for Git operations and data processing
+   - All analysis functions support caching via `useCache` parameter
+   - Returns normalized data structures matching TypeScript interfaces
 
-3. **Data Persistence** (`server/src/db.ts`)
-   - JSON file-based storage
-   - UUID-based project IDs
-   - Automatic database file creation
-   - Prevents duplicate projects by path
+3. **Data Persistence** (`server/src/db/`)
+
+   - **LowDB** (JSON file-based database) with schema versioning
+   - **database.ts**: Database initialization, migrations, schema management
+   - **projects.ts**: Project CRUD operations (UUID-based IDs)
+   - **repositories.ts**: Repository CRUD operations (linked to projects)
+   - **cache.ts**: Analysis result caching (stats and codebase health)
+   - **types.ts**: Database schema type definitions
+   - Automatic migration from old `projects.json` format
+   - Prevents duplicate repositories by path within a project
+   - Cache management with TTL support (currently no expiration, manual clear only)
 
 4. **File Upload Flow**
-   - Multer saves to `uploads/` directory
+   - Multer saves to `uploads/` directory (100MB limit)
    - ZIP extracted to `uploads/<filename>_extracted/`
    - Automatic detection of nested repository structure
+   - Validates Git repository (must have `.git` directory)
+   - Requires `projectId` in form data (repositories belong to projects)
+   - Optional `name` parameter for custom repository name
+   - Optional `replace` flag to replace existing repository with same path
    - Original ZIP file cleaned up after extraction
+   - Extracted files remain in `uploads/` directory (not cleaned up automatically)
+
+### Routing Patterns
+
+1. **TanStack Router File-Based Routing**
+
+   - Routes defined as files in `client/src/routes/`
+   - Route parameters use `$` prefix (e.g., `$repoPath`, `$projectId`)
+   - Root route (`__root.tsx`) provides layout and context providers
+   - Route tree auto-generated in `routeTree.gen.ts` (do not edit manually)
+   - Navigation via `Link` component or `useNavigate()` hook
+
+2. **Route Structure**
+
+   - **Index routes**: `/` (home/landing)
+   - **Projects**: `/projects` (project management)
+   - **Repository routes**: Use `$repoPath` parameter (URL-encoded repository path)
+   - **Project routes**: Use `$projectId` parameter (UUID)
+   - **Route examples**:
+     - `/dashboard/$repoPath` - Dashboard for specific repository
+     - `/developer-analytics/$repoPath` - Developer analytics for repository
+     - `/cross-repo-analytics/$projectId` - Cross-repo analytics for project
+
+3. **Route Components**
+   - Each route file exports a `Route` object using TanStack Router's route creators
+   - Route components access params via `useParams()` hook
+   - Loading states handled in route components
+   - Error boundaries can be added per route
+
+### Analytics Features
+
+The application provides comprehensive Git repository analytics:
+
+1. **Basic Statistics** (`/stats`)
+
+   - Total commits, authors, files
+   - Activity patterns (hour, day, month, year)
+   - File extension distribution
+   - Lines of Code (LOC) history
+
+2. **Developer Analytics** (`/developer-analytics`)
+
+   - Extended contributor metrics (lines added/removed, net lines)
+   - Activity time windows (hour of day, day of week)
+   - Signed commits percentage
+   - Fix and revert commit ratios
+   - Code churn metrics
+   - Longitudinal patterns:
+     - Author activity over time (weekly/monthly)
+     - Onboarding curve (new contributors over time)
+     - Dormancy detection (inactive contributors)
+
+3. **Codebase Health** (`/codebase-health`)
+
+   - **Hotspots**: Most frequently changed files and directories
+   - **Change Coupling**: Files that change together
+   - **Stability**: File age and change frequency analysis
+   - **Complexity**: Average diff sizes, largest diffs, most rewritten files
+
+4. **Repository Evolution** (`/repository-evolution`)
+
+   - Commit frequency over time
+   - Release information (tags, dates)
+   - Growth curve (LOC and files over time)
+   - Change bursts (periods of high activity)
+   - Churn metrics (additions, deletions, net change)
+
+5. **Bus Factor & Ownership** (`/bus-factor-and-ownership`)
+
+   - **Single Maintainer Risk**: Files/repos with one primary contributor
+   - **Fragmentation**: Files with too many contributors
+   - **Owner Churn**: Files that changed primary maintainer
+
+6. **Social Network Analysis** (`/social-network-analysis`)
+
+   - **Collaboration Graph**: Network of contributors and their collaborations
+   - **Knowledge Silos**: Files with limited contributor access
+   - **Orphaned Code**: Files with no recent activity
+
+7. **Cross-Repository Analytics**
+   - Aggregated metrics across all repositories in a project
+   - Cross-repo collaboration patterns
+   - Repository clusters (repos worked on by same teams)
+   - Synchronization patterns (commits across repos on same dates)
 
 ## Data Flow
 
 ### Statistics Retrieval Flow
 
-1. User selects project from sidebar → `setCurrentPath(project.path)`
-2. `useEffect` triggers when `currentPath` changes
-3. `getStats(currentPath)` called from `api.ts`
-4. Axios GET request to `/stats?path=<path>`
-5. Backend `getStats()` function:
-   - Validates Git repository
+1. User navigates to route (e.g., `/dashboard/$repoPath` or `/developer-analytics/$repoPath`)
+2. Route component extracts `repoPath` from route parameters
+3. Component calls API function (e.g., `getStats(repoPath)`) from `api.ts`
+4. Axios GET request to endpoint (e.g., `/stats?path=<path>&refresh=false`)
+5. Backend analysis function:
+   - Checks cache first (unless `refresh=true`)
+   - If cached and valid, returns cached result
+   - Otherwise, validates Git repository
    - Executes Git commands via `simple-git`
    - Processes commit logs and file lists
+   - Caches result in database
    - Returns structured statistics
-6. Frontend receives data and updates state
+6. Frontend receives data and updates component state
 7. Components re-render with new statistics
+8. Loading states and error handling via notifications
 
 ### Project Management Flow
 
-1. **Adding Project (Upload)**:
-   - User selects ZIP file
-   - FormData sent to `/upload` endpoint
-   - Backend extracts ZIP, finds Git repo root
-   - Project added to `projects.json`
-   - Frontend refreshes project list
+1. **Creating Project**:
 
-2. **Removing Project**:
+   - User navigates to `/projects` route
+   - User creates project via form (name, optional description)
+   - `POST /projects` creates project in database
+   - `AppContext` refreshes projects list
+
+2. **Adding Repository (Upload)**:
+
+   - User selects project and ZIP file
+   - FormData sent to `/upload` endpoint with `projectId`
+   - Backend extracts ZIP, finds Git repo root
+   - Repository added to database linked to project
+   - `AppContext` refreshes repositories list
+
+3. **Adding Repository (Path)**:
+
+   - User provides repository path
+   - `POST /repositories` with `projectId` and `path`
+   - Repository added to database
+   - `AppContext` refreshes repositories list
+
+4. **Removing Project**:
+
    - User clicks delete button
-   - DELETE request to `/projects/:id`
-   - Backend removes from `projects.json`
-   - Frontend updates state and UI
+   - `DELETE /projects/:id` removes project
+   - All associated repositories are also removed (cascade delete)
+   - `AppContext` refreshes data
+
+5. **Removing Repository**:
+   - User clicks delete button
+   - `DELETE /repositories/:id` removes repository
+   - `AppContext` refreshes repositories list
 
 ## Development Workflow
 
@@ -209,55 +479,70 @@ cd server && npm run build
 ### Development Scripts
 
 **Root (`package.json`)**:
+
 - `dev`: Runs both client and server concurrently
 - `install:all`: Installs dependencies for root, client, and server
 
 **Client (`client/package.json`)**:
+
 - `dev`: Vite development server
 - `build`: TypeScript compilation + Vite build
 - `preview`: Preview production build
 - `lint`: ESLint check
 
 **Server (`server/package.json`)**:
+
 - `dev`: Nodemon with ts-node (auto-reload)
 - `build`: TypeScript compilation
 - `start`: Run compiled JavaScript
+- `test`: Run Vitest tests once
+- `test:watch`: Run Vitest in watch mode
+- `test:coverage`: Run tests with coverage report
 
 ## Important Notes and Gotchas
 
 ### Git Repository Requirements
+
 - Backend expects valid Git repositories (must have `.git` directory)
 - Uploaded ZIPs are extracted and Git repo root is auto-detected
-- Path-based project identification (duplicates prevented)
+- Path-based repository identification within a project (duplicates prevented per project)
+- Repositories must belong to a project (cannot exist standalone)
 
 ### LOC Calculation
+
 - LOC history is approximate, calculated from `git log --numstat`
 - Uses cumulative approach: adds (added - deleted) lines per commit
 - Negative LOC values are normalized to 0
 - Based on commit dates, not file system timestamps
 
 ### File Extension Analysis
+
 - Extracted from `git ls-files` (tracked files only)
 - Extension is last part after final dot (e.g., `file.test.js` → `js`)
 - Files without extensions categorized as `no-extension`
 
 ### Port Configuration
+
 - Backend hardcoded to port 3001 in `server/src/index.ts`
 - Frontend API base URL hardcoded to `http://localhost:3001` in `client/src/api.ts`
 - No environment variable configuration currently
 
 ### Dark Mode
+
 - Uses system preference (`prefers-color-scheme`)
 - Tailwind `dark:` classes used throughout components
 - No manual toggle (system preference only)
 
 ### Layout Component
+
 - Uses Headless UI Dialog for mobile sidebar
 - Desktop sidebar is fixed (72 width units)
-- Projects sidebar is separate (96 width units on xl screens)
-- Navigation items in Layout are currently placeholder (not functional)
+- Projects sidebar (`ProjectsSidebar`) is separate and shows projects/repositories
+- Navigation handled by TanStack Router with file-based routes
+- Root route (`__root.tsx`) wraps all routes with `Layout`, `AppProvider`, and `NotificationProvider`
 
 ### Type Safety
+
 - Strong TypeScript usage throughout
 - Shared types between frontend and backend via separate definitions
 - API responses typed via interfaces in `api.ts`
@@ -265,26 +550,45 @@ cd server && npm run build
 ## Common Tasks for AI Assistants
 
 ### Adding a New Chart/Visualization
+
 1. Create component in `client/src/components/`
 2. Import Recharts components as needed
 3. Follow existing chart patterns (see `ActivityChart.tsx`, `LocChart.tsx`)
-4. Add to `App.tsx` render logic
-5. Ensure responsive design with Tailwind classes
+4. Create a view wrapper component if needed (see `*View.tsx` components)
+5. Add route in `client/src/routes/` if it's a new page
+6. Ensure responsive design with Tailwind classes
 
 ### Adding a New API Endpoint
+
 1. Add route handler in `server/src/index.ts`
-2. Implement business logic (may need new function in `git.ts` or `db.ts`)
+2. Implement business logic in appropriate module:
+   - Git analysis: Add function to `server/src/git/` (create new file or extend existing)
+   - Database operations: Add function to `server/src/db/` (projects.ts, repositories.ts, or cache.ts)
 3. Add corresponding function in `client/src/api.ts`
-4. Define TypeScript interfaces for request/response
-5. Update component to use new API function
+4. Define TypeScript interfaces:
+   - Backend: Add to `server/src/git/types.ts` or `server/src/db/types.ts`
+   - Frontend: Add to `client/src/api.ts`
+5. Create route component in `client/src/routes/` if needed
+6. Create view component in `client/src/components/` if needed
+7. Update `AppContext` if it affects global state
 
 ### Modifying Git Analysis
-1. Edit `server/src/git.ts`
+
+1. Edit appropriate file in `server/src/git/`:
+   - `stats.ts` for basic statistics
+   - `developerAnalytics.ts` for developer metrics
+   - `codebaseHealth.ts` for health metrics
+   - `repositoryEvolution.ts` for evolution analysis
+   - `busFactor.ts` for bus factor analysis
+   - `socialNetwork.ts` for social network analysis
 2. Use `simple-git` methods for Git operations
-3. Return data in format matching `GitStats` interface
-4. Update frontend types in `api.ts` if structure changes
+3. Use caching utilities from `server/src/db/cache.ts` if appropriate
+4. Return data in format matching TypeScript interfaces from `git/types.ts`
+5. Update frontend types in `api.ts` if structure changes
+6. Add tests in `server/src/git/__tests__/` if adding new functionality
 
 ### Styling Changes
+
 1. Use Tailwind utility classes
 2. Follow existing color scheme (blue, gray, indigo)
 3. Ensure dark mode support with `dark:` variants
@@ -303,28 +607,49 @@ cd server && npm run build
 
 ## Testing Considerations
 
-- No test suite currently configured
-- Manual testing via development servers
-- Consider adding tests for:
-  - Git analysis logic (`git.ts`)
-  - API endpoints (`index.ts`)
-  - React components (component tests)
+- **Test Framework**: Vitest 2.1.8 with coverage support
+- **Test Location**: `server/src/**/__tests__/`
+- **Coverage**: Generated in `server/coverage/` directory
+- **Test Commands**:
+  - `npm test` - Run all tests once
+  - `npm run test:watch` - Watch mode for development
+  - `npm run test:coverage` - Generate coverage report
+- **Test Structure**:
+  - Git analysis tests: `server/src/git/__tests__/`
+  - Database tests: `server/src/db/__tests__/`
+  - External dependencies (simple-git, db) are mocked
+  - Tests use proper 40-character git commit hashes in mocks
+- **Frontend Testing**: Not currently configured (manual testing via dev server)
+- **See**: `server/TESTING.md` for detailed testing guidelines
 
 ## Future Enhancement Opportunities
 
 - Environment variable configuration for ports/URLs
-- Database migration from JSON to proper database
+- Database migration from LowDB to proper database (PostgreSQL, MongoDB, etc.)
 - Authentication/authorization
 - Real-time updates (WebSockets)
 - Export functionality (PDF, CSV)
 - More detailed commit analysis
 - Branch visualization
 - File change history
-- Contributor network graphs
 - Performance optimizations for large repositories
+- Cache expiration/TTL for analysis results
+- Frontend component testing (Vitest + React Testing Library)
+- API rate limiting
+- Background job processing for large analyses
+- Repository cloning from remote URLs (GitHub, GitLab, etc.)
 
 ---
 
-**Last Updated**: Based on current codebase state
-**Maintainer Notes**: This is a working application with active development. Always check current implementation before making assumptions.
+**Last Updated**: December 2024 - Updated to reflect:
 
+- TanStack Router implementation with file-based routing
+- Project/Repository hierarchy (Projects contain Repositories)
+- LowDB database with schema versioning and caching
+- Comprehensive analytics features (Developer Analytics, Codebase Health, Repository Evolution, Bus Factor, Social Network Analysis)
+- Cross-repository analytics capabilities
+- React Context API for global state management
+- Vitest testing framework
+- Modular backend structure (db/ and git/ subdirectories)
+
+**Maintainer Notes**: This is a working application with active development. Always check current implementation before making assumptions. The codebase has evolved significantly from the original simple dashboard to a comprehensive Git analytics platform.

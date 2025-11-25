@@ -26,12 +26,6 @@ import {
 const navigation = [
   { name: 'Dashboard', to: '/dashboard', icon: HomeIcon, id: 'dashboard' },
   {
-    name: 'Developer Analytics',
-    to: '/developer-analytics',
-    icon: CodeBracketIcon,
-    id: 'developer-analytics',
-  },
-  {
     name: 'Codebase Health',
     to: '/codebase-health',
     icon: HeartIcon,
@@ -54,6 +48,12 @@ const navigation = [
     to: '/social-network-analysis',
     icon: UserGroupIcon,
     id: 'social-network-analysis',
+  },
+  {
+    name: 'Developer Analytics',
+    to: '/developer-analytics',
+    icon: CodeBracketIcon,
+    id: 'developer-analytics',
   },
   {
     name: 'Projects',
