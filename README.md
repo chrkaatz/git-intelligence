@@ -74,37 +74,38 @@ git-intelligence/
 
 #### Frontend (`client/`)
 
-- **Framework**: React 19.2.0 with TypeScript
-- **Build Tool**: Vite 7.2.4
-- **Routing**: TanStack Router 1.139.3 (file-based routing)
-- **Styling**: Tailwind CSS 4.1.17
-- **Charts**: Recharts 3.5.0
+- **Framework**: React with TypeScript
+- **Build Tool**: Vite
+- **Routing**: TanStack Router (file-based routing)
+- **Styling**: Tailwind CSS
+- **Charts**: Recharts
 - **State Management**: React Context API
 - **UI Components**: Headless UI, Heroicons, Lucide React
-- **Tables**: TanStack React Table 8.21.3
+- **Tables**: TanStack React Table
 
 #### Backend (`server/`)
 
-- **Runtime**: Node.js (v18+)
-- **Framework**: Express 5.1.0
-- **Language**: TypeScript 5.9.3
-- **Git Operations**: simple-git 3.30.0
-- **Database**: LowDB 7.0.1 (JSON-based with schema versioning)
-- **File Upload**: multer 2.0.2
-- **ZIP Handling**: adm-zip 0.5.16
-- **Testing**: Vitest 2.1.8
+- **Runtime**: Node.js (v22+)
+- **Framework**: Express
+- **Language**: TypeScript
+- **Git Operations**: simple-git
+- **Database**: LowDB (JSON-based with schema versioning)
+- **File Upload**: multer
+- **ZIP Handling**: adm-zip
+- **Testing**: Vitest
 
 ## 📦 Installation
 
 ### Prerequisites
 
-- Node.js (v18 or higher)
+- Node.js (v22 or higher)
 - npm or yarn
 - Git
 
 ### Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd git-intelligence
@@ -216,6 +217,7 @@ cd server && npm run test:coverage
 ## 📊 API Endpoints
 
 ### Projects
+
 - `GET /projects` - List all projects
 - `GET /projects/:id` - Get project by ID
 - `POST /projects` - Create project
@@ -223,6 +225,7 @@ cd server && npm run test:coverage
 - `DELETE /projects/:id` - Delete project
 
 ### Repositories
+
 - `GET /repositories` - List repositories (optional `?projectId=<id>` filter)
 - `GET /repositories/:id` - Get repository by ID
 - `POST /repositories` - Add repository
@@ -230,6 +233,7 @@ cd server && npm run test:coverage
 - `POST /upload` - Upload ZIP archive
 
 ### Analytics
+
 - `GET /stats?path=<repo-path>` - Basic statistics
 - `GET /developer-analytics?path=<repo-path>` - Developer analytics
 - `GET /codebase-health?path=<repo-path>` - Codebase health
@@ -243,14 +247,18 @@ All analytics endpoints support `?refresh=true` to bypass cache.
 ## 🎨 Features in Detail
 
 ### Dashboard
+
 The main dashboard provides an overview of repository statistics with interactive charts showing:
+
 - Activity patterns (hourly, daily, monthly, yearly)
 - Top contributors with percentages
 - File extension distribution
 - Lines of Code history
 
 ### Developer Analytics
+
 Deep dive into contributor behavior:
+
 - Code contribution metrics (additions, deletions, net change)
 - Activity patterns (when contributors are most active)
 - Code quality indicators (signed commits, fix/revert ratios)
@@ -258,14 +266,18 @@ Deep dive into contributor behavior:
 - Longitudinal patterns showing how contributors evolve over time
 
 ### Codebase Health
+
 Identify potential issues and maintenance hotspots:
+
 - Files and directories with high change frequency
 - Files that change together (coupling)
 - File stability analysis
 - Complexity metrics
 
 ### Repository Evolution
+
 Track how your repository grows and changes:
+
 - Commit frequency trends
 - Release history
 - Growth curves
@@ -273,13 +285,17 @@ Track how your repository grows and changes:
 - Churn metrics
 
 ### Bus Factor & Ownership
+
 Assess knowledge concentration risks:
+
 - Single maintainer risk (files/repos with one primary contributor)
 - Fragmentation (files with too many contributors)
 - Owner churn (files that changed primary maintainer)
 
 ### Social Network Analysis
+
 Understand collaboration patterns:
+
 - Collaboration graphs showing contributor relationships
 - Knowledge silos (files with limited contributor access)
 - Orphaned code (files with no recent activity)
