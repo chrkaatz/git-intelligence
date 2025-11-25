@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import type { CrossRepoDeveloperStats, CrossRepoDeveloperAnalytics } from '../api';
 import { Code, GitCommit, TrendingUp, Shield, Mail, AlertTriangle, RotateCcw, Activity, FolderOpen } from 'lucide-react';
@@ -287,9 +287,8 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {analytics.authors.map((author, index) => (
-                <>
+                <Fragment key={`${author.email}-${index}`}>
                   <tr
-                    key={`${author.email}-${index}`}
                     className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${
                       selectedAuthor?.email === author.email ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                     }`}
@@ -395,7 +394,7 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

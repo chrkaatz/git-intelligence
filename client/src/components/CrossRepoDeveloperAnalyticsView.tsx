@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { CrossRepoDeveloperAnalytics as CrossRepoDeveloperAnalyticsComponent } from './CrossRepoDeveloperAnalytics';
 import { getCrossRepoDeveloperAnalytics, type CrossRepoDeveloperAnalytics as CrossRepoDeveloperAnalyticsType } from '../api';
@@ -12,6 +12,8 @@ export function CrossRepoDeveloperAnalyticsView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showNotification, removeNotification } = useNotifications();
+  const loadingNotificationIdRef = useRef<string | null>(null);
+  const isFetchingRef = useRef(false);
 
   useEffect(() => {
     if (!projectId) {
@@ -19,32 +21,46 @@ export function CrossRepoDeveloperAnalyticsView() {
       return;
     }
 
+    // Prevent duplicate fetches
+    if (isFetchingRef.current) {
+      return;
+    }
+
     const fetchAnalytics = async () => {
+      isFetchingRef.current = true;
       setLoading(true);
       setError(null);
 
       // Show loading notification
       const loadingId = showNotification('loading', 'Calculating cross-repo analytics across all repositories... This may take a while.', 0);
+      loadingNotificationIdRef.current = loadingId;
 
       try {
         const data = await getCrossRepoDeveloperAnalytics(projectId);
         setAnalytics(data);
         // Remove loading notification and show success
-        removeNotification(loadingId);
+        if (loadingNotificationIdRef.current) {
+          removeNotification(loadingNotificationIdRef.current);
+          loadingNotificationIdRef.current = null;
+        }
         showNotification('success', `Cross-repo analytics calculated for ${data.totalRepos} repositories!`, 3000);
       } catch (err) {
         const errorMessage = 'Failed to load cross-repo developer analytics';
         setError(errorMessage);
         // Remove loading notification and show error
-        removeNotification(loadingId);
+        if (loadingNotificationIdRef.current) {
+          removeNotification(loadingNotificationIdRef.current);
+          loadingNotificationIdRef.current = null;
+        }
         showNotification('error', errorMessage, 5000);
       } finally {
         setLoading(false);
+        isFetchingRef.current = false;
       }
     };
 
     fetchAnalytics();
-  }, [projectId, showNotification]);
+  }, [projectId]);
 
   return (
     <>

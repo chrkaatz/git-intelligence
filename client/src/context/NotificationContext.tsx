@@ -26,18 +26,30 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const showNotification = useCallback(
     (type: NotificationType, message: string, duration: number = 5000) => {
-      const id = Math.random().toString(36).substring(2, 9);
-      const notification: Notification = { id, type, message, duration };
+      let notificationId: string;
 
-      setNotifications((prev) => [...prev, notification]);
+      // Deduplicate: don't show the same message if it already exists
+      setNotifications((prev) => {
+        const existing = prev.find((n) => n.message === message && n.type === type);
+        if (existing) {
+          notificationId = existing.id;
+          return prev; // Don't add duplicate
+        }
 
-      if (duration > 0) {
-        setTimeout(() => {
-          removeNotification(id);
-        }, duration);
-      }
+        const id = Math.random().toString(36).substring(2, 9);
+        notificationId = id;
+        const notification: Notification = { id, type, message, duration };
 
-      return id;
+        if (duration > 0) {
+          setTimeout(() => {
+            removeNotification(id);
+          }, duration);
+        }
+
+        return [...prev, notification];
+      });
+
+      return notificationId;
     },
     [removeNotification]
   );

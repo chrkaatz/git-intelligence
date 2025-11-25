@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { DeveloperAnalytics as DeveloperAnalyticsComponent } from './DeveloperAnalytics';
 import { getDeveloperAnalytics, type DeveloperAnalytics as DeveloperAnalyticsType } from '../api';
@@ -12,6 +12,8 @@ export function DeveloperAnalyticsView() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showNotification, removeNotification } = useNotifications();
+  const loadingNotificationIdRef = useRef<string | null>(null);
+  const isFetchingRef = useRef(false);
 
   useEffect(() => {
     if (!repoPath) {
@@ -19,33 +21,47 @@ export function DeveloperAnalyticsView() {
       return;
     }
 
+    // Prevent duplicate fetches
+    if (isFetchingRef.current) {
+      return;
+    }
+
     const decodedPath = decodeURIComponent(repoPath);
     const fetchAnalytics = async () => {
+      isFetchingRef.current = true;
       setAnalyticsLoading(true);
       setError(null);
 
       // Show loading notification
       const loadingId = showNotification('loading', 'Calculating developer analytics... This may take a moment.', 0);
+      loadingNotificationIdRef.current = loadingId;
 
       try {
         const data = await getDeveloperAnalytics(decodedPath);
         setDeveloperAnalytics(data);
         // Remove loading notification and show success
-        removeNotification(loadingId);
+        if (loadingNotificationIdRef.current) {
+          removeNotification(loadingNotificationIdRef.current);
+          loadingNotificationIdRef.current = null;
+        }
         showNotification('success', 'Developer analytics calculated successfully!', 3000);
       } catch (err) {
         const errorMessage = 'Failed to load developer analytics';
         setError(errorMessage);
         // Remove loading notification and show error
-        removeNotification(loadingId);
+        if (loadingNotificationIdRef.current) {
+          removeNotification(loadingNotificationIdRef.current);
+          loadingNotificationIdRef.current = null;
+        }
         showNotification('error', errorMessage, 5000);
       } finally {
         setAnalyticsLoading(false);
+        isFetchingRef.current = false;
       }
     };
 
     fetchAnalytics();
-  }, [repoPath, showNotification]);
+  }, [repoPath]);
 
   const decodedPath = repoPath ? decodeURIComponent(repoPath) : '';
   // Extract repository name from path for cleaner display
