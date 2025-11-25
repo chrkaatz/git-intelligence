@@ -7,10 +7,12 @@ import {
 } from '../api';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
+import { useApp } from '../context/AppContext';
 
 export function RepositoryEvolutionView() {
-  const params = useParams({ strict: false }) as { repoPath?: string };
-  const repoPath = params?.repoPath;
+  const params = useParams({ strict: false }) as { repoId?: string };
+  const repoId = params?.repoId;
+  const { repositories } = useApp();
   const [evolution, setEvolution] = useState<RepositoryEvolutionType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,9 +20,13 @@ export function RepositoryEvolutionView() {
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
 
+  // Get repository name from ID
+  const repository = repoId ? repositories.find((r) => r.id === repoId) : null;
+  const repoName = repository?.name || '';
+
   const fetchEvolution = useCallback(
     async (refresh: boolean = false) => {
-      if (!repoPath) {
+      if (!repoId) {
         setEvolution(null);
         return;
       }
@@ -30,7 +36,6 @@ export function RepositoryEvolutionView() {
         return;
       }
 
-      const decodedPath = decodeURIComponent(repoPath);
       isFetchingRef.current = true;
       setLoading(true);
       setError(null);
@@ -43,7 +48,7 @@ export function RepositoryEvolutionView() {
       loadingNotificationIdRef.current = loadingId;
 
       try {
-        const data = await getRepositoryEvolution(decodedPath, refresh);
+        const data = await getRepositoryEvolution(repoId, refresh);
         setEvolution(data);
         // Remove loading notification and show success
         if (loadingNotificationIdRef.current) {
@@ -68,31 +73,23 @@ export function RepositoryEvolutionView() {
         isFetchingRef.current = false;
       }
     },
-    [repoPath, showNotification, removeNotification]
+    [repoId, showNotification, removeNotification]
   );
 
   useEffect(() => {
     fetchEvolution(false);
   }, [fetchEvolution]);
 
-  const decodedPath = repoPath ? decodeURIComponent(repoPath) : '';
-  // Extract repository name from path for cleaner display
-  const getRepoName = (path: string) => {
-    const parts = path.split('/');
-    return parts[parts.length - 1] || path;
-  };
-  const repoName = decodedPath ? getRepoName(decodedPath) : '';
-
   return (
     <>
       <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Repository Evolution</h1>
-          {repoPath && evolution && (
+          {repoId && evolution && repoName && (
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{repoName}</p>
           )}
         </div>
-        {repoPath && (
+        {repoId && (
           <button
             onClick={() => fetchEvolution(true)}
             disabled={loading}

@@ -8,10 +8,12 @@ import { LocChart } from './LocChart';
 import { getStats, type GitStats } from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
+import { useApp } from '../context/AppContext';
 
 export function DashboardView() {
-  const params = useParams({ strict: false }) as { repoPath?: string };
-  const repoPath = params?.repoPath;
+  const params = useParams({ strict: false }) as { repoId?: string };
+  const repoId = params?.repoId;
+  const { repositories } = useApp();
   const [stats, setStats] = useState<GitStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,8 +21,12 @@ export function DashboardView() {
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
 
+  // Get repository name from ID
+  const repository = repoId ? repositories.find((r) => r.id === repoId) : null;
+  const repoName = repository?.name || '';
+
   useEffect(() => {
-    if (!repoPath) {
+    if (!repoId) {
       setLoading(false);
       setStats(null);
       return;
@@ -31,7 +37,6 @@ export function DashboardView() {
       return;
     }
 
-    const decodedPath = decodeURIComponent(repoPath);
     const fetchStats = async () => {
       isFetchingRef.current = true;
       setLoading(true);
@@ -42,7 +47,7 @@ export function DashboardView() {
       loadingNotificationIdRef.current = loadingId;
 
       try {
-        const data = await getStats(decodedPath);
+        const data = await getStats(repoId);
         setStats(data);
         // Remove loading notification and show success
         if (loadingNotificationIdRef.current) {
@@ -66,9 +71,9 @@ export function DashboardView() {
     };
 
     fetchStats();
-  }, [repoPath]);
+  }, [repoId, showNotification, removeNotification]);
 
-  if (!repoPath) {
+  if (!repoId) {
     return (
       <>
         <div className="mb-8">
@@ -84,19 +89,11 @@ export function DashboardView() {
     );
   }
 
-  const decodedPath = decodeURIComponent(repoPath);
-  // Extract repository name from path for cleaner display
-  const getRepoName = (path: string) => {
-    const parts = path.split('/');
-    return parts[parts.length - 1] || path;
-  };
-  const repoName = decodedPath ? getRepoName(decodedPath) : '';
-
   return (
     <>
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
-        {repoPath && stats && (
+        {repoId && stats && repoName && (
           <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{repoName}</p>
         )}
       </div>

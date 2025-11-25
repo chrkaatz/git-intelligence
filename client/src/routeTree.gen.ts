@@ -18,16 +18,22 @@ import { Route as CodebaseHealthRouteImport } from './routes/codebase-health'
 import { Route as BusFactorAndOwnershipRouteImport } from './routes/bus-factor-and-ownership'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SocialNetworkAnalysisRepoPathRouteImport } from './routes/social-network-analysis.$repoPath'
+import { Route as SocialNetworkAnalysisRepoIdRouteImport } from './routes/social-network-analysis.$repoId'
 import { Route as RepositoryEvolutionRepoPathRouteImport } from './routes/repository-evolution.$repoPath'
+import { Route as RepositoryEvolutionRepoIdRouteImport } from './routes/repository-evolution.$repoId'
 import { Route as DeveloperAnalyticsRepoPathRouteImport } from './routes/developer-analytics.$repoPath'
+import { Route as DeveloperAnalyticsRepoIdRouteImport } from './routes/developer-analytics.$repoId'
 import { Route as DashboardRepoPathRouteImport } from './routes/dashboard.$repoPath'
+import { Route as DashboardRepoIdRouteImport } from './routes/dashboard.$repoId'
 import { Route as CrossRepoSocialNetworkAnalysisProjectIdRouteImport } from './routes/cross-repo-social-network-analysis.$projectId'
 import { Route as CrossRepoRepositoryEvolutionProjectIdRouteImport } from './routes/cross-repo-repository-evolution.$projectId'
 import { Route as CrossRepoCodebaseHealthProjectIdRouteImport } from './routes/cross-repo-codebase-health.$projectId'
 import { Route as CrossRepoBusFactorAndOwnershipProjectIdRouteImport } from './routes/cross-repo-bus-factor-and-ownership.$projectId'
 import { Route as CrossRepoAnalyticsProjectIdRouteImport } from './routes/cross-repo-analytics.$projectId'
 import { Route as CodebaseHealthRepoPathRouteImport } from './routes/codebase-health.$repoPath'
+import { Route as CodebaseHealthRepoIdRouteImport } from './routes/codebase-health.$repoId'
 import { Route as BusFactorAndOwnershipRepoPathRouteImport } from './routes/bus-factor-and-ownership.$repoPath'
+import { Route as BusFactorAndOwnershipRepoIdRouteImport } from './routes/bus-factor-and-ownership.$repoId'
 
 const SocialNetworkAnalysisRoute = SocialNetworkAnalysisRouteImport.update({
   id: '/social-network-analysis',
@@ -75,10 +81,22 @@ const SocialNetworkAnalysisRepoPathRoute =
     path: '/$repoPath',
     getParentRoute: () => SocialNetworkAnalysisRoute,
   } as any)
+const SocialNetworkAnalysisRepoIdRoute =
+  SocialNetworkAnalysisRepoIdRouteImport.update({
+    id: '/$repoId',
+    path: '/$repoId',
+    getParentRoute: () => SocialNetworkAnalysisRoute,
+  } as any)
 const RepositoryEvolutionRepoPathRoute =
   RepositoryEvolutionRepoPathRouteImport.update({
     id: '/$repoPath',
     path: '/$repoPath',
+    getParentRoute: () => RepositoryEvolutionRoute,
+  } as any)
+const RepositoryEvolutionRepoIdRoute =
+  RepositoryEvolutionRepoIdRouteImport.update({
+    id: '/$repoId',
+    path: '/$repoId',
     getParentRoute: () => RepositoryEvolutionRoute,
   } as any)
 const DeveloperAnalyticsRepoPathRoute =
@@ -87,9 +105,20 @@ const DeveloperAnalyticsRepoPathRoute =
     path: '/$repoPath',
     getParentRoute: () => DeveloperAnalyticsRoute,
   } as any)
+const DeveloperAnalyticsRepoIdRoute =
+  DeveloperAnalyticsRepoIdRouteImport.update({
+    id: '/$repoId',
+    path: '/$repoId',
+    getParentRoute: () => DeveloperAnalyticsRoute,
+  } as any)
 const DashboardRepoPathRoute = DashboardRepoPathRouteImport.update({
   id: '/$repoPath',
   path: '/$repoPath',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardRepoIdRoute = DashboardRepoIdRouteImport.update({
+  id: '/$repoId',
+  path: '/$repoId',
   getParentRoute: () => DashboardRoute,
 } as any)
 const CrossRepoSocialNetworkAnalysisProjectIdRoute =
@@ -127,10 +156,21 @@ const CodebaseHealthRepoPathRoute = CodebaseHealthRepoPathRouteImport.update({
   path: '/$repoPath',
   getParentRoute: () => CodebaseHealthRoute,
 } as any)
+const CodebaseHealthRepoIdRoute = CodebaseHealthRepoIdRouteImport.update({
+  id: '/$repoId',
+  path: '/$repoId',
+  getParentRoute: () => CodebaseHealthRoute,
+} as any)
 const BusFactorAndOwnershipRepoPathRoute =
   BusFactorAndOwnershipRepoPathRouteImport.update({
     id: '/$repoPath',
     path: '/$repoPath',
+    getParentRoute: () => BusFactorAndOwnershipRoute,
+  } as any)
+const BusFactorAndOwnershipRepoIdRoute =
+  BusFactorAndOwnershipRepoIdRouteImport.update({
+    id: '/$repoId',
+    path: '/$repoId',
     getParentRoute: () => BusFactorAndOwnershipRoute,
   } as any)
 
@@ -143,16 +183,22 @@ export interface FileRoutesByFullPath {
   '/projects': typeof ProjectsRoute
   '/repository-evolution': typeof RepositoryEvolutionRouteWithChildren
   '/social-network-analysis': typeof SocialNetworkAnalysisRouteWithChildren
+  '/bus-factor-and-ownership/$repoId': typeof BusFactorAndOwnershipRepoIdRoute
   '/bus-factor-and-ownership/$repoPath': typeof BusFactorAndOwnershipRepoPathRoute
+  '/codebase-health/$repoId': typeof CodebaseHealthRepoIdRoute
   '/codebase-health/$repoPath': typeof CodebaseHealthRepoPathRoute
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
   '/cross-repo-bus-factor-and-ownership/$projectId': typeof CrossRepoBusFactorAndOwnershipProjectIdRoute
   '/cross-repo-codebase-health/$projectId': typeof CrossRepoCodebaseHealthProjectIdRoute
   '/cross-repo-repository-evolution/$projectId': typeof CrossRepoRepositoryEvolutionProjectIdRoute
   '/cross-repo-social-network-analysis/$projectId': typeof CrossRepoSocialNetworkAnalysisProjectIdRoute
+  '/dashboard/$repoId': typeof DashboardRepoIdRoute
   '/dashboard/$repoPath': typeof DashboardRepoPathRoute
+  '/developer-analytics/$repoId': typeof DeveloperAnalyticsRepoIdRoute
   '/developer-analytics/$repoPath': typeof DeveloperAnalyticsRepoPathRoute
+  '/repository-evolution/$repoId': typeof RepositoryEvolutionRepoIdRoute
   '/repository-evolution/$repoPath': typeof RepositoryEvolutionRepoPathRoute
+  '/social-network-analysis/$repoId': typeof SocialNetworkAnalysisRepoIdRoute
   '/social-network-analysis/$repoPath': typeof SocialNetworkAnalysisRepoPathRoute
 }
 export interface FileRoutesByTo {
@@ -164,16 +210,22 @@ export interface FileRoutesByTo {
   '/projects': typeof ProjectsRoute
   '/repository-evolution': typeof RepositoryEvolutionRouteWithChildren
   '/social-network-analysis': typeof SocialNetworkAnalysisRouteWithChildren
+  '/bus-factor-and-ownership/$repoId': typeof BusFactorAndOwnershipRepoIdRoute
   '/bus-factor-and-ownership/$repoPath': typeof BusFactorAndOwnershipRepoPathRoute
+  '/codebase-health/$repoId': typeof CodebaseHealthRepoIdRoute
   '/codebase-health/$repoPath': typeof CodebaseHealthRepoPathRoute
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
   '/cross-repo-bus-factor-and-ownership/$projectId': typeof CrossRepoBusFactorAndOwnershipProjectIdRoute
   '/cross-repo-codebase-health/$projectId': typeof CrossRepoCodebaseHealthProjectIdRoute
   '/cross-repo-repository-evolution/$projectId': typeof CrossRepoRepositoryEvolutionProjectIdRoute
   '/cross-repo-social-network-analysis/$projectId': typeof CrossRepoSocialNetworkAnalysisProjectIdRoute
+  '/dashboard/$repoId': typeof DashboardRepoIdRoute
   '/dashboard/$repoPath': typeof DashboardRepoPathRoute
+  '/developer-analytics/$repoId': typeof DeveloperAnalyticsRepoIdRoute
   '/developer-analytics/$repoPath': typeof DeveloperAnalyticsRepoPathRoute
+  '/repository-evolution/$repoId': typeof RepositoryEvolutionRepoIdRoute
   '/repository-evolution/$repoPath': typeof RepositoryEvolutionRepoPathRoute
+  '/social-network-analysis/$repoId': typeof SocialNetworkAnalysisRepoIdRoute
   '/social-network-analysis/$repoPath': typeof SocialNetworkAnalysisRepoPathRoute
 }
 export interface FileRoutesById {
@@ -186,16 +238,22 @@ export interface FileRoutesById {
   '/projects': typeof ProjectsRoute
   '/repository-evolution': typeof RepositoryEvolutionRouteWithChildren
   '/social-network-analysis': typeof SocialNetworkAnalysisRouteWithChildren
+  '/bus-factor-and-ownership/$repoId': typeof BusFactorAndOwnershipRepoIdRoute
   '/bus-factor-and-ownership/$repoPath': typeof BusFactorAndOwnershipRepoPathRoute
+  '/codebase-health/$repoId': typeof CodebaseHealthRepoIdRoute
   '/codebase-health/$repoPath': typeof CodebaseHealthRepoPathRoute
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
   '/cross-repo-bus-factor-and-ownership/$projectId': typeof CrossRepoBusFactorAndOwnershipProjectIdRoute
   '/cross-repo-codebase-health/$projectId': typeof CrossRepoCodebaseHealthProjectIdRoute
   '/cross-repo-repository-evolution/$projectId': typeof CrossRepoRepositoryEvolutionProjectIdRoute
   '/cross-repo-social-network-analysis/$projectId': typeof CrossRepoSocialNetworkAnalysisProjectIdRoute
+  '/dashboard/$repoId': typeof DashboardRepoIdRoute
   '/dashboard/$repoPath': typeof DashboardRepoPathRoute
+  '/developer-analytics/$repoId': typeof DeveloperAnalyticsRepoIdRoute
   '/developer-analytics/$repoPath': typeof DeveloperAnalyticsRepoPathRoute
+  '/repository-evolution/$repoId': typeof RepositoryEvolutionRepoIdRoute
   '/repository-evolution/$repoPath': typeof RepositoryEvolutionRepoPathRoute
+  '/social-network-analysis/$repoId': typeof SocialNetworkAnalysisRepoIdRoute
   '/social-network-analysis/$repoPath': typeof SocialNetworkAnalysisRepoPathRoute
 }
 export interface FileRouteTypes {
@@ -209,16 +267,22 @@ export interface FileRouteTypes {
     | '/projects'
     | '/repository-evolution'
     | '/social-network-analysis'
+    | '/bus-factor-and-ownership/$repoId'
     | '/bus-factor-and-ownership/$repoPath'
+    | '/codebase-health/$repoId'
     | '/codebase-health/$repoPath'
     | '/cross-repo-analytics/$projectId'
     | '/cross-repo-bus-factor-and-ownership/$projectId'
     | '/cross-repo-codebase-health/$projectId'
     | '/cross-repo-repository-evolution/$projectId'
     | '/cross-repo-social-network-analysis/$projectId'
+    | '/dashboard/$repoId'
     | '/dashboard/$repoPath'
+    | '/developer-analytics/$repoId'
     | '/developer-analytics/$repoPath'
+    | '/repository-evolution/$repoId'
     | '/repository-evolution/$repoPath'
+    | '/social-network-analysis/$repoId'
     | '/social-network-analysis/$repoPath'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -230,16 +294,22 @@ export interface FileRouteTypes {
     | '/projects'
     | '/repository-evolution'
     | '/social-network-analysis'
+    | '/bus-factor-and-ownership/$repoId'
     | '/bus-factor-and-ownership/$repoPath'
+    | '/codebase-health/$repoId'
     | '/codebase-health/$repoPath'
     | '/cross-repo-analytics/$projectId'
     | '/cross-repo-bus-factor-and-ownership/$projectId'
     | '/cross-repo-codebase-health/$projectId'
     | '/cross-repo-repository-evolution/$projectId'
     | '/cross-repo-social-network-analysis/$projectId'
+    | '/dashboard/$repoId'
     | '/dashboard/$repoPath'
+    | '/developer-analytics/$repoId'
     | '/developer-analytics/$repoPath'
+    | '/repository-evolution/$repoId'
     | '/repository-evolution/$repoPath'
+    | '/social-network-analysis/$repoId'
     | '/social-network-analysis/$repoPath'
   id:
     | '__root__'
@@ -251,16 +321,22 @@ export interface FileRouteTypes {
     | '/projects'
     | '/repository-evolution'
     | '/social-network-analysis'
+    | '/bus-factor-and-ownership/$repoId'
     | '/bus-factor-and-ownership/$repoPath'
+    | '/codebase-health/$repoId'
     | '/codebase-health/$repoPath'
     | '/cross-repo-analytics/$projectId'
     | '/cross-repo-bus-factor-and-ownership/$projectId'
     | '/cross-repo-codebase-health/$projectId'
     | '/cross-repo-repository-evolution/$projectId'
     | '/cross-repo-social-network-analysis/$projectId'
+    | '/dashboard/$repoId'
     | '/dashboard/$repoPath'
+    | '/developer-analytics/$repoId'
     | '/developer-analytics/$repoPath'
+    | '/repository-evolution/$repoId'
     | '/repository-evolution/$repoPath'
+    | '/social-network-analysis/$repoId'
     | '/social-network-analysis/$repoPath'
   fileRoutesById: FileRoutesById
 }
@@ -345,11 +421,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SocialNetworkAnalysisRepoPathRouteImport
       parentRoute: typeof SocialNetworkAnalysisRoute
     }
+    '/social-network-analysis/$repoId': {
+      id: '/social-network-analysis/$repoId'
+      path: '/$repoId'
+      fullPath: '/social-network-analysis/$repoId'
+      preLoaderRoute: typeof SocialNetworkAnalysisRepoIdRouteImport
+      parentRoute: typeof SocialNetworkAnalysisRoute
+    }
     '/repository-evolution/$repoPath': {
       id: '/repository-evolution/$repoPath'
       path: '/$repoPath'
       fullPath: '/repository-evolution/$repoPath'
       preLoaderRoute: typeof RepositoryEvolutionRepoPathRouteImport
+      parentRoute: typeof RepositoryEvolutionRoute
+    }
+    '/repository-evolution/$repoId': {
+      id: '/repository-evolution/$repoId'
+      path: '/$repoId'
+      fullPath: '/repository-evolution/$repoId'
+      preLoaderRoute: typeof RepositoryEvolutionRepoIdRouteImport
       parentRoute: typeof RepositoryEvolutionRoute
     }
     '/developer-analytics/$repoPath': {
@@ -359,11 +449,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeveloperAnalyticsRepoPathRouteImport
       parentRoute: typeof DeveloperAnalyticsRoute
     }
+    '/developer-analytics/$repoId': {
+      id: '/developer-analytics/$repoId'
+      path: '/$repoId'
+      fullPath: '/developer-analytics/$repoId'
+      preLoaderRoute: typeof DeveloperAnalyticsRepoIdRouteImport
+      parentRoute: typeof DeveloperAnalyticsRoute
+    }
     '/dashboard/$repoPath': {
       id: '/dashboard/$repoPath'
       path: '/$repoPath'
       fullPath: '/dashboard/$repoPath'
       preLoaderRoute: typeof DashboardRepoPathRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/$repoId': {
+      id: '/dashboard/$repoId'
+      path: '/$repoId'
+      fullPath: '/dashboard/$repoId'
+      preLoaderRoute: typeof DashboardRepoIdRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/cross-repo-social-network-analysis/$projectId': {
@@ -408,6 +512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CodebaseHealthRepoPathRouteImport
       parentRoute: typeof CodebaseHealthRoute
     }
+    '/codebase-health/$repoId': {
+      id: '/codebase-health/$repoId'
+      path: '/$repoId'
+      fullPath: '/codebase-health/$repoId'
+      preLoaderRoute: typeof CodebaseHealthRepoIdRouteImport
+      parentRoute: typeof CodebaseHealthRoute
+    }
     '/bus-factor-and-ownership/$repoPath': {
       id: '/bus-factor-and-ownership/$repoPath'
       path: '/$repoPath'
@@ -415,14 +526,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusFactorAndOwnershipRepoPathRouteImport
       parentRoute: typeof BusFactorAndOwnershipRoute
     }
+    '/bus-factor-and-ownership/$repoId': {
+      id: '/bus-factor-and-ownership/$repoId'
+      path: '/$repoId'
+      fullPath: '/bus-factor-and-ownership/$repoId'
+      preLoaderRoute: typeof BusFactorAndOwnershipRepoIdRouteImport
+      parentRoute: typeof BusFactorAndOwnershipRoute
+    }
   }
 }
 
 interface BusFactorAndOwnershipRouteChildren {
+  BusFactorAndOwnershipRepoIdRoute: typeof BusFactorAndOwnershipRepoIdRoute
   BusFactorAndOwnershipRepoPathRoute: typeof BusFactorAndOwnershipRepoPathRoute
 }
 
 const BusFactorAndOwnershipRouteChildren: BusFactorAndOwnershipRouteChildren = {
+  BusFactorAndOwnershipRepoIdRoute: BusFactorAndOwnershipRepoIdRoute,
   BusFactorAndOwnershipRepoPathRoute: BusFactorAndOwnershipRepoPathRoute,
 }
 
@@ -432,10 +552,12 @@ const BusFactorAndOwnershipRouteWithChildren =
   )
 
 interface CodebaseHealthRouteChildren {
+  CodebaseHealthRepoIdRoute: typeof CodebaseHealthRepoIdRoute
   CodebaseHealthRepoPathRoute: typeof CodebaseHealthRepoPathRoute
 }
 
 const CodebaseHealthRouteChildren: CodebaseHealthRouteChildren = {
+  CodebaseHealthRepoIdRoute: CodebaseHealthRepoIdRoute,
   CodebaseHealthRepoPathRoute: CodebaseHealthRepoPathRoute,
 }
 
@@ -444,10 +566,12 @@ const CodebaseHealthRouteWithChildren = CodebaseHealthRoute._addFileChildren(
 )
 
 interface DashboardRouteChildren {
+  DashboardRepoIdRoute: typeof DashboardRepoIdRoute
   DashboardRepoPathRoute: typeof DashboardRepoPathRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardRepoIdRoute: DashboardRepoIdRoute,
   DashboardRepoPathRoute: DashboardRepoPathRoute,
 }
 
@@ -456,10 +580,12 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 )
 
 interface DeveloperAnalyticsRouteChildren {
+  DeveloperAnalyticsRepoIdRoute: typeof DeveloperAnalyticsRepoIdRoute
   DeveloperAnalyticsRepoPathRoute: typeof DeveloperAnalyticsRepoPathRoute
 }
 
 const DeveloperAnalyticsRouteChildren: DeveloperAnalyticsRouteChildren = {
+  DeveloperAnalyticsRepoIdRoute: DeveloperAnalyticsRepoIdRoute,
   DeveloperAnalyticsRepoPathRoute: DeveloperAnalyticsRepoPathRoute,
 }
 
@@ -467,10 +593,12 @@ const DeveloperAnalyticsRouteWithChildren =
   DeveloperAnalyticsRoute._addFileChildren(DeveloperAnalyticsRouteChildren)
 
 interface RepositoryEvolutionRouteChildren {
+  RepositoryEvolutionRepoIdRoute: typeof RepositoryEvolutionRepoIdRoute
   RepositoryEvolutionRepoPathRoute: typeof RepositoryEvolutionRepoPathRoute
 }
 
 const RepositoryEvolutionRouteChildren: RepositoryEvolutionRouteChildren = {
+  RepositoryEvolutionRepoIdRoute: RepositoryEvolutionRepoIdRoute,
   RepositoryEvolutionRepoPathRoute: RepositoryEvolutionRepoPathRoute,
 }
 
@@ -478,10 +606,12 @@ const RepositoryEvolutionRouteWithChildren =
   RepositoryEvolutionRoute._addFileChildren(RepositoryEvolutionRouteChildren)
 
 interface SocialNetworkAnalysisRouteChildren {
+  SocialNetworkAnalysisRepoIdRoute: typeof SocialNetworkAnalysisRepoIdRoute
   SocialNetworkAnalysisRepoPathRoute: typeof SocialNetworkAnalysisRepoPathRoute
 }
 
 const SocialNetworkAnalysisRouteChildren: SocialNetworkAnalysisRouteChildren = {
+  SocialNetworkAnalysisRepoIdRoute: SocialNetworkAnalysisRepoIdRoute,
   SocialNetworkAnalysisRepoPathRoute: SocialNetworkAnalysisRepoPathRoute,
 }
 

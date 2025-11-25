@@ -4,10 +4,12 @@ import { CodebaseHealth as CodebaseHealthComponent } from './CodebaseHealth';
 import { getCodebaseHealth, type CodebaseHealth as CodebaseHealthType } from '../api';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
+import { useApp } from '../context/AppContext';
 
 export function CodebaseHealthView() {
-  const params = useParams({ strict: false }) as { repoPath?: string };
-  const repoPath = params?.repoPath;
+  const params = useParams({ strict: false }) as { repoId?: string };
+  const repoId = params?.repoId;
+  const { repositories } = useApp();
   const [codebaseHealth, setCodebaseHealth] = useState<CodebaseHealthType | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -15,9 +17,13 @@ export function CodebaseHealthView() {
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
 
+  // Get repository name from ID
+  const repository = repoId ? repositories.find((r) => r.id === repoId) : null;
+  const repoName = repository?.name || '';
+
   const fetchHealth = useCallback(
     async (refresh: boolean = false) => {
-      if (!repoPath) {
+      if (!repoId) {
         setCodebaseHealth(null);
         return;
       }
@@ -27,7 +33,6 @@ export function CodebaseHealthView() {
         return;
       }
 
-      const decodedPath = decodeURIComponent(repoPath);
       isFetchingRef.current = true;
       setHealthLoading(true);
       setError(null);
@@ -40,7 +45,7 @@ export function CodebaseHealthView() {
       loadingNotificationIdRef.current = loadingId;
 
       try {
-        const data = await getCodebaseHealth(decodedPath, refresh);
+        const data = await getCodebaseHealth(repoId, refresh);
         setCodebaseHealth(data);
         // Remove loading notification and show success
         if (loadingNotificationIdRef.current) {
@@ -65,20 +70,12 @@ export function CodebaseHealthView() {
         isFetchingRef.current = false;
       }
     },
-    [repoPath, showNotification, removeNotification]
+    [repoId, showNotification, removeNotification]
   );
 
   useEffect(() => {
     fetchHealth(false);
   }, [fetchHealth]);
-
-  const decodedPath = repoPath ? decodeURIComponent(repoPath) : '';
-  // Extract repository name from path for cleaner display
-  const getRepoName = (path: string) => {
-    const parts = path.split('/');
-    return parts[parts.length - 1] || path;
-  };
-  const repoName = decodedPath ? getRepoName(decodedPath) : '';
 
   return (
     <>
@@ -87,11 +84,11 @@ export function CodebaseHealthView() {
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
             Codebase Health & Architecture Signals
           </h1>
-          {repoPath && codebaseHealth && (
+          {repoId && codebaseHealth && repoName && (
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{repoName}</p>
           )}
         </div>
-        {repoPath && (
+        {repoId && (
           <button
             onClick={() => fetchHealth(true)}
             disabled={healthLoading}

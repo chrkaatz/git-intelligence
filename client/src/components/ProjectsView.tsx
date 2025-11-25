@@ -25,7 +25,7 @@ export function ProjectsView() {
     const updatedRepos = await getRepositories();
     if (updatedRepos.length > 0) {
       const repo = updatedRepos[updatedRepos.length - 1];
-      navigate({ to: '/dashboard/$repoPath', params: { repoPath: encodeURIComponent(repo.path) } });
+      navigate({ to: '/dashboard/$repoId', params: { repoId: repo.id } });
     }
   };
 

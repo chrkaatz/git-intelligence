@@ -257,11 +257,19 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 });
 
 app.post('/cache/clear', async (req, res) => {
-  const { path } = req.body;
+  const { repoId } = req.body;
   try {
+    let path: string | undefined;
+    if (repoId) {
+      const repository = await getRepository(repoId);
+      if (!repository) {
+        return res.status(404).json({ error: 'Repository not found' });
+      }
+      path = repository.path;
+    }
     await clearCache(path);
     res.json({
-      message: path ? 'Cache cleared for project' : 'All cache cleared',
+      message: path ? 'Cache cleared for repository' : 'All cache cleared',
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to clear cache' });
@@ -269,14 +277,19 @@ app.post('/cache/clear', async (req, res) => {
 });
 
 app.get('/stats', async (req, res) => {
-  const { path, refresh } = req.query;
-  if (!path || typeof path !== 'string') {
-    return res.status(400).json({ error: 'Path is required' });
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
   }
   try {
+    // Resolve repoId to path
+    const repository = await getRepository(repoId);
+    if (!repository) {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
     // Use cache by default, unless refresh=true
     const useCache = refresh !== 'true';
-    const stats = await getStats(path, useCache);
+    const stats = await getStats(repository.path, useCache);
     res.json(stats);
   } catch (error) {
     console.error(error);
@@ -285,14 +298,19 @@ app.get('/stats', async (req, res) => {
 });
 
 app.get('/developer-analytics', async (req, res) => {
-  const { path, refresh } = req.query;
-  if (!path || typeof path !== 'string') {
-    return res.status(400).json({ error: 'Path is required' });
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
   }
   try {
+    // Resolve repoId to path
+    const repository = await getRepository(repoId);
+    if (!repository) {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
     // Use cache by default, unless refresh=true
     const useCache = refresh !== 'true';
-    const analytics = await getDeveloperAnalytics(path, useCache);
+    const analytics = await getDeveloperAnalytics(repository.path, useCache);
     res.json(analytics);
   } catch (error) {
     console.error(error);
@@ -317,14 +335,19 @@ app.get('/cross-repo-developer-analytics', async (req, res) => {
 });
 
 app.get('/codebase-health', async (req, res) => {
-  const { path, refresh } = req.query;
-  if (!path || typeof path !== 'string') {
-    return res.status(400).json({ error: 'Path is required' });
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
   }
   try {
+    // Resolve repoId to path
+    const repository = await getRepository(repoId);
+    if (!repository) {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
     // Use cache by default, unless refresh=true
     const useCache = refresh !== 'true';
-    const health = await getCodebaseHealth(path, useCache);
+    const health = await getCodebaseHealth(repository.path, useCache);
     res.json(health);
   } catch (error) {
     console.error(error);
@@ -349,14 +372,19 @@ app.get('/cross-repo-codebase-health', async (req, res) => {
 });
 
 app.get('/repository-evolution', async (req, res) => {
-  const { path, refresh } = req.query;
-  if (!path || typeof path !== 'string') {
-    return res.status(400).json({ error: 'Path is required' });
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
   }
   try {
+    // Resolve repoId to path
+    const repository = await getRepository(repoId);
+    if (!repository) {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
     // Use cache by default, unless refresh=true
     const useCache = refresh !== 'true';
-    const evolution = await getRepositoryEvolution(path, useCache);
+    const evolution = await getRepositoryEvolution(repository.path, useCache);
     res.json(evolution);
   } catch (error) {
     console.error(error);
@@ -381,14 +409,19 @@ app.get('/cross-repo-repository-evolution', async (req, res) => {
 });
 
 app.get('/bus-factor-and-ownership', async (req, res) => {
-  const { path, refresh } = req.query;
-  if (!path || typeof path !== 'string') {
-    return res.status(400).json({ error: 'Path is required' });
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
   }
   try {
+    // Resolve repoId to path
+    const repository = await getRepository(repoId);
+    if (!repository) {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
     // Use cache by default, unless refresh=true
     const useCache = refresh !== 'true';
-    const analytics = await getBusFactorAndOwnership(path, useCache);
+    const analytics = await getBusFactorAndOwnership(repository.path, useCache);
     res.json(analytics);
   } catch (error) {
     console.error(error);
@@ -415,22 +448,19 @@ app.get('/cross-repo-bus-factor-and-ownership', async (req, res) => {
 });
 
 app.get('/social-network-analysis', async (req, res) => {
-  const { path, refresh } = req.query;
-  if (!path || typeof path !== 'string') {
-    return res.status(400).json({ error: 'Path is required' });
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
   }
   try {
-    // Decode the path in case it's URL-encoded (Express should decode automatically, but handle both cases)
-    let decodedPath = path;
-    try {
-      decodedPath = decodeURIComponent(path);
-    } catch {
-      // If decoding fails, use the original path (it might already be decoded)
-      decodedPath = path;
+    // Resolve repoId to path
+    const repository = await getRepository(repoId);
+    if (!repository) {
+      return res.status(404).json({ error: 'Repository not found' });
     }
     // Use cache by default, unless refresh=true
     const useCache = refresh !== 'true';
-    const analysis = await getSocialNetworkAnalysis(decodedPath, useCache);
+    const analysis = await getSocialNetworkAnalysis(repository.path, useCache);
     res.json(analysis);
   } catch (error) {
     console.error(error);

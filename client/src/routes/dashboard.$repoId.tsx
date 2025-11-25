@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { DeveloperAnalyticsView } from '../components/DeveloperAnalyticsView';
+import { DashboardView } from '../components/DashboardView';
 import { RepositoryRouteWrapper } from '../components/RepositoryRouteWrapper';
 
-export const Route = createFileRoute('/developer-analytics/$repoPath')({
+export const Route = createFileRoute('/dashboard/$repoId')({
   component: () => (
     <RepositoryRouteWrapper>
-      <DeveloperAnalyticsView />
+      <DashboardView />
     </RepositoryRouteWrapper>
   ),
 });

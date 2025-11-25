@@ -4,10 +4,12 @@ import { DeveloperAnalytics as DeveloperAnalyticsComponent } from './DeveloperAn
 import { getDeveloperAnalytics, type DeveloperAnalytics as DeveloperAnalyticsType } from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
+import { useApp } from '../context/AppContext';
 
 export function DeveloperAnalyticsView() {
-  const params = useParams({ strict: false }) as { repoPath?: string };
-  const repoPath = params?.repoPath;
+  const params = useParams({ strict: false }) as { repoId?: string };
+  const repoId = params?.repoId;
+  const { repositories } = useApp();
   const [developerAnalytics, setDeveloperAnalytics] = useState<DeveloperAnalyticsType | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -15,8 +17,12 @@ export function DeveloperAnalyticsView() {
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
 
+  // Get repository name from ID
+  const repository = repoId ? repositories.find((r) => r.id === repoId) : null;
+  const repoName = repository?.name || '';
+
   useEffect(() => {
-    if (!repoPath) {
+    if (!repoId) {
       setDeveloperAnalytics(null);
       return;
     }
@@ -26,7 +32,6 @@ export function DeveloperAnalyticsView() {
       return;
     }
 
-    const decodedPath = decodeURIComponent(repoPath);
     const fetchAnalytics = async () => {
       isFetchingRef.current = true;
       setAnalyticsLoading(true);
@@ -41,7 +46,7 @@ export function DeveloperAnalyticsView() {
       loadingNotificationIdRef.current = loadingId;
 
       try {
-        const data = await getDeveloperAnalytics(decodedPath);
+        const data = await getDeveloperAnalytics(repoId);
         setDeveloperAnalytics(data);
         // Remove loading notification and show success
         if (loadingNotificationIdRef.current) {
@@ -65,15 +70,7 @@ export function DeveloperAnalyticsView() {
     };
 
     fetchAnalytics();
-  }, [repoPath]);
-
-  const decodedPath = repoPath ? decodeURIComponent(repoPath) : '';
-  // Extract repository name from path for cleaner display
-  const getRepoName = (path: string) => {
-    const parts = path.split('/');
-    return parts[parts.length - 1] || path;
-  };
-  const repoName = decodedPath ? getRepoName(decodedPath) : '';
+  }, [repoId, showNotification, removeNotification]);
 
   return (
     <>
@@ -81,7 +78,7 @@ export function DeveloperAnalyticsView() {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
           Developer Analytics
         </h1>
-        {repoPath && developerAnalytics && (
+        {repoId && developerAnalytics && repoName && (
           <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{repoName}</p>
         )}
       </div>

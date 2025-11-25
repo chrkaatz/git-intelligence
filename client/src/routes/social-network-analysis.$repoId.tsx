@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { DeveloperAnalyticsView } from '../components/DeveloperAnalyticsView';
+import { SocialNetworkAnalysisView } from '../components/SocialNetworkAnalysisView';
 import { RepositoryRouteWrapper } from '../components/RepositoryRouteWrapper';
 
-export const Route = createFileRoute('/developer-analytics/$repoPath')({
+export const Route = createFileRoute('/social-network-analysis/$repoId')({
   component: () => (
     <RepositoryRouteWrapper>
-      <DeveloperAnalyticsView />
+      <SocialNetworkAnalysisView />
     </RepositoryRouteWrapper>
   ),
 });

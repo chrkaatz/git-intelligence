@@ -7,20 +7,12 @@ import {
 } from '../api';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
-
-function getRepoName(path: string): string {
-  try {
-    const decoded = decodeURIComponent(path);
-    const parts = decoded.split(/[/\\]/);
-    return parts[parts.length - 1] || decoded;
-  } catch {
-    return path;
-  }
-}
+import { useApp } from '../context/AppContext';
 
 export function SocialNetworkAnalysisView() {
-  const params = useParams({ strict: false }) as { repoPath?: string };
-  const repoPath = params?.repoPath;
+  const params = useParams({ strict: false }) as { repoId?: string };
+  const repoId = params?.repoId;
+  const { repositories } = useApp();
   const [analysis, setAnalysis] = useState<SocialNetworkAnalysisType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,9 +20,13 @@ export function SocialNetworkAnalysisView() {
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
 
+  // Get repository name from ID
+  const repository = repoId ? repositories.find((r) => r.id === repoId) : null;
+  const repoName = repository?.name || '';
+
   const fetchAnalysis = useCallback(
     async (refresh: boolean = false) => {
-      if (!repoPath || isFetchingRef.current) return;
+      if (!repoId || isFetchingRef.current) return;
 
       isFetchingRef.current = true;
       setLoading(true);
@@ -43,7 +39,7 @@ export function SocialNetworkAnalysisView() {
       loadingNotificationIdRef.current = loadingId;
 
       try {
-        const data = await getSocialNetworkAnalysis(repoPath, refresh);
+        const data = await getSocialNetworkAnalysis(repoId, refresh);
         setAnalysis(data);
         // Remove loading notification and show success
         if (loadingNotificationIdRef.current) {
@@ -70,15 +66,12 @@ export function SocialNetworkAnalysisView() {
         loadingNotificationIdRef.current = null;
       }
     },
-    [repoPath, showNotification, removeNotification]
+    [repoId, showNotification, removeNotification]
   );
 
   useEffect(() => {
     fetchAnalysis(false);
   }, [fetchAnalysis]);
-
-  const decodedPath = repoPath ? decodeURIComponent(repoPath) : null;
-  const repoName = decodedPath ? getRepoName(decodedPath) : '';
 
   return (
     <>
@@ -87,11 +80,11 @@ export function SocialNetworkAnalysisView() {
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
             Social / Organizational Network Analysis
           </h1>
-          {repoPath && analysis && (
+          {repoId && analysis && repoName && (
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{repoName}</p>
           )}
         </div>
-        {repoPath && (
+        {repoId && (
           <button
             onClick={() => fetchAnalysis(true)}
             disabled={loading}

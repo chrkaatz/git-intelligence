@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { DeveloperAnalyticsView } from '../components/DeveloperAnalyticsView';
+import { CodebaseHealthView } from '../components/CodebaseHealthView';
 import { RepositoryRouteWrapper } from '../components/RepositoryRouteWrapper';
 
-export const Route = createFileRoute('/developer-analytics/$repoPath')({
+export const Route = createFileRoute('/codebase-health/$repoId')({
   component: () => (
     <RepositoryRouteWrapper>
-      <DeveloperAnalyticsView />
+      <CodebaseHealthView />
     </RepositoryRouteWrapper>
   ),
 });

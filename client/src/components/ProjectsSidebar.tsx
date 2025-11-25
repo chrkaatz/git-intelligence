@@ -36,21 +36,21 @@ export function ProjectsSidebar({
   const router = useRouterState();
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
 
-  // Get current repo path from URL
-  const currentRepoPath = (() => {
+  // Get current repo ID from URL
+  const currentRepoId = (() => {
     try {
       const location = router.location;
       // Try to get from route params if available
       const routeParams = (location as any).params || {};
-      if (routeParams.repoPath) {
-        return decodeURIComponent(routeParams.repoPath);
+      if (routeParams.repoId) {
+        return routeParams.repoId;
       }
       // Fallback: try to extract from pathname
       const pathMatch = location.pathname.match(
-        /\/(dashboard|developer-analytics|codebase-health|repository-evolution|bus-factor-and-ownership)\/(.+)$/
+        /\/(dashboard|developer-analytics|codebase-health|repository-evolution|bus-factor-and-ownership|social-network-analysis)\/([^/]+)$/
       );
       if (pathMatch && pathMatch[2]) {
-        return decodeURIComponent(pathMatch[2]);
+        return pathMatch[2];
       }
     } catch (e) {
       // Ignore errors
@@ -74,39 +74,43 @@ export function ProjectsSidebar({
     setExpandedProjects(newExpanded);
   };
 
-  const handleSelectRepository = (path: string) => {
-    const encodedPath = encodeURIComponent(path);
-    // Try to navigate to current route with repo path, or default to dashboard
+  const handleSelectRepository = (repo: { id: string; path: string }) => {
+    // Save the repository ID as last selected
+    if (typeof window !== 'undefined' && repo.id) {
+      localStorage.setItem('lastSelectedRepository', repo.id);
+    }
+
+    // Try to navigate to current route with repo ID, or default to dashboard
     const currentPath = router.location.pathname;
     if (currentPath.startsWith('/developer-analytics')) {
       navigate({
-        to: '/developer-analytics/$repoPath',
-        params: { repoPath: encodedPath },
+        to: '/developer-analytics/$repoId',
+        params: { repoId: repo.id },
       });
     } else if (currentPath.startsWith('/codebase-health')) {
       navigate({
-        to: '/codebase-health/$repoPath',
-        params: { repoPath: encodedPath },
+        to: '/codebase-health/$repoId',
+        params: { repoId: repo.id },
       });
     } else if (currentPath.startsWith('/repository-evolution')) {
       navigate({
-        to: '/repository-evolution/$repoPath',
-        params: { repoPath: encodedPath },
+        to: '/repository-evolution/$repoId',
+        params: { repoId: repo.id },
       });
     } else if (currentPath.startsWith('/bus-factor-and-ownership')) {
       navigate({
-        to: '/bus-factor-and-ownership/$repoPath',
-        params: { repoPath: encodedPath },
+        to: '/bus-factor-and-ownership/$repoId',
+        params: { repoId: repo.id },
       });
     } else if (currentPath.startsWith('/social-network-analysis')) {
       navigate({
-        to: '/social-network-analysis/$repoPath',
-        params: { repoPath: encodedPath },
+        to: '/social-network-analysis/$repoId',
+        params: { repoId: repo.id },
       });
     } else {
       navigate({
-        to: '/dashboard/$repoPath',
-        params: { repoPath: encodedPath },
+        to: '/dashboard/$repoId',
+        params: { repoId: repo.id },
       });
     }
   };
@@ -134,7 +138,7 @@ export function ProjectsSidebar({
         <div className="flex-1 flex flex-col gap-2 w-full items-center overflow-y-auto overflow-x-visible min-h-0 p-2">
           {projects.map((project) => {
             const projectRepos = projectRepoMap.get(project.id) || [];
-            const hasSelectedRepo = projectRepos.some((repo) => repo.path === currentRepoPath);
+            const hasSelectedRepo = projectRepos.some((repo) => repo.id === currentRepoId);
 
             return (
               <div key={project.id} className="flex flex-col items-center gap-1 shrink-0">
@@ -160,13 +164,13 @@ export function ProjectsSidebar({
 
                 {/* Repository avatars - show first 3 repos */}
                 {projectRepos.slice(0, 3).map((repo) => {
-                  const isSelected = repo.path === currentRepoPath;
+                  const isSelected = repo.id === currentRepoId;
                   return (
                     <button
                       key={repo.id}
                       type="button"
                       onClick={() => {
-                        handleSelectRepository(repo.path);
+                        handleSelectRepository(repo);
                         onExpand?.();
                       }}
                       className={classNames(
@@ -321,11 +325,11 @@ export function ProjectsSidebar({
               {isExpanded && (
                 <div className="ml-6 mt-1 space-y-1">
                   {projectRepos.map((repo) => {
-                    const isSelected = currentRepoPath === repo.path;
+                    const isSelected = currentRepoId === repo.id;
                     return (
                       <div
                         key={repo.id}
-                        onClick={() => handleSelectRepository(repo.path)}
+                        onClick={() => handleSelectRepository(repo)}
                         className={`group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all ${
                           isSelected
                             ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'

@@ -201,13 +201,20 @@ export const uploadRepository = async (
   return response.data;
 };
 
-export const getStats = async (path: string): Promise<GitStats> => {
-  const response = await api.get('/stats', { params: { path } });
+export const getStats = async (repoId: string, refresh?: boolean): Promise<GitStats> => {
+  const response = await api.get('/stats', {
+    params: { repoId, refresh: refresh ? 'true' : undefined },
+  });
   return response.data;
 };
 
-export const getDeveloperAnalytics = async (path: string): Promise<DeveloperAnalytics> => {
-  const response = await api.get('/developer-analytics', { params: { path } });
+export const getDeveloperAnalytics = async (
+  repoId: string,
+  refresh?: boolean
+): Promise<DeveloperAnalytics> => {
+  const response = await api.get('/developer-analytics', {
+    params: { repoId, refresh: refresh ? 'true' : undefined },
+  });
   return response.data;
 };
 
@@ -287,11 +294,11 @@ export interface CodebaseHealth {
 }
 
 export const getCodebaseHealth = async (
-  path: string,
+  repoId: string,
   refresh: boolean = false
 ): Promise<CodebaseHealth> => {
   const response = await api.get('/codebase-health', {
-    params: { path, refresh: refresh ? 'true' : 'false' },
+    params: { repoId, refresh: refresh ? 'true' : 'false' },
   });
   return response.data;
 };
@@ -391,11 +398,11 @@ export interface CrossRepoRepositoryEvolution {
 }
 
 export const getRepositoryEvolution = async (
-  path: string,
+  repoId: string,
   refresh?: boolean
 ): Promise<RepositoryEvolution> => {
   const response = await api.get('/repository-evolution', {
-    params: { path, refresh: refresh ? 'true' : undefined },
+    params: { repoId, refresh: refresh ? 'true' : undefined },
   });
   return response.data;
 };
@@ -498,11 +505,11 @@ export interface CrossRepoBusFactorAndOwnership {
 }
 
 export const getBusFactorAndOwnership = async (
-  path: string,
+  repoId: string,
   refresh?: boolean
 ): Promise<BusFactorAndOwnership> => {
   const response = await api.get('/bus-factor-and-ownership', {
-    params: { path, refresh: refresh ? 'true' : undefined },
+    params: { repoId, refresh: refresh ? 'true' : undefined },
   });
   return response.data;
 };
@@ -600,11 +607,11 @@ export interface CrossRepoSocialNetworkAnalysis {
 }
 
 export const getSocialNetworkAnalysis = async (
-  path: string,
+  repoId: string,
   refresh?: boolean
 ): Promise<SocialNetworkAnalysis> => {
   const response = await api.get('/social-network-analysis', {
-    params: { path, refresh: refresh ? 'true' : undefined },
+    params: { repoId, refresh: refresh ? 'true' : undefined },
   });
   return response.data;
 };

@@ -182,11 +182,12 @@ describe('API Functions', () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockStats });
 
       const { getStats } = await import('./api');
-      const result = await getStats('/path/to/repo');
+      const repoId = 'test-repo-id-123';
+      const result = await getStats(repoId);
 
       expect(result).toEqual(mockStats);
       expect(mockAxiosInstance.get).toHaveBeenCalledWith('/stats', {
-        params: { path: '/path/to/repo' },
+        params: { repoId: repoId },
       });
     });
   });
