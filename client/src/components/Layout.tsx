@@ -1,4 +1,6 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
+import React from 'react';
+import { ProjectsSidebar } from './ProjectsSidebar';
 import { Link, useRouterState } from '@tanstack/react-router';
 import {
   Dialog,
@@ -15,6 +17,8 @@ import {
   FolderOpenIcon,
   HeartIcon,
   ChartBarIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
@@ -57,7 +61,32 @@ interface LayoutProps {
 export default function Layout({ children, sidebar }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [projectsSidebarOpen, setProjectsSidebarOpen] = useState(false);
+
+  // Load collapsed state from localStorage
+  const [navSidebarCollapsed, setNavSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('navSidebarCollapsed');
+    return saved === 'true';
+  });
+  const [projectsSidebarCollapsed, setProjectsSidebarCollapsed] = useState(
+    () => {
+      const saved = localStorage.getItem('projectsSidebarCollapsed');
+      return saved === 'true';
+    }
+  );
+
   const router = useRouterState();
+
+  // Save collapsed state to localStorage
+  useEffect(() => {
+    localStorage.setItem('navSidebarCollapsed', String(navSidebarCollapsed));
+  }, [navSidebarCollapsed]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      'projectsSidebarCollapsed',
+      String(projectsSidebarCollapsed)
+    );
+  }, [projectsSidebarCollapsed]);
 
   const currentPath = router.location.pathname;
   // Map cross-repo routes to their base navigation items
@@ -157,17 +186,40 @@ export default function Layout({ children, sidebar }: LayoutProps) {
         </Dialog>
 
         {/* Static sidebar for desktop */}
-        <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-          <div className="relative flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 dark:border-white/10 dark:bg-gray-900 dark:before:pointer-events-none dark:before:absolute dark:before:inset-0 dark:before:bg-black/10">
-            <div className="relative flex h-16 shrink-0 items-center gap-x-3">
-              <img
-                src="/logo_alt.png"
-                alt="Git Intelligence"
-                className="h-8 w-auto rounded-lg"
-              />
-              <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
-                Git Intelligence
-              </h1>
+        <div
+          className={classNames(
+            'hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col transition-all duration-300',
+            navSidebarCollapsed ? 'lg:w-16' : 'lg:w-72'
+          )}>
+          <div
+            className={classNames(
+              'relative flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900 dark:before:pointer-events-none dark:before:absolute dark:before:inset-0 dark:before:bg-black/10 transition-all duration-300',
+              navSidebarCollapsed ? 'px-2 overflow-hidden' : 'px-6'
+            )}>
+            <div
+              className={classNames(
+                'relative flex h-16 shrink-0 items-center gap-x-3',
+                navSidebarCollapsed && 'justify-center'
+              )}>
+              {!navSidebarCollapsed && (
+                <>
+                  <img
+                    src="/logo_alt.png"
+                    alt="Git Intelligence"
+                    className="h-8 w-auto rounded-lg"
+                  />
+                  <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                    Git Intelligence
+                  </h1>
+                </>
+              )}
+              {navSidebarCollapsed && (
+                <img
+                  src="/logo_alt.png"
+                  alt="Git Intelligence"
+                  className="h-8 w-auto rounded-lg"
+                />
+              )}
             </div>
             <nav className="relative flex flex-1 flex-col">
               <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -183,7 +235,8 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                               isCurrent
                                 ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
                                 : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
-                              'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold'
+                              'group flex rounded-md p-2 text-sm/6 font-semibold',
+                              navSidebarCollapsed ? 'justify-center' : 'gap-x-3'
                             )}>
                             <item.icon
                               aria-hidden="true"
@@ -194,7 +247,7 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                                 'size-6 shrink-0'
                               )}
                             />
-                            {item.name}
+                            {!navSidebarCollapsed && item.name}
                           </Link>
                         </li>
                       );
@@ -231,18 +284,35 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                     ))}
                   </ul>
                 </li>*/}
-                <li className="-mx-6 mt-auto">
-                  <a
-                    href="#"
-                    className="flex items-center gap-x-4 px-6 py-3 text-sm/6 font-semibold text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-white/5">
-                    <img
-                      alt=""
-                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                      className="size-8 rounded-full bg-gray-50 outline -outline-offset-1 outline-black/5 dark:bg-gray-800 dark:outline-white/10"
-                    />
-                    <span className="sr-only">Your profile</span>
-                    <span aria-hidden="true">Tom Cook</span>
-                  </a>
+                {/* Collapse/Expand button */}
+                <li
+                  className={classNames(
+                    'mt-auto',
+                    navSidebarCollapsed ? '-mx-2 mb-2' : '-mx-6 mt-2 mb-2'
+                  )}>
+                  <button
+                    type="button"
+                    onClick={() => setNavSidebarCollapsed(!navSidebarCollapsed)}
+                    className={classNames(
+                      'flex items-center rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white transition-colors',
+                      navSidebarCollapsed
+                        ? 'w-full justify-center'
+                        : 'w-full gap-x-3'
+                    )}
+                    title={
+                      navSidebarCollapsed
+                        ? 'Expand sidebar'
+                        : 'Collapse sidebar'
+                    }>
+                    {navSidebarCollapsed ? (
+                      <ChevronRightIcon className="size-6 shrink-0" />
+                    ) : (
+                      <>
+                        <ChevronLeftIcon className="size-6 shrink-0" />
+                        <span>Collapse</span>
+                      </>
+                    )}
+                  </button>
                 </li>
               </ul>
             </nav>
@@ -320,8 +390,22 @@ export default function Layout({ children, sidebar }: LayoutProps) {
           </Dialog>
         )}
 
-        <main className="lg:pl-72">
-          <div className="xl:pl-96">
+        <main
+          className={classNames(
+            'transition-all duration-300',
+            navSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72'
+          )}>
+          <div
+            className={classNames(
+              'transition-all duration-300',
+              !sidebar || projectsSidebarCollapsed
+                ? navSidebarCollapsed
+                  ? 'xl:pl-32'
+                  : 'xl:pl-[22rem]'
+                : navSidebarCollapsed
+                  ? 'xl:pl-[28rem]'
+                  : 'xl:pl-[42rem]'
+            )}>
             <div className="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
               {/* Floating button for projects sidebar on lg screens (not xl) */}
               {sidebar && (
@@ -343,8 +427,32 @@ export default function Layout({ children, sidebar }: LayoutProps) {
 
         {/* Projects sidebar for desktop (xl screens) */}
         {sidebar && (
-          <aside className="fixed inset-y-0 left-72 hidden w-96 overflow-y-auto border-r border-gray-200 px-4 py-6 sm:px-6 lg:px-8 xl:block dark:border-white/10">
-            {sidebar}
+          <aside
+            className={classNames(
+              'fixed inset-y-0 hidden overflow-y-auto border-r border-gray-200 dark:border-white/10 transition-all duration-300 xl:block',
+              navSidebarCollapsed ? 'left-16' : 'left-72',
+              projectsSidebarCollapsed
+                ? 'w-16 px-2'
+                : 'w-96 px-4 py-6 sm:px-6 lg:px-8'
+            )}>
+            <div className="relative h-full">
+              {React.isValidElement(sidebar) && sidebar.type === ProjectsSidebar
+                ? React.cloneElement(
+                    sidebar as React.ReactElement<{
+                      onCollapse?: () => void;
+                      showCollapseButton?: boolean;
+                      isCollapsed?: boolean;
+                      onExpand?: () => void;
+                    }>,
+                    {
+                      onCollapse: () => setProjectsSidebarCollapsed(true),
+                      showCollapseButton: !projectsSidebarCollapsed,
+                      isCollapsed: projectsSidebarCollapsed,
+                      onExpand: () => setProjectsSidebarCollapsed(false),
+                    }
+                  )
+                : sidebar}
+            </div>
           </aside>
         )}
       </div>
