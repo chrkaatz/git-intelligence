@@ -8,7 +8,7 @@ interface BaseRouteRedirectProps {
 
 /**
  * Component that redirects to the last selected repository if available
- * Used in base routes (without repoPath parameter)
+ * Used in base routes (without repoId parameter)
  */
 export function BaseRouteRedirect({ targetRoute, children }: BaseRouteRedirectProps) {
   const navigate = useNavigate();

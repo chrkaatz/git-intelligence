@@ -16,8 +16,8 @@ import { useNavigate } from '@tanstack/react-router';
 interface ProjectsListProps {
   projects: Project[];
   repositories: Repository[];
-  currentRepoPath: string;
-  onSelectRepository: (path: string) => void;
+  currentRepoId: string;
+  onSelectRepository: (repoId: string) => void;
   onDeleteProject: (id: string, e: React.MouseEvent) => void;
   onDeleteRepository: (id: string, e: React.MouseEvent) => void;
   onAddProject: () => void;
@@ -27,7 +27,7 @@ interface ProjectsListProps {
 export function ProjectsList({
   projects,
   repositories,
-  currentRepoPath,
+  currentRepoId,
   onSelectRepository,
   onDeleteProject,
   onDeleteRepository,
@@ -175,7 +175,7 @@ export function ProjectsList({
                   <div className="divide-y divide-gray-200 dark:divide-gray-700">
                     {hasRepos ? (
                       projectRepos.map((repo) => {
-                        const isSelected = currentRepoPath === repo.path;
+                        const isSelected = currentRepoId === repo.id;
                         return (
                           <div
                             key={repo.id}
@@ -186,7 +186,7 @@ export function ProjectsList({
                             <div className="flex items-center justify-between">
                               <div
                                 className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-                                onClick={() => onSelectRepository(repo.path)}
+                                onClick={() => onSelectRepository(repo.id)}
                               >
                                 <FolderGit2
                                   className={`w-4 h-4 shrink-0 ${
@@ -217,7 +217,7 @@ export function ProjectsList({
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    onSelectRepository(repo.path);
+                                    onSelectRepository(repo.id);
                                   }}
                                   className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
                                   title="Open Repository"

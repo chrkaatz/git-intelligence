@@ -58,12 +58,16 @@ export function ProjectsView() {
     }
   };
 
-  const handleSelectRepository = (path: string) => {
-    navigate({ to: '/dashboard/$repoPath', params: { repoPath: encodeURIComponent(path) } });
+  const handleSelectRepository = (repoId: string) => {
+    // Save the repository ID as last selected
+    if (typeof window !== 'undefined' && repoId) {
+      localStorage.setItem('lastSelectedRepository', repoId);
+    }
+    navigate({ to: '/dashboard/$repoId', params: { repoId } });
   };
 
-  // Get current repo path from URL if on dashboard/developer-analytics
-  const currentRepoPath = '';
+  // Get current repo ID from URL
+  const currentRepoId = '';
 
   return (
     <>
@@ -137,7 +141,7 @@ export function ProjectsView() {
       <ProjectsList
         projects={projects}
         repositories={repositories}
-        currentRepoPath={currentRepoPath}
+        currentRepoId={currentRepoId}
         onSelectRepository={handleSelectRepository}
         onDeleteProject={handleDeleteProjectClick}
         onDeleteRepository={handleDeleteRepositoryClick}
