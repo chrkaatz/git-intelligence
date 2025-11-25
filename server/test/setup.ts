@@ -19,4 +19,3 @@ afterEach(() => {
   console.info = originalInfo;
   console.debug = originalDebug;
 });
-
