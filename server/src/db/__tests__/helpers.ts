@@ -8,4 +8,3 @@ export function createTestDb(initialData?: Partial<DatabaseSchema>): Low<Databas
   const db = new Low(adapter, { ...defaultData, ...initialData });
   return db;
 }
-

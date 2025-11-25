@@ -1,4 +1,10 @@
-import type { AuthorData, LongitudinalPatterns, AuthorActivityOverTime, OnboardingData, DormancyData } from './types';
+import type {
+  AuthorData,
+  LongitudinalPatterns,
+  AuthorActivityOverTime,
+  OnboardingData,
+  DormancyData,
+} from './types';
 
 // Helper function to format week string (YYYY-WW)
 export function formatWeek(date: Date): string {
@@ -6,7 +12,7 @@ export function formatWeek(date: Date): string {
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
   return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
 }
 
@@ -53,7 +59,7 @@ export function nameSimilarity(name1: string, name2: string): number {
   if (longer.length === 0) return 1.0;
 
   const distance = levenshteinDistance(n1, n2);
-  return 1 - (distance / longer.length);
+  return 1 - distance / longer.length;
 }
 
 // Simple Levenshtein distance calculation
@@ -152,7 +158,7 @@ export function mergeAuthorsBySimilarity(
       }
       existing.emails.add(author.email);
       if (author.emails) {
-        author.emails.forEach(email => existing.emails!.add(email));
+        author.emails.forEach((email) => existing.emails!.add(email));
       }
     }
   });
@@ -221,7 +227,7 @@ export function mergeAuthorsBySimilarity(
           author1.emails = new Set([author1.email]);
         }
         if (author2.emails) {
-          author2.emails.forEach(email => author1.emails!.add(email));
+          author2.emails.forEach((email) => author1.emails!.add(email));
         }
         author1.emails.add(author2.email);
 
@@ -231,7 +237,7 @@ export function mergeAuthorsBySimilarity(
   }
 
   // Remove merged authors
-  toRemove.forEach(key => merged.delete(key));
+  toRemove.forEach((key) => merged.delete(key));
 
   return merged;
 }
@@ -245,23 +251,26 @@ export function calculateLongitudinalPatterns(
   const INACTIVE_THRESHOLD_DAYS = 365; // 1 year
 
   // 1. Author Activity Over Time
-  const authorActivityMap = new Map<string, {
-    weekly: Map<string, number>;
-    monthly: Map<string, number>;
-  }>();
+  const authorActivityMap = new Map<
+    string,
+    {
+      weekly: Map<string, number>;
+      monthly: Map<string, number>;
+    }
+  >();
 
   // Create a map from any email to the canonical author
   const emailToAuthor = new Map<string, AuthorData>();
   authors.forEach((author, normalizedEmail) => {
     // Map all known emails to this author
-    author.emails.forEach(email => {
+    author.emails.forEach((email) => {
       emailToAuthor.set(normalizeEmail(email), author);
     });
     // Also map the normalized key
     emailToAuthor.set(normalizedEmail, author);
   });
 
-  allCommits.forEach(commit => {
+  allCommits.forEach((commit) => {
     const date = commit.date instanceof Date ? commit.date : new Date(commit.date);
     const normalizedEmail = normalizeEmail(commit.authorEmail);
 
@@ -316,7 +325,7 @@ export function calculateLongitudinalPatterns(
   // Group by month for onboarding curve
   const onboardingByMonth = new Map<string, { date: Date; authorNames: Set<string> }>();
 
-  Array.from(authors.values()).forEach(author => {
+  Array.from(authors.values()).forEach((author) => {
     const month = formatMonth(author.firstCommit);
     if (!onboardingByMonth.has(month)) {
       onboardingByMonth.set(month, {
@@ -337,7 +346,7 @@ export function calculateLongitudinalPatterns(
 
   // 3. Dormancy Detection
   const dormancyDetection: DormancyData[] = Array.from(authors.values())
-    .map(author => {
+    .map((author) => {
       const daysSinceLastCommit = Math.floor(
         (now.getTime() - author.lastCommit.getTime()) / (1000 * 60 * 60 * 24)
       );
@@ -369,4 +378,3 @@ export function calculateLongitudinalPatterns(
     dormancyDetection,
   };
 }
-

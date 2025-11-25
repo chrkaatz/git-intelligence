@@ -1,15 +1,31 @@
 import { useState } from 'react';
-import { LineChart, Line, ComposedChart, Area, AreaChart, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  Area,
+  AreaChart,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import type { CrossRepoRepositoryEvolution as CrossRepoRepositoryEvolutionType } from '../api';
-import { GitBranch, Activity, TrendingUp, RefreshCw, Zap, Tag, Link2 } from 'lucide-react';
+import { GitBranch, Activity, TrendingUp, RefreshCw, Tag, Link2 } from 'lucide-react';
 
 interface CrossRepoRepositoryEvolutionProps {
   evolution: CrossRepoRepositoryEvolutionType;
   loading?: boolean;
 }
 
-export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRepositoryEvolutionProps) {
-  const [selectedSection, setSelectedSection] = useState<'overview' | 'synchronization' | 'repos'>('overview');
+export function CrossRepoRepositoryEvolution({
+  evolution,
+  loading,
+}: CrossRepoRepositoryEvolutionProps) {
+  const [selectedSection, setSelectedSection] = useState<'overview' | 'synchronization' | 'repos'>(
+    'overview'
+  );
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
 
   if (loading) {
@@ -21,21 +37,22 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
   }
 
   if (!evolution || evolution.totalRepos === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        No repository data available.
-      </div>
-    );
+    return <div className="text-center py-12 text-gray-500">No repository data available.</div>;
   }
 
   // Aggregate metrics across all repos
   const totalCommits = evolution.repositories.reduce((sum, r) => sum + r.evolution.totalCommits, 0);
-  const totalReleases = evolution.repositories.reduce((sum, r) => sum + r.evolution.totalReleases, 0);
-  const totalRefactors = evolution.repositories.reduce((sum, r) => sum + r.evolution.refactorCount, 0);
-  const avgCommitsPerDay = evolution.repositories.reduce((sum, r) => sum + r.evolution.averageCommitsPerDay, 0) / evolution.repositories.length;
+  const totalReleases = evolution.repositories.reduce(
+    (sum, r) => sum + r.evolution.totalReleases,
+    0
+  );
+  const totalRefactors = evolution.repositories.reduce(
+    (sum, r) => sum + r.evolution.refactorCount,
+    0
+  );
 
   // Prepare synchronization data
-  const syncData = evolution.synchronization.map(sync => ({
+  const syncData = evolution.synchronization.map((sync) => ({
     date: sync.date,
     repoCount: sync.repos.length,
     repos: sync.repos,
@@ -44,8 +61,8 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
 
   // Prepare aggregated commit frequency (sum across all repos)
   const commitFreqMap = new Map<string, number>();
-  evolution.repositories.forEach(repo => {
-    repo.evolution.commitFrequency.forEach(cf => {
+  evolution.repositories.forEach((repo) => {
+    repo.evolution.commitFrequency.forEach((cf) => {
       commitFreqMap.set(cf.date, (commitFreqMap.get(cf.date) || 0) + cf.commits);
     });
   });
@@ -60,8 +77,12 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Repositories</p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{evolution.totalRepos}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Repositories
+              </p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
+                {evolution.totalRepos}
+              </p>
             </div>
             <GitBranch className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
@@ -69,8 +90,12 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Commits</p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{totalCommits.toLocaleString()}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Total Commits
+              </p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
+                {totalCommits.toLocaleString()}
+              </p>
             </div>
             <Activity className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
@@ -78,8 +103,12 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Releases</p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{totalReleases}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Total Releases
+              </p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
+                {totalReleases}
+              </p>
             </div>
             <Tag className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
@@ -87,8 +116,12 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Refactors</p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{totalRefactors}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Total Refactors
+              </p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
+                {totalRefactors}
+              </p>
             </div>
             <RefreshCw className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
@@ -103,7 +136,8 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
             selectedSection === 'overview'
               ? 'bg-indigo-600 text-white dark:bg-indigo-500'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}>
+          }`}
+        >
           <TrendingUp className="w-4 h-4 inline mr-2" />
           Overview
         </button>
@@ -113,7 +147,8 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
             selectedSection === 'synchronization'
               ? 'bg-indigo-600 text-white dark:bg-indigo-500'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}>
+          }`}
+        >
           <Link2 className="w-4 h-4 inline mr-2" />
           Synchronization
         </button>
@@ -123,7 +158,8 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
             selectedSection === 'repos'
               ? 'bg-indigo-600 text-white dark:bg-indigo-500'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}>
+          }`}
+        >
           <GitBranch className="w-4 h-4 inline mr-2" />
           Per-Repository
         </button>
@@ -144,7 +180,10 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <ResponsiveContainer width="100%" height={400}>
               <AreaChart data={aggregatedCommitFrequency}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-gray-300 dark:stroke-gray-700"
+                />
                 <XAxis
                   dataKey="date"
                   tick={{ fill: 'currentColor', fontSize: 12 }}
@@ -153,7 +192,10 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
                   textAnchor="end"
                   height={100}
                 />
-                <YAxis tick={{ fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+                <YAxis
+                  tick={{ fill: 'currentColor' }}
+                  className="text-gray-600 dark:text-gray-400"
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'var(--tw-color-gray-800)',
@@ -192,7 +234,10 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
               <div className="space-y-4">
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart data={syncData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-gray-300 dark:stroke-gray-700"
+                    />
                     <XAxis
                       dataKey="date"
                       tick={{ fill: 'currentColor', fontSize: 12 }}
@@ -201,7 +246,10 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
                       textAnchor="end"
                       height={100}
                     />
-                    <YAxis tick={{ fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+                    <YAxis
+                      tick={{ fill: 'currentColor' }}
+                      className="text-gray-600 dark:text-gray-400"
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'var(--tw-color-gray-800)',
@@ -219,27 +267,32 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
                     Synchronization Events (dates with multiple repos active)
                   </h4>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {syncData.slice(-30).reverse().map((sync, idx) => (
-                      <div
-                        key={idx}
-                        className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {new Date(sync.date).toLocaleDateString()}
+                    {syncData
+                      .slice(-30)
+                      .reverse()
+                      .map((sync, idx) => (
+                        <div
+                          key={idx}
+                          className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                        >
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {new Date(sync.date).toLocaleDateString()}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {sync.repoCount} repositories active, {sync.totalCommits} total commits
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {sync.repos.map((repo, rIdx) => (
+                              <span
+                                key={rIdx}
+                                className="text-xs px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded"
+                              >
+                                {repo}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {sync.repoCount} repositories active, {sync.totalCommits} total commits
-                        </div>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {sync.repos.map((repo, rIdx) => (
-                            <span
-                              key={rIdx}
-                              className="text-xs px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded">
-                              {repo}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               </div>
@@ -267,17 +320,22 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Repository List */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Repositories</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                Repositories
+              </h3>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {evolution.repositories.map((repo, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setSelectedRepo(selectedRepo === repo.repoName ? null : repo.repoName)}
+                    onClick={() =>
+                      setSelectedRepo(selectedRepo === repo.repoName ? null : repo.repoName)
+                    }
                     className={`w-full text-left p-3 rounded-lg border transition-colors ${
                       selectedRepo === repo.repoName
                         ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-700'
                         : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}>
+                    }`}
+                  >
                     <div className="font-medium text-gray-900 dark:text-white">{repo.repoName}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {repo.evolution.totalCommits} commits, {repo.evolution.totalReleases} releases
@@ -291,11 +349,13 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
               {selectedRepo ? (
                 (() => {
-                  const repo = evolution.repositories.find(r => r.repoName === selectedRepo);
+                  const repo = evolution.repositories.find((r) => r.repoName === selectedRepo);
                   if (!repo) return null;
                   return (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">{repo.repoName}</h3>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                        {repo.repoName}
+                      </h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded">
                           <div className="text-xs text-gray-500 dark:text-gray-400">Commits</div>
@@ -310,7 +370,9 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
                           </div>
                         </div>
                         <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded">
-                          <div className="text-xs text-gray-500 dark:text-gray-400">Avg Commits/Day</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            Avg Commits/Day
+                          </div>
                           <div className="text-lg font-semibold text-gray-900 dark:text-white">
                             {repo.evolution.averageCommitsPerDay.toFixed(1)}
                           </div>
@@ -328,13 +390,19 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
                         </h4>
                         <ResponsiveContainer width="100%" height={200}>
                           <AreaChart data={repo.evolution.commitFrequency.slice(-30)}>
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              className="stroke-gray-300 dark:stroke-gray-700"
+                            />
                             <XAxis
                               dataKey="date"
                               tick={{ fill: 'currentColor', fontSize: 10 }}
                               className="text-gray-600 dark:text-gray-400"
                             />
-                            <YAxis tick={{ fill: 'currentColor', fontSize: 10 }} className="text-gray-600 dark:text-gray-400" />
+                            <YAxis
+                              tick={{ fill: 'currentColor', fontSize: 10 }}
+                              className="text-gray-600 dark:text-gray-400"
+                            />
                             <Tooltip
                               contentStyle={{
                                 backgroundColor: 'var(--tw-color-gray-800)',
@@ -367,4 +435,3 @@ export function CrossRepoRepositoryEvolution({ evolution, loading }: CrossRepoRe
     </div>
   );
 }
-

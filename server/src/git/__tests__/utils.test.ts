@@ -269,16 +269,13 @@ describe('utils', () => {
         revertCommits: 1,
       });
 
-      const allCommits = [
-        { authorName: 'Test User', authorEmail: email, date: oldDate },
-      ];
+      const allCommits = [{ authorName: 'Test User', authorEmail: email, date: oldDate }];
 
       const patterns = calculateLongitudinalPatterns(authors, allCommits);
 
-      const dormancy = patterns.dormancyDetection.find(d => d.authorEmail === email);
+      const dormancy = patterns.dormancyDetection.find((d) => d.authorEmail === email);
       expect(dormancy).toBeDefined();
       expect(dormancy?.status).toBe('dormant');
     });
   });
 });
-

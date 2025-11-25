@@ -32,10 +32,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       setError(null);
-      const [projectList, repoList] = await Promise.all([
-        getProjects(),
-        getRepositories(),
-      ]);
+      const [projectList, repoList] = await Promise.all([getProjects(), getRepositories()]);
       setProjects(projectList);
       setRepositories(repoList);
     } catch (err) {
@@ -88,7 +85,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         handleAddProject,
         handleDeleteProject,
         handleDeleteRepository,
-      }}>
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
@@ -101,4 +99,3 @@ export function useApp() {
   }
   return context;
 }
-

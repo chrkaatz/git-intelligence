@@ -15,55 +15,58 @@ export function CodebaseHealthView() {
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
 
-  const fetchHealth = useCallback(async (refresh: boolean = false) => {
-    if (!repoPath) {
-      setCodebaseHealth(null);
-      return;
-    }
-
-    // Prevent duplicate fetches
-    if (isFetchingRef.current) {
-      return;
-    }
-
-    const decodedPath = decodeURIComponent(repoPath);
-    isFetchingRef.current = true;
-    setHealthLoading(true);
-    setError(null);
-
-    // Show loading notification
-    const message = refresh
-      ? 'Recalculating codebase health metrics... This may take a moment.'
-      : 'Calculating codebase health metrics... This may take a moment.';
-    const loadingId = showNotification('loading', message, 0);
-    loadingNotificationIdRef.current = loadingId;
-
-    try {
-      const data = await getCodebaseHealth(decodedPath, refresh);
-      setCodebaseHealth(data);
-      // Remove loading notification and show success
-      if (loadingNotificationIdRef.current) {
-        removeNotification(loadingNotificationIdRef.current);
-        loadingNotificationIdRef.current = null;
+  const fetchHealth = useCallback(
+    async (refresh: boolean = false) => {
+      if (!repoPath) {
+        setCodebaseHealth(null);
+        return;
       }
-      const successMessage = refresh
-        ? 'Codebase health metrics recalculated successfully!'
-        : 'Codebase health metrics calculated successfully!';
-      showNotification('success', successMessage, 3000);
-    } catch (err) {
-      const errorMessage = 'Failed to load codebase health metrics';
-      setError(errorMessage);
-      // Remove loading notification and show error
-      if (loadingNotificationIdRef.current) {
-        removeNotification(loadingNotificationIdRef.current);
-        loadingNotificationIdRef.current = null;
+
+      // Prevent duplicate fetches
+      if (isFetchingRef.current) {
+        return;
       }
-      showNotification('error', errorMessage, 5000);
-    } finally {
-      setHealthLoading(false);
-      isFetchingRef.current = false;
-    }
-  }, [repoPath, showNotification, removeNotification]);
+
+      const decodedPath = decodeURIComponent(repoPath);
+      isFetchingRef.current = true;
+      setHealthLoading(true);
+      setError(null);
+
+      // Show loading notification
+      const message = refresh
+        ? 'Recalculating codebase health metrics... This may take a moment.'
+        : 'Calculating codebase health metrics... This may take a moment.';
+      const loadingId = showNotification('loading', message, 0);
+      loadingNotificationIdRef.current = loadingId;
+
+      try {
+        const data = await getCodebaseHealth(decodedPath, refresh);
+        setCodebaseHealth(data);
+        // Remove loading notification and show success
+        if (loadingNotificationIdRef.current) {
+          removeNotification(loadingNotificationIdRef.current);
+          loadingNotificationIdRef.current = null;
+        }
+        const successMessage = refresh
+          ? 'Codebase health metrics recalculated successfully!'
+          : 'Codebase health metrics calculated successfully!';
+        showNotification('success', successMessage, 3000);
+      } catch (err) {
+        const errorMessage = 'Failed to load codebase health metrics';
+        setError(errorMessage);
+        // Remove loading notification and show error
+        if (loadingNotificationIdRef.current) {
+          removeNotification(loadingNotificationIdRef.current);
+          loadingNotificationIdRef.current = null;
+        }
+        showNotification('error', errorMessage, 5000);
+      } finally {
+        setHealthLoading(false);
+        isFetchingRef.current = false;
+      }
+    },
+    [repoPath, showNotification, removeNotification]
+  );
 
   useEffect(() => {
     fetchHealth(false);
@@ -85,16 +88,15 @@ export function CodebaseHealthView() {
             Codebase Health & Architecture Signals
           </h1>
           {repoPath && codebaseHealth && (
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">
-              {repoName}
-            </p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{repoName}</p>
           )}
         </div>
         {repoPath && (
           <button
             onClick={() => fetchHealth(true)}
             disabled={healthLoading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+          >
             <RefreshCw className={`w-4 h-4 ${healthLoading ? 'animate-spin' : ''}`} />
             {healthLoading ? 'Recalculating...' : 'Recalculate'}
           </button>
@@ -125,4 +127,3 @@ export function CodebaseHealthView() {
     </>
   );
 }
-

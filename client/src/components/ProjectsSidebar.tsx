@@ -31,17 +31,10 @@ export function ProjectsSidebar({
   isCollapsed = false,
   onExpand,
 }: ProjectsSidebarProps) {
-  const {
-    projects,
-    repositories,
-    handleDeleteProject,
-    handleDeleteRepository,
-  } = useApp();
+  const { projects, repositories, handleDeleteProject, handleDeleteRepository } = useApp();
   const navigate = useNavigate();
   const router = useRouterState();
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
-    new Set()
-  );
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
 
   // Get current repo path from URL
   const currentRepoPath = (() => {
@@ -133,21 +126,18 @@ export function ProjectsSidebar({
           type="button"
           onClick={onExpand}
           className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors shrink-0"
-          title="Expand projects">
+          title="Expand projects"
+        >
           <ChevronRight className="w-4 h-4" />
         </button>
 
         <div className="flex-1 flex flex-col gap-2 w-full items-center overflow-y-auto overflow-x-visible min-h-0 p-2">
           {projects.map((project) => {
             const projectRepos = projectRepoMap.get(project.id) || [];
-            const hasSelectedRepo = projectRepos.some(
-              (repo) => repo.path === currentRepoPath
-            );
+            const hasSelectedRepo = projectRepos.some((repo) => repo.path === currentRepoPath);
 
             return (
-              <div
-                key={project.id}
-                className="flex flex-col items-center gap-1 shrink-0">
+              <div key={project.id} className="flex flex-col items-center gap-1 shrink-0">
                 {/* Project avatar */}
                 <button
                   type="button"
@@ -158,7 +148,8 @@ export function ProjectsSidebar({
                       ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
                   )}
-                  title={project.name}>
+                  title={project.name}
+                >
                   <FolderOpen className="w-4 h-4" />
                   {projectRepos.length > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 bg-indigo-600 text-white text-[9px] rounded-full w-3.5 h-3.5 flex items-center justify-center font-semibold leading-none">
@@ -168,7 +159,7 @@ export function ProjectsSidebar({
                 </button>
 
                 {/* Repository avatars - show first 3 repos */}
-                {projectRepos.slice(0, 3).map((repo, idx) => {
+                {projectRepos.slice(0, 3).map((repo) => {
                   const isSelected = repo.path === currentRepoPath;
                   return (
                     <button
@@ -184,7 +175,8 @@ export function ProjectsSidebar({
                           ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 ring-1 ring-blue-500'
                           : 'bg-gray-50 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:hover:bg-gray-700'
                       )}
-                      title={repo.name}>
+                      title={repo.name}
+                    >
                       <FolderGit2 className="w-3.5 h-3.5" />
                     </button>
                   );
@@ -202,7 +194,8 @@ export function ProjectsSidebar({
         <Link
           to="/projects"
           className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors shrink-0"
-          title="Add Project">
+          title="Add Project"
+        >
           <Plus className="w-4 h-4" />
         </Link>
       </div>
@@ -213,23 +206,23 @@ export function ProjectsSidebar({
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Projects
-        </h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Projects</h2>
         <div className="flex items-center gap-2">
           {showCollapseButton && onCollapse && (
             <button
               type="button"
               onClick={onCollapse}
               className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-              title="Collapse projects">
+              title="Collapse projects"
+            >
               <ChevronLeft className="w-5 h-5" />
             </button>
           )}
           <Link
             to="/projects"
             className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-            title="Add Project">
+            title="Add Project"
+          >
             <Plus className="w-5 h-5" />
           </Link>
         </div>
@@ -245,7 +238,8 @@ export function ProjectsSidebar({
               {/* Project Header */}
               <div
                 className="group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-white/5"
-                onClick={() => toggleProject(project.id)}>
+                onClick={() => toggleProject(project.id)}
+              >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   {isExpanded ? (
                     <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
@@ -272,7 +266,8 @@ export function ProjectsSidebar({
                           });
                         }}
                         className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 rounded transition-all"
-                        title="View Cross-Repo Developer Analytics">
+                        title="View Cross-Repo Developer Analytics"
+                      >
                         <BarChart3 className="w-3 h-3" />
                       </button>
                       <button
@@ -284,7 +279,8 @@ export function ProjectsSidebar({
                           });
                         }}
                         className="p-1 hover:bg-orange-50 dark:hover:bg-orange-900/20 text-gray-400 hover:text-orange-500 rounded transition-all"
-                        title="View Cross-Repo Codebase Health">
+                        title="View Cross-Repo Codebase Health"
+                      >
                         <Heart className="w-3 h-3" />
                       </button>
                       <button
@@ -296,7 +292,8 @@ export function ProjectsSidebar({
                           });
                         }}
                         className="p-1 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-400 hover:text-purple-500 rounded transition-all"
-                        title="View Cross-Repo Repository Evolution">
+                        title="View Cross-Repo Repository Evolution"
+                      >
                         <TrendingUp className="w-3 h-3" />
                       </button>
                     </>
@@ -313,7 +310,8 @@ export function ProjectsSidebar({
                       }
                     }}
                     className="p-1 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded transition-all"
-                    title="Remove Project">
+                    title="Remove Project"
+                  >
                     <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
@@ -332,32 +330,26 @@ export function ProjectsSidebar({
                           isSelected
                             ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
                             : 'hover:bg-gray-50 text-gray-700 dark:text-gray-400 dark:hover:bg-white/5'
-                        }`}>
+                        }`}
+                      >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <FolderGit2
                             className={`w-4 h-4 shrink-0 ${
-                              isSelected
-                                ? 'text-blue-600 dark:text-blue-400'
-                                : 'text-gray-400'
+                              isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'
                             }`}
                           />
-                          <span className="text-sm font-medium truncate">
-                            {repo.name}
-                          </span>
+                          <span className="text-sm font-medium truncate">{repo.name}</span>
                         </div>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (
-                              confirm(
-                                'Are you sure you want to remove this repository?'
-                              )
-                            ) {
+                            if (confirm('Are you sure you want to remove this repository?')) {
                               handleDeleteRepository(repo.id);
                             }
                           }}
                           className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded transition-all"
-                          title="Remove Repository">
+                          title="Remove Repository"
+                        >
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
@@ -373,9 +365,7 @@ export function ProjectsSidebar({
           <div className="text-center py-8 text-gray-500 text-sm">
             No projects yet.
             <br />
-            <Link
-              to="/projects"
-              className="text-indigo-600 dark:text-indigo-400 hover:underline">
+            <Link to="/projects" className="text-indigo-600 dark:text-indigo-400 hover:underline">
               Click here to add one.
             </Link>
           </div>

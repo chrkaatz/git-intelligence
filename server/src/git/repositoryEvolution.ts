@@ -40,7 +40,13 @@ export async function getRepositoryEvolution(
     // For each tag, get its commit info
     for (const tagName of tagsList.all) {
       try {
-        const tagInfo = await git.raw(['log', '-1', '--pretty=format:%H|%ad|%s', '--date=iso', tagName]);
+        const tagInfo = await git.raw([
+          'log',
+          '-1',
+          '--pretty=format:%H|%ad|%s',
+          '--date=iso',
+          tagName,
+        ]);
         const parts = tagInfo.trim().split('|');
         if (parts.length >= 2) {
           const commitHash = parts[0];
@@ -104,7 +110,7 @@ export async function getRepositoryEvolution(
           }
           const growth = growthCurveMap.get(dateKey)!;
           growth.loc = currentLoc;
-          currentCommitFiles.forEach(f => {
+          currentCommitFiles.forEach((f) => {
             allFiles.add(f);
             growth.files.add(f);
           });
@@ -120,7 +126,8 @@ export async function getRepositoryEvolution(
           // Detect change bursts (commits with significant changes)
           const totalChange = currentCommitAdditions + currentCommitDeletions;
           const netChange = currentCommitAdditions - currentCommitDeletions;
-          if (totalChange > 100) { // Threshold for burst
+          if (totalChange > 100) {
+            // Threshold for burst
             const isRefactor = Math.abs(netChange) < totalChange * 0.1; // Less than 10% net change
             changeBursts.push({
               date: currentDate,
@@ -164,7 +171,7 @@ export async function getRepositoryEvolution(
 
           currentCommitAdditions += added;
           currentCommitDeletions += deleted;
-          currentLoc += (added - deleted);
+          currentLoc += added - deleted;
           if (filePath) {
             currentCommitFiles.add(filePath);
           }
@@ -182,7 +189,7 @@ export async function getRepositoryEvolution(
       }
       const growth = growthCurveMap.get(dateKey)!;
       growth.loc = currentLoc;
-      currentCommitFiles.forEach(f => {
+      currentCommitFiles.forEach((f) => {
         allFiles.add(f);
         growth.files.add(f);
       });
@@ -223,16 +230,19 @@ export async function getRepositoryEvolution(
     const totalCommits = commitFrequency.reduce((sum, c) => sum + c.commits, 0);
     const totalDays = commitFrequency.length;
     const averageCommitsPerDay = totalDays > 0 ? totalCommits / totalDays : 0;
-    const averageChurnRatio = churnMetrics.length > 0
-      ? churnMetrics.reduce((sum, c) => sum + c.churnRatio, 0) / churnMetrics.length
-      : 0;
-    const refactorCount = changeBursts.filter(b => b.isRefactor).length;
+    const averageChurnRatio =
+      churnMetrics.length > 0
+        ? churnMetrics.reduce((sum, c) => sum + c.churnRatio, 0) / churnMetrics.length
+        : 0;
+    const refactorCount = changeBursts.filter((b) => b.isRefactor).length;
 
     return {
       commitFrequency,
       releases: releases.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
       growthCurve,
-      changeBursts: changeBursts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+      changeBursts: changeBursts.sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      ),
       churnMetrics,
       totalCommits,
       totalReleases: releases.length,
@@ -312,7 +322,6 @@ export async function getCrossRepoRepositoryEvolution(
     repositories: validEvolutions,
     synchronization,
     totalRepos: validEvolutions.length,
-    repoNames: validEvolutions.map(r => r.repoName),
+    repoNames: validEvolutions.map((r) => r.repoName),
   };
 }
-

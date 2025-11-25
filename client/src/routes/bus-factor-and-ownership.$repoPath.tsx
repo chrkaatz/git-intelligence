@@ -4,4 +4,3 @@ import { BusFactorAndOwnershipView } from '../components/BusFactorAndOwnershipVi
 export const Route = createFileRoute('/bus-factor-and-ownership/$repoPath')({
   component: () => <BusFactorAndOwnershipView />,
 });
-

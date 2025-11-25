@@ -1,7 +1,25 @@
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import type { DeveloperAuthorStats, LongitudinalPatterns } from '../api';
-import { Code, GitCommit, TrendingUp, Shield, Mail, AlertTriangle, RotateCcw, Activity } from 'lucide-react';
+import {
+  Code,
+  GitCommit,
+  TrendingUp,
+  Shield,
+  Mail,
+  AlertTriangle,
+  RotateCcw,
+  Activity,
+} from 'lucide-react';
 import { LongitudinalPatterns as LongitudinalPatternsComponent } from './LongitudinalPatterns';
 
 interface DeveloperAnalyticsProps {
@@ -10,9 +28,15 @@ interface DeveloperAnalyticsProps {
   loading?: boolean;
 }
 
-export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: DeveloperAnalyticsProps) {
+export function DeveloperAnalytics({
+  authors,
+  longitudinalPatterns,
+  loading,
+}: DeveloperAnalyticsProps) {
   const [selectedAuthor, setSelectedAuthor] = useState<DeveloperAuthorStats | null>(null);
-  const [selectedAuthorForLongitudinal, setSelectedAuthorForLongitudinal] = useState<string | null>(null);
+  const [selectedAuthorForLongitudinal, setSelectedAuthorForLongitudinal] = useState<string | null>(
+    null
+  );
 
   if (loading) {
     return (
@@ -23,21 +47,17 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
   }
 
   if (!authors || authors.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        No developer data available.
-      </div>
-    );
+    return <div className="text-center py-12 text-gray-500">No developer data available.</div>;
   }
 
   // Prepare data for charts
-  const commitsData = authors.slice(0, 10).map(a => ({
+  const commitsData = authors.slice(0, 10).map((a) => ({
     name: a.name.length > 15 ? a.name.substring(0, 15) + '...' : a.name,
     commits: a.commits,
     fullName: a.name,
   }));
 
-  const linesData = authors.slice(0, 10).map(a => ({
+  const linesData = authors.slice(0, 10).map((a) => ({
     name: a.name.length > 15 ? a.name.substring(0, 15) + '...' : a.name,
     added: a.linesAdded,
     removed: a.linesRemoved,
@@ -53,11 +73,10 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
     : [];
 
   const dayData = selectedAuthor
-    ? Object.entries(selectedAuthor.activeTimeWindows.dayOfWeek)
-        .map(([day, count]) => ({
-          day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][parseInt(day)],
-          commits: count,
-        }))
+    ? Object.entries(selectedAuthor.activeTimeWindows.dayOfWeek).map(([day, count]) => ({
+        day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][parseInt(day)],
+        commits: count,
+      }))
     : [];
 
   return (
@@ -67,8 +86,12 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Developers</p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{authors.length}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Developers
+              </p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
+                {authors.length}
+              </p>
             </div>
             <Code className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
@@ -76,7 +99,9 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Commits</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Commits
+              </p>
               <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
                 {authors.reduce((sum, a) => sum + a.commits, 0).toLocaleString()}
               </p>
@@ -87,7 +112,9 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Lines Added</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Lines Added
+              </p>
               <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
                 {authors.reduce((sum, a) => sum + a.linesAdded, 0).toLocaleString()}
               </p>
@@ -98,7 +125,9 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Signed</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Signed
+              </p>
               <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
                 {authors.reduce((sum, a) => sum + a.signedCommits, 0).toLocaleString()}
               </p>
@@ -113,7 +142,9 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Fix Commits</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Fix Commits
+              </p>
               <p className="text-xl font-semibold text-gray-900 dark:text-white mt-1">
                 {authors.reduce((sum, a) => sum + a.fixCommits, 0).toLocaleString()}
               </p>
@@ -124,7 +155,9 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Revert Commits</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Revert Commits
+              </p>
               <p className="text-xl font-semibold text-gray-900 dark:text-white mt-1">
                 {authors.reduce((sum, a) => sum + a.revertCommits, 0).toLocaleString()}
               </p>
@@ -135,7 +168,9 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Churn</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Churn
+              </p>
               <p className="text-xl font-semibold text-gray-900 dark:text-white mt-1">
                 {authors.reduce((sum, a) => sum + a.churn, 0).toLocaleString()}
               </p>
@@ -221,9 +256,7 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
       {/* Developer List */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="px-5 py-3 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Developers
-          </h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Developers</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -287,7 +320,8 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
                               element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }, 100);
                           }}
-                          className="text-sm font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left">
+                          className="text-sm font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left"
+                        >
                           {author.name}
                         </button>
                         <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
@@ -298,8 +332,12 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 dark:text-white">{author.commits.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{author.percentage}%</div>
+                    <div className="text-sm text-gray-900 dark:text-white">
+                      {author.commits.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {author.percentage}%
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-green-600 dark:text-green-400">
@@ -312,12 +350,15 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className={`text-sm font-medium ${
-                      author.netLines >= 0
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-red-600 dark:text-red-400'
-                    }`}>
-                      {author.netLines >= 0 ? '+' : ''}{author.netLines.toLocaleString()}
+                    <div
+                      className={`text-sm font-medium ${
+                        author.netLines >= 0
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-600 dark:text-red-400'
+                      }`}
+                    >
+                      {author.netLines >= 0 ? '+' : ''}
+                      {author.netLines.toLocaleString()}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -360,7 +401,9 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <button
-                      onClick={() => setSelectedAuthor(selectedAuthor?.email === author.email ? null : author)}
+                      onClick={() =>
+                        setSelectedAuthor(selectedAuthor?.email === author.email ? null : author)
+                      }
                       className={`px-3 py-1 rounded ${
                         selectedAuthor?.email === author.email
                           ? 'bg-blue-600 text-white'
@@ -390,4 +433,3 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
     </div>
   );
 }
-

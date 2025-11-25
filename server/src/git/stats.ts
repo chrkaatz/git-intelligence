@@ -37,7 +37,7 @@ export async function getStats(repoPath: string, useCache: boolean = true) {
     for (let i = 0; i < 7; i++) activity.dayOfWeek[i] = 0;
     for (let i = 0; i < 12; i++) activity.monthOfYear[i] = 0;
 
-    log.all.forEach(commit => {
+    log.all.forEach((commit) => {
       const date = new Date(commit.date);
       const authorName = commit.author_name;
       const authorEmail = commit.author_email;
@@ -49,7 +49,7 @@ export async function getStats(repoPath: string, useCache: boolean = true) {
           email: authorEmail,
           commits: 0,
           firstCommit: date,
-          lastCommit: date
+          lastCommit: date,
         });
       }
 
@@ -67,16 +67,18 @@ export async function getStats(repoPath: string, useCache: boolean = true) {
       activity.year[year] = (activity.year[year] || 0) + 1;
     });
 
-    const authorList = Array.from(authors.values()).map(a => ({
-      ...a,
-      percentage: ((a.commits / totalCommits) * 100).toFixed(1)
-    })).sort((a, b) => b.commits - a.commits);
+    const authorList = Array.from(authors.values())
+      .map((a) => ({
+        ...a,
+        percentage: ((a.commits / totalCommits) * 100).toFixed(1),
+      }))
+      .sort((a, b) => b.commits - a.commits);
 
     // File extensions (HEAD)
     // This is a rough approximation using ls-files
     const files = await git.raw(['ls-files']);
     const extensions: Record<string, number> = {};
-    files.split('\n').forEach(file => {
+    files.split('\n').forEach((file) => {
       if (!file) return;
       const ext = file.split('.').pop() || 'no-extension';
       extensions[ext] = (extensions[ext] || 0) + 1;
@@ -90,14 +92,20 @@ export async function getStats(repoPath: string, useCache: boolean = true) {
     // The actual LOC history is derived from `rawLog` below.
 
     // Alternative efficient approach for LOC history:
-    const rawLog = await git.raw(['log', '--all', '--pretty=tformat:%ad', '--date=iso', '--numstat']);
+    const rawLog = await git.raw([
+      'log',
+      '--all',
+      '--pretty=tformat:%ad',
+      '--date=iso',
+      '--numstat',
+    ]);
     const lines = rawLog.split('\n');
     const historyMap = new Map<string, number>();
 
     let currentLoc = 0;
     let currentDate = '';
 
-    lines.forEach(line => {
+    lines.forEach((line) => {
       if (!line) return;
 
       // Date line
@@ -111,7 +119,7 @@ export async function getStats(repoPath: string, useCache: boolean = true) {
       if (parts.length === 3) {
         const added = parseInt(parts[0]) || 0;
         const deleted = parseInt(parts[1]) || 0;
-        currentLoc += (added - deleted);
+        currentLoc += added - deleted;
 
         // Keep the last value for the day
         historyMap.set(currentDate, currentLoc);
@@ -123,7 +131,7 @@ export async function getStats(repoPath: string, useCache: boolean = true) {
       .map(([date, loc]) => ({ date, loc }));
 
     // Ensure we don't have negative LOC (can happen with binary files or renames sometimes)
-    const normalizedHistory = sortedHistory.map(h => ({ ...h, loc: Math.max(0, h.loc) }));
+    const normalizedHistory = sortedHistory.map((h) => ({ ...h, loc: Math.max(0, h.loc) }));
 
     const stats = {
       summary: {
@@ -134,7 +142,7 @@ export async function getStats(repoPath: string, useCache: boolean = true) {
       authors: authorList,
       activity,
       extensions,
-      locHistory: normalizedHistory
+      locHistory: normalizedHistory,
     };
 
     // Cache the results
@@ -148,4 +156,3 @@ export async function getStats(repoPath: string, useCache: boolean = true) {
     throw error;
   }
 }
-

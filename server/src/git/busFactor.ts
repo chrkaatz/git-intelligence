@@ -42,7 +42,12 @@ export async function getBusFactorAndOwnership(
     let totalRepoCommits = 0;
 
     const lines = numstatRaw.split('\n');
-    let currentCommit: { hash: string; authorName: string; authorEmail: string; date: Date } | null = null;
+    let currentCommit: {
+      hash: string;
+      authorName: string;
+      authorEmail: string;
+      date: Date;
+    } | null = null;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -164,9 +169,8 @@ export async function getBusFactorAndOwnership(
       }
     });
 
-    const repoOwnershipPercentage = totalRepoCommits > 0
-      ? (repoPrimaryAuthorCommits / totalRepoCommits) * 100
-      : 0;
+    const repoOwnershipPercentage =
+      totalRepoCommits > 0 ? (repoPrimaryAuthorCommits / totalRepoCommits) * 100 : 0;
 
     let repoRiskLevel: 'low' | 'medium' | 'high' = 'low';
     if (repoOwnershipPercentage >= 90) {
@@ -220,8 +224,8 @@ export async function getBusFactorAndOwnership(
 
       // Sort authors by their last commit date
       authors.sort((a, b) => {
-        const aLast = Math.max(...a[1].map(d => d.getTime()));
-        const bLast = Math.max(...b[1].map(d => d.getTime()));
+        const aLast = Math.max(...a[1].map((d) => d.getTime()));
+        const bLast = Math.max(...b[1].map((d) => d.getTime()));
         return bLast - aLast;
       });
 
@@ -230,11 +234,12 @@ export async function getBusFactorAndOwnership(
       const currentOwner = authors[0];
       const previousOwner = authors[1];
 
-      const currentOwnerFirstCommit = Math.min(...currentOwner[1].map(d => d.getTime()));
-      const previousOwnerLastCommit = Math.max(...previousOwner[1].map(d => d.getTime()));
+      const currentOwnerFirstCommit = Math.min(...currentOwner[1].map((d) => d.getTime()));
+      const previousOwnerLastCommit = Math.max(...previousOwner[1].map((d) => d.getTime()));
 
       // Check if there's a significant gap indicating churn
-      const daysSinceTransition = (currentOwnerFirstCommit - previousOwnerLastCommit) / (1000 * 60 * 60 * 24);
+      const daysSinceTransition =
+        (currentOwnerFirstCommit - previousOwnerLastCommit) / (1000 * 60 * 60 * 24);
 
       if (daysSinceTransition > 0 && daysSinceTransition < CHURN_WINDOW_DAYS) {
         // Check if previous owner had significant ownership
@@ -242,7 +247,8 @@ export async function getBusFactorAndOwnership(
         const totalCommits = fileCommits.get(file) || 0;
         const previousOwnerPercentage = (previousOwnerCommits / totalCommits) * 100;
 
-        if (previousOwnerPercentage >= 30) { // Previous owner had at least 30% ownership
+        if (previousOwnerPercentage >= 30) {
+          // Previous owner had at least 30% ownership
           let riskLevel: 'low' | 'medium' | 'high';
           if (previousOwnerPercentage >= 70) {
             riskLevel = 'high';
@@ -328,9 +334,14 @@ export async function getCrossRepoBusFactorAndOwnership(
   // Aggregate analytics across all repositories
   const repoSingleMaintainer: SingleMaintainerRepo[] = [];
   const aggregatedSingleMaintainerFiles = new Map<string, SingleMaintainerFile>(); // file key -> file data
-  const repoFragmentation: Array<{ repoName: string; repoPath: string; fragmentedFiles: FragmentedFile[] }> = [];
+  const repoFragmentation: Array<{
+    repoName: string;
+    repoPath: string;
+    fragmentedFiles: FragmentedFile[];
+  }> = [];
   const aggregatedFragmentedFiles = new Map<string, FragmentedFile>(); // file key -> file data
-  const repoOwnerChurn: Array<{ repoName: string; repoPath: string; churnFiles: OwnerChurn[] }> = [];
+  const repoOwnerChurn: Array<{ repoName: string; repoPath: string; churnFiles: OwnerChurn[] }> =
+    [];
   const aggregatedChurnFiles = new Map<string, OwnerChurn>(); // file key -> churn data
 
   // Process each repository
@@ -348,10 +359,12 @@ export async function getCrossRepoBusFactorAndOwnership(
       }
 
       // Aggregate single-maintainer files (prefix with repo name)
-      analytics.singleMaintainerRisk.files.forEach(file => {
+      analytics.singleMaintainerRisk.files.forEach((file) => {
         const key = `${repo.name}:${file.file}`;
-        if (!aggregatedSingleMaintainerFiles.has(key) ||
-            file.ownershipPercentage > aggregatedSingleMaintainerFiles.get(key)!.ownershipPercentage) {
+        if (
+          !aggregatedSingleMaintainerFiles.has(key) ||
+          file.ownershipPercentage > aggregatedSingleMaintainerFiles.get(key)!.ownershipPercentage
+        ) {
           aggregatedSingleMaintainerFiles.set(key, {
             ...file,
             file: key,
@@ -369,10 +382,12 @@ export async function getCrossRepoBusFactorAndOwnership(
       }
 
       // Aggregate fragmented files
-      analytics.fragmentation.files.forEach(file => {
+      analytics.fragmentation.files.forEach((file) => {
         const key = `${repo.name}:${file.file}`;
-        if (!aggregatedFragmentedFiles.has(key) ||
-            file.authorCount > aggregatedFragmentedFiles.get(key)!.authorCount) {
+        if (
+          !aggregatedFragmentedFiles.has(key) ||
+          file.authorCount > aggregatedFragmentedFiles.get(key)!.authorCount
+        ) {
           aggregatedFragmentedFiles.set(key, {
             ...file,
             file: key,
@@ -390,10 +405,12 @@ export async function getCrossRepoBusFactorAndOwnership(
       }
 
       // Aggregate churn files
-      analytics.ownerChurn.files.forEach(file => {
+      analytics.ownerChurn.files.forEach((file) => {
         const key = `${repo.name}:${file.file}`;
-        if (!aggregatedChurnFiles.has(key) ||
-            file.daysSinceTransition > aggregatedChurnFiles.get(key)!.daysSinceTransition) {
+        if (
+          !aggregatedChurnFiles.has(key) ||
+          file.daysSinceTransition > aggregatedChurnFiles.get(key)!.daysSinceTransition
+        ) {
           aggregatedChurnFiles.set(key, {
             ...file,
             file: key,
@@ -408,12 +425,15 @@ export async function getCrossRepoBusFactorAndOwnership(
 
   // Sort results
   repoSingleMaintainer.sort((a, b) => b.ownershipPercentage - a.ownershipPercentage);
-  const aggregatedFiles = Array.from(aggregatedSingleMaintainerFiles.values())
-    .sort((a, b) => b.ownershipPercentage - a.ownershipPercentage);
-  const aggregatedFragmented = Array.from(aggregatedFragmentedFiles.values())
-    .sort((a, b) => b.authorCount - a.authorCount);
-  const aggregatedChurn = Array.from(aggregatedChurnFiles.values())
-    .sort((a, b) => b.daysSinceTransition - a.daysSinceTransition);
+  const aggregatedFiles = Array.from(aggregatedSingleMaintainerFiles.values()).sort(
+    (a, b) => b.ownershipPercentage - a.ownershipPercentage
+  );
+  const aggregatedFragmented = Array.from(aggregatedFragmentedFiles.values()).sort(
+    (a, b) => b.authorCount - a.authorCount
+  );
+  const aggregatedChurn = Array.from(aggregatedChurnFiles.values()).sort(
+    (a, b) => b.daysSinceTransition - a.daysSinceTransition
+  );
 
   return {
     singleMaintainerRisk: {
@@ -429,7 +449,6 @@ export async function getCrossRepoBusFactorAndOwnership(
       aggregatedFiles: aggregatedChurn,
     },
     totalRepos: repositories.length,
-    repoNames: repositories.map(r => r.name),
+    repoNames: repositories.map((r) => r.name),
   };
 }
-

@@ -33,7 +33,11 @@ export function DeveloperAnalyticsView() {
       setError(null);
 
       // Show loading notification
-      const loadingId = showNotification('loading', 'Calculating developer analytics... This may take a moment.', 0);
+      const loadingId = showNotification(
+        'loading',
+        'Calculating developer analytics... This may take a moment.',
+        0
+      );
       loadingNotificationIdRef.current = loadingId;
 
       try {
@@ -78,9 +82,7 @@ export function DeveloperAnalyticsView() {
           Developer Analytics
         </h1>
         {repoPath && developerAnalytics && (
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">
-            {repoName}
-          </p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{repoName}</p>
         )}
       </div>
 
@@ -106,4 +108,3 @@ export function DeveloperAnalyticsView() {
     </>
   );
 }
-

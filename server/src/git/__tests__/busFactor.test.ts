@@ -23,7 +23,9 @@ describe('busFactor', () => {
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
 
-      await expect(getBusFactorAndOwnership('/test/repo', false)).rejects.toThrow('Not a git repository');
+      await expect(getBusFactorAndOwnership('/test/repo', false)).rejects.toThrow(
+        'Not a git repository'
+      );
     });
 
     it('should detect single maintainer risk', async () => {
@@ -33,14 +35,16 @@ describe('busFactor', () => {
 
       const mockGit = {
         checkIsRepo: vi.fn().mockResolvedValue(true),
-        raw: vi.fn().mockResolvedValue(
-          `${hash1}|John Doe|john@example.com|2024-01-01T10:00:00Z\n` +
-          '10\t5\tfile1.ts\n' +
-          `${hash2}|John Doe|john@example.com|2024-01-02T11:00:00Z\n` +
-          '3\t1\tfile1.ts\n' +
-          `${hash3}|John Doe|john@example.com|2024-01-03T12:00:00Z\n` +
-          '2\t1\tfile1.ts\n'
-        ),
+        raw: vi
+          .fn()
+          .mockResolvedValue(
+            `${hash1}|John Doe|john@example.com|2024-01-01T10:00:00Z\n` +
+              '10\t5\tfile1.ts\n' +
+              `${hash2}|John Doe|john@example.com|2024-01-02T11:00:00Z\n` +
+              '3\t1\tfile1.ts\n' +
+              `${hash3}|John Doe|john@example.com|2024-01-03T12:00:00Z\n` +
+              '2\t1\tfile1.ts\n'
+          ),
       };
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
@@ -98,12 +102,12 @@ describe('busFactor', () => {
         raw: vi.fn().mockResolvedValue(
           // Previous owner commits
           `${hash1}|John Doe|john@example.com|2024-01-01T10:00:00Z\n` +
-          '10\t5\tfile1.ts\n' +
-          `${hash2}|John Doe|john@example.com|2024-01-02T11:00:00Z\n` +
-          '3\t1\tfile1.ts\n' +
-          // Gap and new owner (within 180 days)
-          `${hash3}|Jane Smith|jane@example.com|2024-02-15T10:00:00Z\n` +
-          '2\t1\tfile1.ts\n'
+            '10\t5\tfile1.ts\n' +
+            `${hash2}|John Doe|john@example.com|2024-01-02T11:00:00Z\n` +
+            '3\t1\tfile1.ts\n' +
+            // Gap and new owner (within 180 days)
+            `${hash3}|Jane Smith|jane@example.com|2024-02-15T10:00:00Z\n` +
+            '2\t1\tfile1.ts\n'
         ),
       };
 
@@ -121,12 +125,14 @@ describe('busFactor', () => {
 
       const mockGit = {
         checkIsRepo: vi.fn().mockResolvedValue(true),
-        raw: vi.fn().mockResolvedValue(
-          `${hash1}|John Doe|john@example.com|2024-01-01T10:00:00Z\n` +
-          '10\t5\tfile1.ts\n' +
-          `${hash2}|John Doe|john@example.com|2024-01-02T11:00:00Z\n` +
-          '3\t1\tfile2.ts\n'
-        ),
+        raw: vi
+          .fn()
+          .mockResolvedValue(
+            `${hash1}|John Doe|john@example.com|2024-01-01T10:00:00Z\n` +
+              '10\t5\tfile1.ts\n' +
+              `${hash2}|John Doe|john@example.com|2024-01-02T11:00:00Z\n` +
+              '3\t1\tfile2.ts\n'
+          ),
       };
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
@@ -149,4 +155,3 @@ describe('busFactor', () => {
     });
   });
 });
-

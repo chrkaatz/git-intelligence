@@ -42,12 +42,14 @@ describe('codebaseHealth', () => {
 
       const mockGit = {
         checkIsRepo: vi.fn().mockResolvedValue(true),
-        raw: vi.fn().mockResolvedValue(
-          `${hash1}|2024-01-01T10:00:00Z\n` +
-          '10\t5\tfile1.ts\n' +
-          `${hash2}|2024-01-02T11:00:00Z\n` +
-          '3\t1\tfile2.ts\n'
-        ),
+        raw: vi
+          .fn()
+          .mockResolvedValue(
+            `${hash1}|2024-01-01T10:00:00Z\n` +
+              '10\t5\tfile1.ts\n' +
+              `${hash2}|2024-01-02T11:00:00Z\n` +
+              '3\t1\tfile2.ts\n'
+          ),
       };
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
@@ -82,14 +84,16 @@ describe('codebaseHealth', () => {
 
       const mockGit = {
         checkIsRepo: vi.fn().mockResolvedValue(true),
-        raw: vi.fn().mockResolvedValue(
-          `${hash1}|2024-01-01T10:00:00Z\n` +
-          '10\t5\tfile1.ts\n' +
-          `${hash2}|2024-01-02T11:00:00Z\n` +
-          '3\t1\tfile1.ts\n' +
-          `${hash3}|2024-01-03T12:00:00Z\n` +
-          '2\t1\tfile1.ts\n'
-        ),
+        raw: vi
+          .fn()
+          .mockResolvedValue(
+            `${hash1}|2024-01-01T10:00:00Z\n` +
+              '10\t5\tfile1.ts\n' +
+              `${hash2}|2024-01-02T11:00:00Z\n` +
+              '3\t1\tfile1.ts\n' +
+              `${hash3}|2024-01-03T12:00:00Z\n` +
+              '2\t1\tfile1.ts\n'
+          ),
       };
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
@@ -115,4 +119,3 @@ describe('codebaseHealth', () => {
     });
   });
 });
-

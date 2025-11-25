@@ -22,8 +22,8 @@ export const LocChart: React.FC<LocChartProps> = ({ data }) => {
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorLoc" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -36,7 +36,11 @@ export const LocChart: React.FC<LocChartProps> = ({ data }) => {
             />
             <YAxis fontSize={12} tickLine={false} axisLine={false} />
             <Tooltip
-              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              contentStyle={{
+                borderRadius: '8px',
+                border: 'none',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+              }}
               labelFormatter={(value) => new Date(value).toLocaleDateString()}
             />
             <Area

@@ -151,4 +151,3 @@ export async function migrateToSchemaV2(db: Low<DatabaseSchema>): Promise<void> 
 export function resetDb(): void {
   db = null;
 }
-

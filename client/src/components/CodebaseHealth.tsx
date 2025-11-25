@@ -1,7 +1,19 @@
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Cell } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  ScatterChart,
+  Scatter,
+  Cell,
+} from 'recharts';
 import type { CodebaseHealth as CodebaseHealthType } from '../api';
-import { Flame, Link2, TrendingDown, TrendingUp, FileText, Folder, AlertTriangle, Activity } from 'lucide-react';
+import { Flame, Link2, TrendingUp, FileText, Folder, AlertTriangle, Activity } from 'lucide-react';
 
 interface CodebaseHealthProps {
   hotspots: CodebaseHealthType['hotspots'];
@@ -10,8 +22,15 @@ interface CodebaseHealthProps {
   complexity: CodebaseHealthType['complexity'];
 }
 
-export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity }: CodebaseHealthProps) {
-  const [selectedSection, setSelectedSection] = useState<'hotspots' | 'coupling' | 'stability' | 'complexity'>('hotspots');
+export function CodebaseHealth({
+  hotspots,
+  changeCoupling,
+  stability,
+  complexity,
+}: CodebaseHealthProps) {
+  const [selectedSection, setSelectedSection] = useState<
+    'hotspots' | 'coupling' | 'stability' | 'complexity'
+  >('hotspots');
 
   return (
     <div className="space-y-6">
@@ -23,7 +42,8 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
             selectedSection === 'hotspots'
               ? 'bg-indigo-600 text-white dark:bg-indigo-500'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}>
+          }`}
+        >
           <Flame className="w-4 h-4 inline mr-2" />
           Hotspots
         </button>
@@ -33,7 +53,8 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
             selectedSection === 'coupling'
               ? 'bg-indigo-600 text-white dark:bg-indigo-500'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}>
+          }`}
+        >
           <Link2 className="w-4 h-4 inline mr-2" />
           Change Coupling
         </button>
@@ -43,7 +64,8 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
             selectedSection === 'stability'
               ? 'bg-indigo-600 text-white dark:bg-indigo-500'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}>
+          }`}
+        >
           <Activity className="w-4 h-4 inline mr-2" />
           Stability
         </button>
@@ -53,7 +75,8 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
             selectedSection === 'complexity'
               ? 'bg-indigo-600 text-white dark:bg-indigo-500'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}>
+          }`}
+        >
           <FileText className="w-4 h-4 inline mr-2" />
           Complexity
         </button>
@@ -68,17 +91,23 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
               Hotspots - Files with Repeated Modifications
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Files that have been modified frequently, indicating potential areas of high maintenance or complexity.
+              Files that have been modified frequently, indicating potential areas of high
+              maintenance or complexity.
             </p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Top File Hotspots</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              Top File Hotspots
+            </h3>
             {hotspots.files.length > 0 ? (
               <div className="space-y-4">
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart data={hotspots.files.slice(0, 20)}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-gray-300 dark:stroke-gray-700"
+                    />
                     <XAxis
                       dataKey="file"
                       angle={-45}
@@ -87,7 +116,10 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
                       tick={{ fill: 'currentColor', fontSize: 12 }}
                       className="text-gray-600 dark:text-gray-400"
                     />
-                    <YAxis tick={{ fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+                    <YAxis
+                      tick={{ fill: 'currentColor' }}
+                      className="text-gray-600 dark:text-gray-400"
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'var(--tw-color-gray-800)',
@@ -100,12 +132,15 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
                   </BarChart>
                 </ResponsiveContainer>
                 <div className="mt-4">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Top 20 Files</h4>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Top 20 Files
+                  </h4>
                   <div className="space-y-2">
                     {hotspots.files.slice(0, 20).map((file, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                        className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded"
+                      >
                         <span className="text-sm text-gray-700 dark:text-gray-300 font-mono truncate flex-1">
                           {file.file}
                         </span>
@@ -131,7 +166,10 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
               <div className="space-y-4">
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={hotspots.directories.slice(0, 15)}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-gray-300 dark:stroke-gray-700"
+                    />
                     <XAxis
                       dataKey="directory"
                       angle={-45}
@@ -140,7 +178,10 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
                       tick={{ fill: 'currentColor', fontSize: 12 }}
                       className="text-gray-600 dark:text-gray-400"
                     />
-                    <YAxis tick={{ fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+                    <YAxis
+                      tick={{ fill: 'currentColor' }}
+                      className="text-gray-600 dark:text-gray-400"
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'var(--tw-color-gray-800)',
@@ -154,7 +195,9 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
                 </ResponsiveContainer>
               </div>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400">No directory hotspot data available.</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                No directory hotspot data available.
+              </p>
             )}
           </div>
         </div>
@@ -169,23 +212,31 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
               Change Coupling (Temporal Coupling)
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Files that often change together, indicating hidden dependencies or missing modularity.
+              Files that often change together, indicating hidden dependencies or missing
+              modularity.
             </p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Most Coupled File Pairs</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              Most Coupled File Pairs
+            </h3>
             {changeCoupling.pairs.length > 0 ? (
               <div className="space-y-2">
                 {changeCoupling.pairs.slice(0, 30).map((pair, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700"
+                  >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-700 dark:text-gray-300 font-mono truncate">{pair.file1}</span>
+                        <span className="text-gray-700 dark:text-gray-300 font-mono truncate">
+                          {pair.file1}
+                        </span>
                         <Link2 className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                        <span className="text-gray-700 dark:text-gray-300 font-mono truncate">{pair.file2}</span>
+                        <span className="text-gray-700 dark:text-gray-300 font-mono truncate">
+                          {pair.file2}
+                        </span>
                       </div>
                     </div>
                     <div className="ml-4 flex items-center gap-4">
@@ -215,16 +266,22 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
               Stability Indicators
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              File age vs. change frequency. High churn / low age indicates unstable code, while high age / low churn indicates stable foundation.
+              File age vs. change frequency. High churn / low age indicates unstable code, while
+              high age / low churn indicates stable foundation.
             </p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">File Stability Scatter Plot</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              File Stability Scatter Plot
+            </h3>
             {stability.files.length > 0 ? (
               <ResponsiveContainer width="100%" height={500}>
                 <ScatterChart>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-gray-300 dark:stroke-gray-700"
+                  />
                   <XAxis
                     type="number"
                     dataKey="ageDays"
@@ -281,7 +338,7 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
                 <h4 className="font-medium text-red-900 dark:text-red-300">Unstable Files</h4>
               </div>
               <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                {stability.files.filter(f => f.status === 'unstable').length}
+                {stability.files.filter((f) => f.status === 'unstable').length}
               </p>
               <p className="text-xs text-red-700 dark:text-red-400 mt-1">High churn, low age</p>
             </div>
@@ -291,7 +348,7 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
                 <h4 className="font-medium text-yellow-900 dark:text-yellow-300">Evolving Files</h4>
               </div>
               <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                {stability.files.filter(f => f.status === 'evolving').length}
+                {stability.files.filter((f) => f.status === 'evolving').length}
               </p>
               <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-1">Moderate changes</p>
             </div>
@@ -301,7 +358,7 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
                 <h4 className="font-medium text-green-900 dark:text-green-300">Stable Files</h4>
               </div>
               <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {stability.files.filter(f => f.status === 'stable').length}
+                {stability.files.filter((f) => f.status === 'stable').length}
               </p>
               <p className="text-xs text-green-700 dark:text-green-400 mt-1">Low churn, high age</p>
             </div>
@@ -318,19 +375,23 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
               Complexity Proxies
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Complexity indicators derived from Git history: average diff sizes, largest diffs, and most rewritten files.
+              Complexity indicators derived from Git history: average diff sizes, largest diffs, and
+              most rewritten files.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Largest Diffs</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                Largest Diffs
+              </h3>
               {complexity.largestDiffs.length > 0 ? (
                 <div className="space-y-2">
                   {complexity.largestDiffs.slice(0, 15).map((diff, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded"
+                    >
                       <span className="text-sm text-gray-700 dark:text-gray-300 font-mono truncate flex-1">
                         {diff.file}
                       </span>
@@ -346,13 +407,16 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Most Rewritten Files</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                Most Rewritten Files
+              </h3>
               {complexity.mostRewritten.length > 0 ? (
                 <div className="space-y-2">
                   {complexity.mostRewritten.slice(0, 15).map((file, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded"
+                    >
                       <span className="text-sm text-gray-700 dark:text-gray-300 font-mono truncate flex-1">
                         {file.file}
                       </span>
@@ -369,11 +433,16 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Average Diff Size per File</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              Average Diff Size per File
+            </h3>
             {complexity.averageDiffSizes.length > 0 ? (
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={complexity.averageDiffSizes.slice(0, 30)}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-gray-300 dark:stroke-gray-700"
+                  />
                   <XAxis
                     dataKey="file"
                     angle={-45}
@@ -382,7 +451,10 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
                     tick={{ fill: 'currentColor', fontSize: 10 }}
                     className="text-gray-600 dark:text-gray-400"
                   />
-                  <YAxis tick={{ fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+                  <YAxis
+                    tick={{ fill: 'currentColor' }}
+                    className="text-gray-600 dark:text-gray-400"
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'var(--tw-color-gray-800)',
@@ -395,7 +467,9 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400">No average diff size data available.</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                No average diff size data available.
+              </p>
             )}
           </div>
         </div>
@@ -403,4 +477,3 @@ export function CodebaseHealth({ hotspots, changeCoupling, stability, complexity
     </div>
   );
 }
-

@@ -170,24 +170,13 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     return res.status(400).json({ error: 'Project ID is required' });
   }
 
-  console.log(
-    'Project ID:',
-    projectId,
-    'Repository name:',
-    repoName,
-    'Replace:',
-    replace
-  );
+  console.log('Project ID:', projectId, 'Repository name:', repoName, 'Replace:', replace);
 
   let extractPath: string | null = null;
 
   try {
     const zip = new AdmZip(req.file.path);
-    extractPath = path.join(
-      process.cwd(),
-      'uploads',
-      req.file.filename + '_extracted'
-    );
+    extractPath = path.join(process.cwd(), 'uploads', req.file.filename + '_extracted');
 
     // Create directory if it doesn't exist
     if (!fs.existsSync(extractPath)) {
@@ -201,9 +190,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
     // Find the actual git repo root (in case it's nested)
     let repoPath = extractPath;
-    const items = fs
-      .readdirSync(extractPath)
-      .filter((item) => item !== '__MACOSX');
+    const items = fs.readdirSync(extractPath).filter((item) => item !== '__MACOSX');
 
     // If there's only one directory and it's not .git, assume it's a wrapper folder
     if (
@@ -230,12 +217,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     }
 
     console.log('Adding repository to database...');
-    const repository = await addRepository(
-      projectId,
-      repoPath,
-      repoName,
-      replace
-    );
+    const repository = await addRepository(projectId, repoPath, repoName, replace);
     console.log('Repository added successfully:', repository.id);
 
     res.json(repository);
@@ -330,9 +312,7 @@ app.get('/cross-repo-developer-analytics', async (req, res) => {
     res.json(analytics);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ error: 'Failed to get cross-repo developer analytics' });
+    res.status(500).json({ error: 'Failed to get cross-repo developer analytics' });
   }
 });
 
@@ -364,9 +344,7 @@ app.get('/cross-repo-codebase-health', async (req, res) => {
     res.json(health);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ error: 'Failed to get cross-repo codebase health metrics' });
+    res.status(500).json({ error: 'Failed to get cross-repo codebase health metrics' });
   }
 });
 
@@ -382,9 +360,7 @@ app.get('/repository-evolution', async (req, res) => {
     res.json(evolution);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ error: 'Failed to get repository evolution metrics' });
+    res.status(500).json({ error: 'Failed to get repository evolution metrics' });
   }
 });
 
@@ -396,16 +372,11 @@ app.get('/cross-repo-repository-evolution', async (req, res) => {
   try {
     // Use cache by default, unless refresh=true
     const useCache = refresh !== 'true';
-    const evolution = await getCrossRepoRepositoryEvolution(
-      projectId,
-      useCache
-    );
+    const evolution = await getCrossRepoRepositoryEvolution(projectId, useCache);
     res.json(evolution);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ error: 'Failed to get cross-repo repository evolution metrics' });
+    res.status(500).json({ error: 'Failed to get cross-repo repository evolution metrics' });
   }
 });
 
@@ -421,9 +392,7 @@ app.get('/bus-factor-and-ownership', async (req, res) => {
     res.json(analytics);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ error: 'Failed to get bus factor and ownership metrics' });
+    res.status(500).json({ error: 'Failed to get bus factor and ownership metrics' });
   }
 });
 
@@ -435,10 +404,7 @@ app.get('/cross-repo-bus-factor-and-ownership', async (req, res) => {
   try {
     // Use cache by default, unless refresh=true
     const useCache = refresh !== 'true';
-    const analytics = await getCrossRepoBusFactorAndOwnership(
-      projectId,
-      useCache
-    );
+    const analytics = await getCrossRepoBusFactorAndOwnership(projectId, useCache);
     res.json(analytics);
   } catch (error) {
     console.error(error);
@@ -480,10 +446,7 @@ app.get('/cross-repo-social-network-analysis', async (req, res) => {
   try {
     // Use cache by default, unless refresh=true
     const useCache = refresh !== 'true';
-    const analysis = await getCrossRepoSocialNetworkAnalysis(
-      projectId,
-      useCache
-    );
+    const analysis = await getCrossRepoSocialNetworkAnalysis(projectId, useCache);
     res.json(analysis);
   } catch (error) {
     console.error(error);
@@ -494,28 +457,19 @@ app.get('/cross-repo-social-network-analysis', async (req, res) => {
 });
 
 // Error handling middleware for multer errors
-app.use(
-  (
-    error: any,
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) => {
-    if (error instanceof multer.MulterError) {
-      console.error('Multer error:', error);
-      return res
-        .status(400)
-        .json({ error: `File upload error: ${error.message}` });
-    }
-    if (error) {
-      console.error('Unhandled error:', error);
-      if (!res.headersSent) {
-        res.status(500).json({ error: 'Internal server error' });
-      }
-    }
-    next();
+app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (error instanceof multer.MulterError) {
+    console.error('Multer error:', error);
+    return res.status(400).json({ error: `File upload error: ${error.message}` });
   }
-);
+  if (error) {
+    console.error('Unhandled error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+  next();
+});
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {

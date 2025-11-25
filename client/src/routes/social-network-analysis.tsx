@@ -4,4 +4,3 @@ import { SocialNetworkAnalysisView } from '../components/SocialNetworkAnalysisVi
 export const Route = createFileRoute('/social-network-analysis')({
   component: () => <SocialNetworkAnalysisView />,
 });
-

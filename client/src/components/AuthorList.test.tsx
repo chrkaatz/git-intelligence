@@ -90,4 +90,3 @@ describe('AuthorList', () => {
     expect(screen.getByText('Commits')).toBeInTheDocument();
   });
 });
-

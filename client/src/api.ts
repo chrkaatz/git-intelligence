@@ -140,7 +140,10 @@ export const addProject = async (name: string, description?: string): Promise<Pr
   return response.data;
 };
 
-export const updateProject = async (id: string, updates: { name?: string; description?: string }): Promise<Project> => {
+export const updateProject = async (
+  id: string,
+  updates: { name?: string; description?: string }
+): Promise<Project> => {
   const response = await api.put(`/projects/${id}`, updates);
   return response.data;
 };
@@ -161,7 +164,12 @@ export const getRepository = async (id: string): Promise<Repository> => {
   return response.data;
 };
 
-export const addRepository = async (projectId: string, path: string, name?: string, replace?: boolean): Promise<Repository> => {
+export const addRepository = async (
+  projectId: string,
+  path: string,
+  name?: string,
+  replace?: boolean
+): Promise<Repository> => {
   const response = await api.post('/repositories', { projectId, path, name, replace });
   return response.data;
 };
@@ -170,7 +178,12 @@ export const removeRepository = async (id: string): Promise<void> => {
   await api.delete(`/repositories/${id}`);
 };
 
-export const uploadRepository = async (file: File, projectId: string, name?: string, replace?: boolean): Promise<Repository> => {
+export const uploadRepository = async (
+  file: File,
+  projectId: string,
+  name?: string,
+  replace?: boolean
+): Promise<Repository> => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('projectId', projectId);
@@ -198,7 +211,9 @@ export const getDeveloperAnalytics = async (path: string): Promise<DeveloperAnal
   return response.data;
 };
 
-export const getCrossRepoDeveloperAnalytics = async (projectId: string): Promise<CrossRepoDeveloperAnalytics> => {
+export const getCrossRepoDeveloperAnalytics = async (
+  projectId: string
+): Promise<CrossRepoDeveloperAnalytics> => {
   const response = await api.get('/cross-repo-developer-analytics', { params: { projectId } });
   return response.data;
 };
@@ -271,8 +286,13 @@ export interface CodebaseHealth {
   complexity: Complexity;
 }
 
-export const getCodebaseHealth = async (path: string, refresh: boolean = false): Promise<CodebaseHealth> => {
-  const response = await api.get('/codebase-health', { params: { path, refresh: refresh ? 'true' : 'false' } });
+export const getCodebaseHealth = async (
+  path: string,
+  refresh: boolean = false
+): Promise<CodebaseHealth> => {
+  const response = await api.get('/codebase-health', {
+    params: { path, refresh: refresh ? 'true' : 'false' },
+  });
   return response.data;
 };
 
@@ -296,8 +316,13 @@ export interface CrossRepoCodebaseHealth {
   repoNames: string[];
 }
 
-export const getCrossRepoCodebaseHealth = async (projectId: string, refresh: boolean = false): Promise<CrossRepoCodebaseHealth> => {
-  const response = await api.get('/cross-repo-codebase-health', { params: { projectId, refresh: refresh ? 'true' : 'false' } });
+export const getCrossRepoCodebaseHealth = async (
+  projectId: string,
+  refresh: boolean = false
+): Promise<CrossRepoCodebaseHealth> => {
+  const response = await api.get('/cross-repo-codebase-health', {
+    params: { projectId, refresh: refresh ? 'true' : 'false' },
+  });
   return response.data;
 };
 
@@ -365,13 +390,23 @@ export interface CrossRepoRepositoryEvolution {
   repoNames: string[];
 }
 
-export const getRepositoryEvolution = async (path: string, refresh?: boolean): Promise<RepositoryEvolution> => {
-  const response = await api.get('/repository-evolution', { params: { path, refresh: refresh ? 'true' : undefined } });
+export const getRepositoryEvolution = async (
+  path: string,
+  refresh?: boolean
+): Promise<RepositoryEvolution> => {
+  const response = await api.get('/repository-evolution', {
+    params: { path, refresh: refresh ? 'true' : undefined },
+  });
   return response.data;
 };
 
-export const getCrossRepoRepositoryEvolution = async (projectId: string, refresh?: boolean): Promise<CrossRepoRepositoryEvolution> => {
-  const response = await api.get('/cross-repo-repository-evolution', { params: { projectId, refresh: refresh ? 'true' : undefined } });
+export const getCrossRepoRepositoryEvolution = async (
+  projectId: string,
+  refresh?: boolean
+): Promise<CrossRepoRepositoryEvolution> => {
+  const response = await api.get('/cross-repo-repository-evolution', {
+    params: { projectId, refresh: refresh ? 'true' : undefined },
+  });
   return response.data;
 };
 
@@ -462,13 +497,23 @@ export interface CrossRepoBusFactorAndOwnership {
   repoNames: string[];
 }
 
-export const getBusFactorAndOwnership = async (path: string, refresh?: boolean): Promise<BusFactorAndOwnership> => {
-  const response = await api.get('/bus-factor-and-ownership', { params: { path, refresh: refresh ? 'true' : undefined } });
+export const getBusFactorAndOwnership = async (
+  path: string,
+  refresh?: boolean
+): Promise<BusFactorAndOwnership> => {
+  const response = await api.get('/bus-factor-and-ownership', {
+    params: { path, refresh: refresh ? 'true' : undefined },
+  });
   return response.data;
 };
 
-export const getCrossRepoBusFactorAndOwnership = async (projectId: string, refresh?: boolean): Promise<CrossRepoBusFactorAndOwnership> => {
-  const response = await api.get('/cross-repo-bus-factor-and-ownership', { params: { projectId, refresh: refresh ? 'true' : undefined } });
+export const getCrossRepoBusFactorAndOwnership = async (
+  projectId: string,
+  refresh?: boolean
+): Promise<CrossRepoBusFactorAndOwnership> => {
+  const response = await api.get('/cross-repo-bus-factor-and-ownership', {
+    params: { projectId, refresh: refresh ? 'true' : undefined },
+  });
   return response.data;
 };
 
@@ -554,12 +599,22 @@ export interface CrossRepoSocialNetworkAnalysis {
   repoNames: string[];
 }
 
-export const getSocialNetworkAnalysis = async (path: string, refresh?: boolean): Promise<SocialNetworkAnalysis> => {
-  const response = await api.get('/social-network-analysis', { params: { path, refresh: refresh ? 'true' : undefined } });
+export const getSocialNetworkAnalysis = async (
+  path: string,
+  refresh?: boolean
+): Promise<SocialNetworkAnalysis> => {
+  const response = await api.get('/social-network-analysis', {
+    params: { path, refresh: refresh ? 'true' : undefined },
+  });
   return response.data;
 };
 
-export const getCrossRepoSocialNetworkAnalysis = async (projectId: string, refresh?: boolean): Promise<CrossRepoSocialNetworkAnalysis> => {
-  const response = await api.get('/cross-repo-social-network-analysis', { params: { projectId, refresh: refresh ? 'true' : undefined } });
+export const getCrossRepoSocialNetworkAnalysis = async (
+  projectId: string,
+  refresh?: boolean
+): Promise<CrossRepoSocialNetworkAnalysis> => {
+  const response = await api.get('/cross-repo-social-network-analysis', {
+    params: { projectId, refresh: refresh ? 'true' : undefined },
+  });
   return response.data;
 };

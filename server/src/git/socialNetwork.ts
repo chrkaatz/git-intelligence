@@ -49,7 +49,12 @@ export async function getSocialNetworkAnalysis(
     const fileLastCommit = new Map<string, Date>();
 
     const lines = numstatRaw.split('\n');
-    let currentCommit: { hash: string; authorName: string; authorEmail: string; date: Date } | null = null;
+    let currentCommit: {
+      hash: string;
+      authorName: string;
+      authorEmail: string;
+      date: Date;
+    } | null = null;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -173,10 +178,15 @@ export async function getSocialNetworkAnalysis(
         const sharedFilesList = Array.from(sharedFiles);
         // Normalize collaboration strength (0-1) based on number of shared files
         // Using a logarithmic scale to prevent outliers from dominating
-        const maxSharedFiles = Math.max(...Array.from(collaborationMap.values()).flatMap(m => Array.from(m.values()).map(s => s.size)));
-        const collaborationStrength = maxSharedFiles > 0
-          ? Math.min(1, Math.log(sharedFilesList.length + 1) / Math.log(maxSharedFiles + 1))
-          : 0;
+        const maxSharedFiles = Math.max(
+          ...Array.from(collaborationMap.values()).flatMap((m) =>
+            Array.from(m.values()).map((s) => s.size)
+          )
+        );
+        const collaborationStrength =
+          maxSharedFiles > 0
+            ? Math.min(1, Math.log(sharedFilesList.length + 1) / Math.log(maxSharedFiles + 1))
+            : 0;
 
         edges.push({
           author1: authorNames.get(author1) || author1,
@@ -193,10 +203,10 @@ export async function getSocialNetworkAnalysis(
     // Build nodes
     const nodes: CollaborationNode[] = Array.from(authorFiles.entries()).map(([email, data]) => {
       const degree = edges.filter(
-        e => e.author1Email === email || e.author2Email === email
+        (e) => e.author1Email === email || e.author2Email === email
       ).length;
       const totalSharedFiles = edges
-        .filter(e => e.author1Email === email || e.author2Email === email)
+        .filter((e) => e.author1Email === email || e.author2Email === email)
         .reduce((sum, e) => sum + e.sharedFiles, 0);
 
       return {
@@ -235,7 +245,7 @@ export async function getSocialNetworkAnalysis(
           // Only include clusters with more than one author
           clusters.push({
             clusterId: clusterId++,
-            authors: cluster.map(e => authorNames.get(e) || e),
+            authors: cluster.map((e) => authorNames.get(e) || e),
             authorEmails: cluster,
             size: cluster.length,
           });
@@ -250,28 +260,34 @@ export async function getSocialNetworkAnalysis(
     for (const [file, authors] of fileAuthors.entries()) {
       if (authors.size <= 2) {
         const authorDetails = fileAuthorDetails.get(file)!;
-        const authorList = Array.from(authors).map(email => ({
+        const authorList = Array.from(authors).map((email) => ({
           name: authorDetails.get(email)!.name,
           email,
         }));
 
         const lastCommit = fileLastCommit.get(file)!;
-        const daysSinceLastCommit = Math.floor((now.getTime() - lastCommit.getTime()) / (1000 * 60 * 60 * 24));
+        const daysSinceLastCommit = Math.floor(
+          (now.getTime() - lastCommit.getTime()) / (1000 * 60 * 60 * 24)
+        );
 
         let riskLevel: 'low' | 'medium' | 'high' = 'low';
         if (authors.size === 1) {
-          riskLevel = daysSinceLastCommit > 365 ? 'high' : daysSinceLastCommit > 180 ? 'medium' : 'low';
+          riskLevel =
+            daysSinceLastCommit > 365 ? 'high' : daysSinceLastCommit > 180 ? 'medium' : 'low';
         } else if (authors.size === 2) {
           riskLevel = daysSinceLastCommit > 365 ? 'medium' : 'low';
         }
 
-        const totalCommits = Array.from(authorDetails.values()).reduce((sum, d) => sum + d.commits, 0);
+        const totalCommits = Array.from(authorDetails.values()).reduce(
+          (sum, d) => sum + d.commits,
+          0
+        );
 
         knowledgeSilos.push({
           file,
           authorCount: authors.size,
-          authors: authorList.map(a => a.name),
-          authorEmails: authorList.map(a => a.email),
+          authors: authorList.map((a) => a.name),
+          authorEmails: authorList.map((a) => a.email),
           totalCommits,
           lastCommitDate: lastCommit.toISOString(),
           daysSinceLastCommit,
@@ -285,14 +301,19 @@ export async function getSocialNetworkAnalysis(
     const orphanThresholdDays = 365 * 2; // 2 years
 
     for (const [file, lastCommit] of fileLastCommit.entries()) {
-      const daysSinceLastCommit = Math.floor((now.getTime() - lastCommit.getTime()) / (1000 * 60 * 60 * 24));
+      const daysSinceLastCommit = Math.floor(
+        (now.getTime() - lastCommit.getTime()) / (1000 * 60 * 60 * 24)
+      );
       if (daysSinceLastCommit >= orphanThresholdDays) {
         const authorDetails = fileAuthorDetails.get(file)!;
-        const lastAuthorDetails = Array.from(authorDetails.values()).sort((a, b) =>
-          b.lastCommit.getTime() - a.lastCommit.getTime()
+        const lastAuthorDetails = Array.from(authorDetails.values()).sort(
+          (a, b) => b.lastCommit.getTime() - a.lastCommit.getTime()
         )[0];
 
-        const totalCommits = Array.from(authorDetails.values()).reduce((sum, d) => sum + d.commits, 0);
+        const totalCommits = Array.from(authorDetails.values()).reduce(
+          (sum, d) => sum + d.commits,
+          0
+        );
 
         let riskLevel: 'low' | 'medium' | 'high' = 'low';
         if (daysSinceLastCommit > 365 * 3) {
@@ -306,9 +327,10 @@ export async function getSocialNetworkAnalysis(
           lastCommitDate: lastCommit.toISOString(),
           daysSinceLastCommit,
           lastAuthor: lastAuthorDetails.name,
-          lastAuthorEmail: Array.from(authorDetails.keys()).find(e =>
-            authorDetails.get(e)!.name === lastAuthorDetails.name
-          ) || '',
+          lastAuthorEmail:
+            Array.from(authorDetails.keys()).find(
+              (e) => authorDetails.get(e)!.name === lastAuthorDetails.name
+            ) || '',
           totalCommits,
           riskLevel,
         });
@@ -378,10 +400,7 @@ export async function getCrossRepoSocialNetworkAnalysis(
     }
   >();
   // Map: repoPath -> { repoName: string, authors: Set<authorEmail> }
-  const repoAuthors = new Map<
-    string,
-    { repoName: string; authors: Set<string> }
-  >();
+  const repoAuthors = new Map<string, { repoName: string; authors: Set<string> }>();
 
   // Analyze each repository
   for (const repo of repositories) {
@@ -399,7 +418,12 @@ export async function getCrossRepoSocialNetworkAnalysis(
       ]);
 
       const lines = numstatRaw.split('\n');
-      let currentCommit: { hash: string; authorName: string; authorEmail: string; date: Date } | null = null;
+      let currentCommit: {
+        hash: string;
+        authorName: string;
+        authorEmail: string;
+        date: Date;
+      } | null = null;
       const repoAuthorCommits = new Map<string, number>(); // authorEmail -> commits
 
       for (let i = 0; i < lines.length; i++) {
@@ -477,24 +501,23 @@ export async function getCrossRepoSocialNetworkAnalysis(
       const author2Details = authorRepoDetails.get(author2Email)!;
 
       // Find shared repos
-      const sharedRepos = Array.from(repos1).filter(r => repos2.has(r));
+      const sharedRepos = Array.from(repos1).filter((r) => repos2.has(r));
       if (sharedRepos.length > 0) {
         const pairKey = [author1Email, author2Email].sort().join('|');
         if (processedPairs.has(pairKey)) continue;
         processedPairs.add(pairKey);
 
-        const sharedRepoNames = sharedRepos.map(path => {
-          const repo = repositories.find(r => r.path === path);
+        const sharedRepoNames = sharedRepos.map((path) => {
+          const repo = repositories.find((r) => r.path === path);
           return repo ? repo.name : path;
         });
 
         // Normalize collaboration strength
-        const maxSharedRepos = Math.max(
-          ...Array.from(authorRepos.values()).map(r => r.size)
-        );
-        const collaborationStrength = maxSharedRepos > 0
-          ? Math.min(1, Math.log(sharedRepos.length + 1) / Math.log(maxSharedRepos + 1))
-          : 0;
+        const maxSharedRepos = Math.max(...Array.from(authorRepos.values()).map((r) => r.size));
+        const collaborationStrength =
+          maxSharedRepos > 0
+            ? Math.min(1, Math.log(sharedRepos.length + 1) / Math.log(maxSharedRepos + 1))
+            : 0;
 
         crossRepoCollaboration.push({
           author1: author1Details.name,
@@ -531,15 +554,15 @@ export async function getCrossRepoSocialNetworkAnalysis(
     if (repoPaths.length > 1) {
       // Only include clusters with more than one repo
       const authors = authorSetKey.split('|');
-      const authorNames = authors.map(email => {
+      const authorNames = authors.map((email) => {
         const details = authorRepoDetails.get(email);
         return details ? details.name : email;
       });
 
       repoClusters.push({
         clusterId: clusterId++,
-        repos: repoPaths.map(path => {
-          const repo = repositories.find(r => r.path === path);
+        repos: repoPaths.map((path) => {
+          const repo = repositories.find((r) => r.path === path);
           return repo ? repo.name : path;
         }),
         repoPaths,
@@ -558,7 +581,6 @@ export async function getCrossRepoSocialNetworkAnalysis(
     crossRepoCollaboration: crossRepoCollaboration.slice(0, 100), // Limit to top 100
     repoClusters,
     totalRepos: repositories.length,
-    repoNames: repositories.map(r => r.name),
+    repoNames: repositories.map((r) => r.name),
   };
 }
-

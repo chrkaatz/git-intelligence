@@ -12,10 +12,7 @@ export async function getProject(id: string): Promise<Project | null> {
   return database.data.projects.find((p) => p.id === id) || null;
 }
 
-export async function addProject(
-  name: string,
-  description?: string
-): Promise<Project> {
+export async function addProject(name: string, description?: string): Promise<Project> {
   const database = await getDb();
   const projects = database.data.projects;
 
@@ -56,9 +53,7 @@ export async function updateProject(
     updatedAt: new Date().toISOString(),
   };
 
-  database.data.projects = database.data.projects.map((p) =>
-    p.id === id ? updatedProject : p
-  );
+  database.data.projects = database.data.projects.map((p) => (p.id === id ? updatedProject : p));
   await database.write();
   return updatedProject;
 }
@@ -75,10 +70,7 @@ export async function removeProject(id: string): Promise<void> {
     delete database.data.analysisCache[repo.path];
     delete database.data.codebaseHealthCache[repo.path];
   });
-  database.data.repositories = database.data.repositories.filter(
-    (r) => r.projectId !== id
-  );
+  database.data.repositories = database.data.repositories.filter((r) => r.projectId !== id);
 
   await database.write();
 }
-

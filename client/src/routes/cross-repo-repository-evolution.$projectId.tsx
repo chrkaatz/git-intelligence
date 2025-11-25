@@ -4,4 +4,3 @@ import { CrossRepoRepositoryEvolutionView } from '../components/CrossRepoReposit
 export const Route = createFileRoute('/cross-repo-repository-evolution/$projectId')({
   component: () => <CrossRepoRepositoryEvolutionView />,
 });
-

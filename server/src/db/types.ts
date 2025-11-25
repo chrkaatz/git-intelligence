@@ -34,4 +34,3 @@ export interface DatabaseSchema {
   codebaseHealthCache: Record<string, CachedCodebaseHealth>; // keyed by repository path
   schemaVersion?: number; // Track schema version for migrations
 }
-

@@ -7,20 +7,9 @@ export type {
   DatabaseSchema,
 } from './db/types';
 
-export {
-  getProjects,
-  getProject,
-  addProject,
-  updateProject,
-  removeProject,
-} from './db/projects';
+export { getProjects, getProject, addProject, updateProject, removeProject } from './db/projects';
 
-export {
-  getRepositories,
-  getRepository,
-  addRepository,
-  removeRepository,
-} from './db/repositories';
+export { getRepositories, getRepository, addRepository, removeRepository } from './db/repositories';
 
 export {
   getCachedStats,

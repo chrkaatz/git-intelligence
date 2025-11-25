@@ -1,7 +1,20 @@
 import { useState } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Area, AreaChart } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  ComposedChart,
+  Area,
+  AreaChart,
+  Line,
+} from 'recharts';
 import type { RepositoryEvolution as RepositoryEvolutionType } from '../api';
-import { GitCommit, TrendingUp, Activity, RefreshCw, Tag, Zap, FileText } from 'lucide-react';
+import { GitCommit, TrendingUp, Activity, RefreshCw, Tag, Zap } from 'lucide-react';
 
 interface RepositoryEvolutionProps {
   evolution: RepositoryEvolutionType;
@@ -9,7 +22,9 @@ interface RepositoryEvolutionProps {
 }
 
 export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionProps) {
-  const [selectedSection, setSelectedSection] = useState<'activity' | 'growth' | 'churn' | 'bursts' | 'releases'>('activity');
+  const [selectedSection, setSelectedSection] = useState<
+    'activity' | 'growth' | 'churn' | 'bursts' | 'releases'
+  >('activity');
 
   if (loading) {
     return (
@@ -52,7 +67,10 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {summaryCards.map((card, idx) => (
-          <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div
+            key={idx}
+            className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
@@ -76,7 +94,8 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
             selectedSection === 'activity'
               ? 'bg-indigo-600 text-white dark:bg-indigo-500'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}>
+          }`}
+        >
           <Activity className="w-4 h-4 inline mr-2" />
           Commit Frequency
         </button>
@@ -86,7 +105,8 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
             selectedSection === 'growth'
               ? 'bg-indigo-600 text-white dark:bg-indigo-500'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}>
+          }`}
+        >
           <TrendingUp className="w-4 h-4 inline mr-2" />
           Growth Curves
         </button>
@@ -96,7 +116,8 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
             selectedSection === 'churn'
               ? 'bg-indigo-600 text-white dark:bg-indigo-500'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}>
+          }`}
+        >
           <RefreshCw className="w-4 h-4 inline mr-2" />
           Churn Metrics
         </button>
@@ -106,7 +127,8 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
             selectedSection === 'bursts'
               ? 'bg-indigo-600 text-white dark:bg-indigo-500'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}>
+          }`}
+        >
           <Zap className="w-4 h-4 inline mr-2" />
           Change Bursts
         </button>
@@ -116,7 +138,8 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
             selectedSection === 'releases'
               ? 'bg-indigo-600 text-white dark:bg-indigo-500'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}>
+          }`}
+        >
           <Tag className="w-4 h-4 inline mr-2" />
           Releases
         </button>
@@ -137,7 +160,10 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <ResponsiveContainer width="100%" height={400}>
               <AreaChart data={evolution.commitFrequency}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-gray-300 dark:stroke-gray-700"
+                />
                 <XAxis
                   dataKey="date"
                   tick={{ fill: 'currentColor', fontSize: 12 }}
@@ -146,7 +172,10 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
                   textAnchor="end"
                   height={100}
                 />
-                <YAxis tick={{ fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+                <YAxis
+                  tick={{ fill: 'currentColor' }}
+                  className="text-gray-600 dark:text-gray-400"
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'var(--tw-color-gray-800)',
@@ -183,7 +212,10 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <ResponsiveContainer width="100%" height={400}>
               <ComposedChart data={evolution.growthCurve}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-gray-300 dark:stroke-gray-700"
+                />
                 <XAxis
                   dataKey="date"
                   tick={{ fill: 'currentColor', fontSize: 12 }}
@@ -242,20 +274,26 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
               Churn Metrics - Additions vs Deletions
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Code additions and deletions over time. High churn indicates active refactoring or rapid changes.
+              Code additions and deletions over time. High churn indicates active refactoring or
+              rapid changes.
             </p>
             <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <p className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>Average Churn Ratio:</strong> {evolution.averageChurnRatio.toFixed(2)}
                 <br />
-                <span className="text-xs">(Higher values indicate more simultaneous additions and deletions)</span>
+                <span className="text-xs">
+                  (Higher values indicate more simultaneous additions and deletions)
+                </span>
               </p>
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <ResponsiveContainer width="100%" height={400}>
               <ComposedChart data={evolution.churnMetrics}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-gray-300 dark:stroke-gray-700"
+                />
                 <XAxis
                   dataKey="date"
                   tick={{ fill: 'currentColor', fontSize: 12 }}
@@ -264,7 +302,10 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
                   textAnchor="end"
                   height={100}
                 />
-                <YAxis tick={{ fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+                <YAxis
+                  tick={{ fill: 'currentColor' }}
+                  className="text-gray-600 dark:text-gray-400"
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'var(--tw-color-gray-800)',
@@ -297,7 +338,8 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
               Change Bursts & Refactors
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Periods of high activity with significant code changes. Refactors are identified as large net-zero changes.
+              Periods of high activity with significant code changes. Refactors are identified as
+              large net-zero changes.
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
@@ -305,7 +347,10 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
               <div className="space-y-4">
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart data={evolution.changeBursts.slice(-50)}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-gray-300 dark:stroke-gray-700"
+                    />
                     <XAxis
                       dataKey="date"
                       tick={{ fill: 'currentColor', fontSize: 12 }}
@@ -314,7 +359,10 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
                       textAnchor="end"
                       height={100}
                     />
-                    <YAxis tick={{ fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+                    <YAxis
+                      tick={{ fill: 'currentColor' }}
+                      className="text-gray-600 dark:text-gray-400"
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'var(--tw-color-gray-800)',
@@ -332,29 +380,36 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
                     Recent Change Bursts (showing refactors in orange)
                   </h4>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {evolution.changeBursts.slice(-20).reverse().map((burst, idx) => (
-                      <div
-                        key={idx}
-                        className={`flex items-center justify-between p-3 rounded ${
-                          burst.isRefactor
-                            ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800'
-                            : 'bg-gray-50 dark:bg-gray-900'
-                        }`}>
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {new Date(burst.date).toLocaleDateString()}
-                            {burst.isRefactor && (
-                              <span className="ml-2 text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 rounded">
-                                Refactor
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            +{burst.linesAdded.toLocaleString()} / -{burst.linesRemoved.toLocaleString()} (net: {burst.netChange > 0 ? '+' : ''}{burst.netChange.toLocaleString()})
+                    {evolution.changeBursts
+                      .slice(-20)
+                      .reverse()
+                      .map((burst, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex items-center justify-between p-3 rounded ${
+                            burst.isRefactor
+                              ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800'
+                              : 'bg-gray-50 dark:bg-gray-900'
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {new Date(burst.date).toLocaleDateString()}
+                              {burst.isRefactor && (
+                                <span className="ml-2 text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 rounded">
+                                  Refactor
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              +{burst.linesAdded.toLocaleString()} / -
+                              {burst.linesRemoved.toLocaleString()} (net:{' '}
+                              {burst.netChange > 0 ? '+' : ''}
+                              {burst.netChange.toLocaleString()})
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               </div>
@@ -384,7 +439,8 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
                   {evolution.releases.map((release, idx) => (
                     <div
                       key={idx}
-                      className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                      className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                    >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
@@ -411,7 +467,9 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
                 </div>
               </div>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400">No releases (tags) found in this repository.</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                No releases (tags) found in this repository.
+              </p>
             )}
           </div>
         </div>
@@ -419,4 +477,3 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
     </div>
   );
 }
-

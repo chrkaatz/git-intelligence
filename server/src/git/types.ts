@@ -430,4 +430,3 @@ export interface CrossRepoSocialNetworkAnalysis {
   totalRepos: number;
   repoNames: string[];
 }
-

@@ -4,4 +4,3 @@ import { CrossRepoDeveloperAnalyticsView } from '../components/CrossRepoDevelope
 export const Route = createFileRoute('/cross-repo-analytics/$projectId')({
   component: () => <CrossRepoDeveloperAnalyticsView />,
 });
-

@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import type { CrossRepoCodebaseHealth as CrossRepoCodebaseHealthType } from '../api';
 import { Flame, Folder, FileText, TrendingUp, GitBranch } from 'lucide-react';
 
@@ -9,7 +18,9 @@ interface CrossRepoCodebaseHealthProps {
 }
 
 export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHealthProps) {
-  const [selectedRepo, setSelectedRepo] = useState<CrossRepoCodebaseHealthType['hotspots']['repositories'][0] | null>(null);
+  const [selectedRepo, setSelectedRepo] = useState<
+    CrossRepoCodebaseHealthType['hotspots']['repositories'][0] | null
+  >(null);
 
   if (loading) {
     return (
@@ -20,15 +31,11 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
   }
 
   if (!health || health.totalRepos === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        No repository data available.
-      </div>
-    );
+    return <div className="text-center py-12 text-gray-500">No repository data available.</div>;
   }
 
   // Prepare data for repository hotspots chart
-  const repoData = health.hotspots.repositories.map(repo => ({
+  const repoData = health.hotspots.repositories.map((repo) => ({
     name: repo.repoName.length > 20 ? repo.repoName.substring(0, 20) + '...' : repo.repoName,
     fullName: repo.repoName,
     commits: repo.totalCommits,
@@ -43,8 +50,12 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Repositories</p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{health.totalRepos}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Repositories
+              </p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
+                {health.totalRepos}
+              </p>
             </div>
             <GitBranch className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
@@ -52,9 +63,13 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Commits</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Total Commits
+              </p>
               <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
-                {health.hotspots.repositories.reduce((sum, r) => sum + r.totalCommits, 0).toLocaleString()}
+                {health.hotspots.repositories
+                  .reduce((sum, r) => sum + r.totalCommits, 0)
+                  .toLocaleString()}
               </p>
             </div>
             <TrendingUp className="w-6 h-6 text-gray-400 dark:text-gray-500" />
@@ -63,9 +78,13 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Files</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Total Files
+              </p>
               <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
-                {health.hotspots.repositories.reduce((sum, r) => sum + r.totalFiles, 0).toLocaleString()}
+                {health.hotspots.repositories
+                  .reduce((sum, r) => sum + r.totalFiles, 0)
+                  .toLocaleString()}
               </p>
             </div>
             <FileText className="w-6 h-6 text-gray-400 dark:text-gray-500" />
@@ -74,9 +93,13 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Directories</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Total Directories
+              </p>
               <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
-                {health.hotspots.repositories.reduce((sum, r) => sum + r.totalDirectories, 0).toLocaleString()}
+                {health.hotspots.repositories
+                  .reduce((sum, r) => sum + r.totalDirectories, 0)
+                  .toLocaleString()}
               </p>
             </div>
             <Folder className="w-6 h-6 text-gray-400 dark:text-gray-500" />
@@ -93,16 +116,22 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
           </h2>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-          Repositories sorted by total commit activity. Click on a repository to see its top files and directories.
+          Repositories sorted by total commit activity. Click on a repository to see its top files
+          and directories.
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Chart */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Commits per Repository</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              Commits per Repository
+            </h3>
             <ResponsiveContainer width="100%" height={400}>
               <BarChart data={repoData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-gray-300 dark:stroke-gray-700"
+                />
                 <XAxis
                   dataKey="name"
                   angle={-45}
@@ -111,7 +140,10 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
                   tick={{ fill: 'currentColor', fontSize: 12 }}
                   className="text-gray-600 dark:text-gray-400"
                 />
-                <YAxis tick={{ fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+                <YAxis
+                  tick={{ fill: 'currentColor' }}
+                  className="text-gray-600 dark:text-gray-400"
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'var(--tw-color-gray-800)',
@@ -130,8 +162,10 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
                   dataKey="commits"
                   fill="#f97316"
                   name="Commits"
-                  onClick={(data) => {
-                    const repo = health.hotspots.repositories.find(r => r.repoName === data.fullName);
+                  onClick={(data: any) => {
+                    const repo = health.hotspots.repositories.find(
+                      (r) => r.repoName === data.name || r.repoName === data.fullName
+                    );
                     setSelectedRepo(repo || null);
                   }}
                   style={{ cursor: 'pointer' }}
@@ -142,7 +176,9 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
 
           {/* Repository List */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Repository Rankings</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              Repository Rankings
+            </h3>
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
               {health.hotspots.repositories.map((repo, idx) => (
                 <div
@@ -152,7 +188,8 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
                     selectedRepo?.repoName === repo.repoName
                       ? 'bg-indigo-50 border-indigo-300 dark:bg-indigo-900/20 dark:border-indigo-700'
                       : 'bg-gray-50 border-gray-200 hover:bg-gray-100 dark:bg-gray-900 dark:border-gray-700 dark:hover:bg-gray-800'
-                  }`}>
+                  }`}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -184,12 +221,15 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Top Files</h4>
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Top Files
+                </h4>
                 <div className="space-y-1 max-h-64 overflow-y-auto">
                   {selectedRepo.topFiles.map((file, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded text-sm">
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded text-sm"
+                    >
                       <span className="text-gray-700 dark:text-gray-300 font-mono truncate flex-1">
                         {file.file}
                       </span>
@@ -201,12 +241,15 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
                 </div>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Top Directories</h4>
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Top Directories
+                </h4>
                 <div className="space-y-1 max-h-64 overflow-y-auto">
                   {selectedRepo.topDirectories.map((dir, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded text-sm">
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded text-sm"
+                    >
                       <span className="text-gray-700 dark:text-gray-300 font-mono truncate flex-1">
                         {dir.directory}
                       </span>
@@ -238,7 +281,8 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
             {health.hotspots.aggregatedFiles.slice(0, 30).map((file, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700"
+              >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 w-8">
                     #{idx + 1}
@@ -274,7 +318,8 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
             {health.hotspots.aggregatedDirectories.slice(0, 30).map((dir, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700"
+              >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 w-8">
                     #{idx + 1}
@@ -296,4 +341,3 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
     </div>
   );
 }
-

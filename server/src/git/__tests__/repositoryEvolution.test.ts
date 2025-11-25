@@ -23,7 +23,9 @@ describe('repositoryEvolution', () => {
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
 
-      await expect(getRepositoryEvolution('/test/repo', false)).rejects.toThrow('Not a git repository');
+      await expect(getRepositoryEvolution('/test/repo', false)).rejects.toThrow(
+        'Not a git repository'
+      );
     });
 
     it('should calculate evolution metrics', async () => {
@@ -33,12 +35,13 @@ describe('repositoryEvolution', () => {
 
       const mockGit = {
         checkIsRepo: vi.fn().mockResolvedValue(true),
-        raw: vi.fn()
+        raw: vi
+          .fn()
           .mockResolvedValueOnce(
             `${hash1}|2024-01-01T10:00:00Z|Initial commit\n` +
-            '10\t5\tfile1.ts\n' +
-            `${hash2}|2024-01-02T11:00:00Z|Add feature\n` +
-            '20\t3\tfile2.ts\n'
+              '10\t5\tfile1.ts\n' +
+              `${hash2}|2024-01-02T11:00:00Z|Add feature\n` +
+              '20\t3\tfile2.ts\n'
           )
           .mockResolvedValueOnce(`${hash3}|2024-01-01T10:00:00Z|Release v1.0.0`),
         tags: vi.fn().mockResolvedValue({
@@ -63,15 +66,14 @@ describe('repositoryEvolution', () => {
 
       const mockGit = {
         checkIsRepo: vi.fn().mockResolvedValue(true),
-        raw: vi.fn()
-          .mockResolvedValueOnce(
-            // First commit with large change (burst) - needs to be processed by second commit
-            `${hash1}|2024-01-01T10:00:00Z|Large refactor\n` +
+        raw: vi.fn().mockResolvedValueOnce(
+          // First commit with large change (burst) - needs to be processed by second commit
+          `${hash1}|2024-01-01T10:00:00Z|Large refactor\n` +
             '500\t450\tfile1.ts\n' +
             // Second commit to trigger processing of first commit's burst
             `${hash2}|2024-01-02T10:00:00Z|Small fix\n` +
             '5\t2\tfile2.ts\n'
-          ),
+        ),
         tags: vi.fn().mockResolvedValue({
           all: [],
         }),
@@ -98,4 +100,3 @@ describe('repositoryEvolution', () => {
     });
   });
 });
-

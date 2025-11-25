@@ -2,12 +2,7 @@ import { useState, useEffect, type ReactNode } from 'react';
 import React from 'react';
 import { ProjectsSidebar } from './ProjectsSidebar';
 import { Link, useRouterState } from '@tanstack/react-router';
-import {
-  Dialog,
-  DialogBackdrop,
-  DialogPanel,
-  TransitionChild,
-} from '@headlessui/react';
+import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from '@headlessui/react';
 import {
   Bars3Icon,
   FolderIcon,
@@ -81,12 +76,10 @@ export default function Layout({ children, sidebar }: LayoutProps) {
     const saved = localStorage.getItem('navSidebarCollapsed');
     return saved === 'true';
   });
-  const [projectsSidebarCollapsed, setProjectsSidebarCollapsed] = useState(
-    () => {
-      const saved = localStorage.getItem('projectsSidebarCollapsed');
-      return saved === 'true';
-    }
-  );
+  const [projectsSidebarCollapsed, setProjectsSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('projectsSidebarCollapsed');
+    return saved === 'true';
+  });
 
   const router = useRouterState();
 
@@ -96,17 +89,12 @@ export default function Layout({ children, sidebar }: LayoutProps) {
   }, [navSidebarCollapsed]);
 
   useEffect(() => {
-    localStorage.setItem(
-      'projectsSidebarCollapsed',
-      String(projectsSidebarCollapsed)
-    );
+    localStorage.setItem('projectsSidebarCollapsed', String(projectsSidebarCollapsed));
   }, [projectsSidebarCollapsed]);
 
   const currentPath = router.location.pathname;
   // Map cross-repo routes to their base navigation items
-  const normalizedPath = currentPath.startsWith(
-    '/cross-repo-repository-evolution'
-  )
+  const normalizedPath = currentPath.startsWith('/cross-repo-repository-evolution')
     ? '/repository-evolution'
     : currentPath.startsWith('/cross-repo-analytics')
       ? '/developer-analytics'
@@ -118,16 +106,12 @@ export default function Layout({ children, sidebar }: LayoutProps) {
             ? '/social-network-analysis'
             : currentPath;
   const currentView =
-    navigation.find((item) => normalizedPath.startsWith(item.to))?.id ||
-    'dashboard';
+    navigation.find((item) => normalizedPath.startsWith(item.to))?.id || 'dashboard';
 
   return (
     <>
       <div>
-        <Dialog
-          open={sidebarOpen}
-          onClose={setSidebarOpen}
-          className="relative z-50 lg:hidden">
+        <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="relative z-50 lg:hidden">
           <DialogBackdrop
             transition
             className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear data-closed:opacity-0"
@@ -136,18 +120,17 @@ export default function Layout({ children, sidebar }: LayoutProps) {
           <div className="fixed inset-0 flex">
             <DialogPanel
               transition
-              className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out data-closed:-translate-x-full">
+              className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out data-closed:-translate-x-full"
+            >
               <TransitionChild>
                 <div className="absolute top-0 left-full flex w-16 justify-center pt-5 duration-300 ease-in-out data-closed:opacity-0">
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(false)}
-                    className="-m-2.5 p-2.5">
+                    className="-m-2.5 p-2.5"
+                  >
                     <span className="sr-only">Close sidebar</span>
-                    <XMarkIcon
-                      aria-hidden="true"
-                      className="size-6 text-white"
-                    />
+                    <XMarkIcon aria-hidden="true" className="size-6 text-white" />
                   </button>
                 </div>
               </TransitionChild>
@@ -179,7 +162,8 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                                     ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
                                     : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
                                   'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold'
-                                )}>
+                                )}
+                              >
                                 <item.icon
                                   aria-hidden="true"
                                   className={classNames(
@@ -208,17 +192,20 @@ export default function Layout({ children, sidebar }: LayoutProps) {
           className={classNames(
             'hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col transition-all duration-300',
             navSidebarCollapsed ? 'lg:w-16' : 'lg:w-72'
-          )}>
+          )}
+        >
           <div
             className={classNames(
               'relative flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900 dark:before:pointer-events-none dark:before:absolute dark:before:inset-0 dark:before:bg-black/10 transition-all duration-300',
               navSidebarCollapsed ? 'px-2 overflow-hidden' : 'px-6'
-            )}>
+            )}
+          >
             <div
               className={classNames(
                 'relative flex h-16 shrink-0 items-center gap-x-3',
                 navSidebarCollapsed && 'justify-center'
-              )}>
+              )}
+            >
               {!navSidebarCollapsed && (
                 <>
                   <img
@@ -232,11 +219,7 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                 </>
               )}
               {navSidebarCollapsed && (
-                <img
-                  src="/logo_alt.png"
-                  alt="Git Intelligence"
-                  className="h-8 w-auto rounded-lg"
-                />
+                <img src="/logo_alt.png" alt="Git Intelligence" className="h-8 w-auto rounded-lg" />
               )}
             </div>
             <nav className="relative flex flex-1 flex-col">
@@ -255,7 +238,8 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                                 : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
                               'group flex rounded-md p-2 text-sm/6 font-semibold',
                               navSidebarCollapsed ? 'justify-center' : 'gap-x-3'
-                            )}>
+                            )}
+                          >
                             <item.icon
                               aria-hidden="true"
                               className={classNames(
@@ -307,21 +291,17 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                   className={classNames(
                     'mt-auto',
                     navSidebarCollapsed ? '-mx-2 mb-2' : '-mx-6 mt-2 mb-2'
-                  )}>
+                  )}
+                >
                   <button
                     type="button"
                     onClick={() => setNavSidebarCollapsed(!navSidebarCollapsed)}
                     className={classNames(
                       'flex items-center rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white transition-colors',
-                      navSidebarCollapsed
-                        ? 'w-full justify-center'
-                        : 'w-full gap-x-3'
+                      navSidebarCollapsed ? 'w-full justify-center' : 'w-full gap-x-3'
                     )}
-                    title={
-                      navSidebarCollapsed
-                        ? 'Expand sidebar'
-                        : 'Collapse sidebar'
-                    }>
+                    title={navSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                  >
                     {navSidebarCollapsed ? (
                       <ChevronRightIcon className="size-6 shrink-0" />
                     ) : (
@@ -341,20 +321,21 @@ export default function Layout({ children, sidebar }: LayoutProps) {
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="relative -m-2.5 p-2.5 text-gray-700 lg:hidden dark:text-gray-400">
+            className="relative -m-2.5 p-2.5 text-gray-700 lg:hidden dark:text-gray-400"
+          >
             <span className="sr-only">Open sidebar</span>
             <Bars3Icon aria-hidden="true" className="size-6" />
           </button>
           <div className="relative flex-1 text-sm/6 font-semibold text-gray-900 dark:text-white">
-            {navigation.find((item) => item.id === currentView)?.name ||
-              'Dashboard'}
+            {navigation.find((item) => item.id === currentView)?.name || 'Dashboard'}
           </div>
           {sidebar && (
             <button
               type="button"
               onClick={() => setProjectsSidebarOpen(true)}
               className="relative -m-2.5 p-2.5 text-gray-700 dark:text-gray-400"
-              title="Open projects">
+              title="Open projects"
+            >
               <span className="sr-only">Open projects</span>
               <FolderIcon aria-hidden="true" className="size-6" />
             </button>
@@ -374,7 +355,8 @@ export default function Layout({ children, sidebar }: LayoutProps) {
           <Dialog
             open={projectsSidebarOpen}
             onClose={setProjectsSidebarOpen}
-            className="relative z-50 xl:hidden">
+            className="relative z-50 xl:hidden"
+          >
             <DialogBackdrop
               transition
               className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear data-closed:opacity-0"
@@ -383,18 +365,17 @@ export default function Layout({ children, sidebar }: LayoutProps) {
             <div className="fixed inset-0 flex">
               <DialogPanel
                 transition
-                className="relative ml-auto flex w-full max-w-sm flex-1 transform transition duration-300 ease-in-out data-closed:translate-x-full">
+                className="relative ml-auto flex w-full max-w-sm flex-1 transform transition duration-300 ease-in-out data-closed:translate-x-full"
+              >
                 <TransitionChild>
                   <div className="absolute top-0 right-full flex w-16 justify-center pt-5 duration-300 ease-in-out data-closed:opacity-0">
                     <button
                       type="button"
                       onClick={() => setProjectsSidebarOpen(false)}
-                      className="-m-2.5 p-2.5">
+                      className="-m-2.5 p-2.5"
+                    >
                       <span className="sr-only">Close projects</span>
-                      <XMarkIcon
-                        aria-hidden="true"
-                        className="size-6 text-white"
-                      />
+                      <XMarkIcon aria-hidden="true" className="size-6 text-white" />
                     </button>
                   </div>
                 </TransitionChild>
@@ -412,12 +393,14 @@ export default function Layout({ children, sidebar }: LayoutProps) {
           className={classNames(
             'transition-all duration-300',
             navSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72'
-          )}>
+          )}
+        >
           <div
             className={classNames(
               'transition-all duration-300',
               !sidebar || projectsSidebarCollapsed ? '' : 'xl:pl-96'
-            )}>
+            )}
+          >
             <div className="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
               {/* Floating button for projects sidebar on lg screens (not xl) */}
               {sidebar && (
@@ -426,7 +409,8 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                     type="button"
                     onClick={() => setProjectsSidebarOpen(true)}
                     className="flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-indigo-500 dark:hover:bg-indigo-600"
-                    title="Open projects">
+                    title="Open projects"
+                  >
                     <FolderIcon aria-hidden="true" className="size-5" />
                     <span>Projects</span>
                   </button>
@@ -443,10 +427,9 @@ export default function Layout({ children, sidebar }: LayoutProps) {
             className={classNames(
               'fixed inset-y-0 hidden overflow-y-auto border-r border-gray-200 dark:border-white/10 transition-all duration-300 xl:block',
               navSidebarCollapsed ? 'left-16' : 'left-72',
-              projectsSidebarCollapsed
-                ? 'w-16 px-2'
-                : 'w-96 px-4 py-6 sm:px-6 lg:px-8'
-            )}>
+              projectsSidebarCollapsed ? 'w-16 px-2' : 'w-96 px-4 py-6 sm:px-6 lg:px-8'
+            )}
+          >
             <div className="relative h-full">
               {React.isValidElement(sidebar) && sidebar.type === ProjectsSidebar
                 ? React.cloneElement(

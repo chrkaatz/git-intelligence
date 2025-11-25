@@ -1,0 +1,21 @@
+echo "Formatting all files..."
+npm run format
+
+echo "Formatting staged files..."
+prettier $(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g') --write --ignore-unknown
+
+git update-index --again
+
+# FIXME: Linting is not working
+# echo "Running linting..."
+# npm run lint
+
+echo "Running tests..."
+npm test
+
+echo "Building projects..."
+npm run build
+
+git update-index --again
+
+echo "✅ Pre-commit checks passed!"

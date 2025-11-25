@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { ActivityStats } from '../api';
 
 interface ActivityChartProps {
@@ -37,7 +29,11 @@ export const ActivityChart: React.FC<ActivityChartProps> = ({ activity }) => {
               <YAxis fontSize={12} tickLine={false} axisLine={false} />
               <Tooltip
                 cursor={{ fill: '#f3f4f6' }}
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                contentStyle={{
+                  borderRadius: '8px',
+                  border: 'none',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                }}
               />
               <Bar dataKey="commits" fill="#3b82f6" radius={[4, 4, 0, 0]} />
             </BarChart>
@@ -55,7 +51,11 @@ export const ActivityChart: React.FC<ActivityChartProps> = ({ activity }) => {
               <YAxis fontSize={12} tickLine={false} axisLine={false} />
               <Tooltip
                 cursor={{ fill: '#f3f4f6' }}
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                contentStyle={{
+                  borderRadius: '8px',
+                  border: 'none',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                }}
               />
               <Bar dataKey="commits" fill="#10b981" radius={[4, 4, 0, 0]} />
             </BarChart>

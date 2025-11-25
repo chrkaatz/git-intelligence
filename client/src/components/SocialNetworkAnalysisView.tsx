@@ -1,7 +1,10 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { SocialNetworkAnalysis as SocialNetworkAnalysisComponent } from './SocialNetworkAnalysis';
-import { getSocialNetworkAnalysis, type SocialNetworkAnalysis as SocialNetworkAnalysisType } from '../api';
+import {
+  getSocialNetworkAnalysis,
+  type SocialNetworkAnalysis as SocialNetworkAnalysisType,
+} from '../api';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
 
@@ -52,7 +55,8 @@ export function SocialNetworkAnalysisView() {
           : 'Social network analysis calculated successfully!';
         showNotification('success', successMessage, 3000);
       } catch (err: any) {
-        const errorMessage = err?.response?.data?.error || err?.message || 'Failed to load social network analysis';
+        const errorMessage =
+          err?.response?.data?.error || err?.message || 'Failed to load social network analysis';
         setError(errorMessage);
         // Remove loading notification and show error
         if (loadingNotificationIdRef.current) {
@@ -91,7 +95,8 @@ export function SocialNetworkAnalysisView() {
           <button
             onClick={() => fetchAnalysis(true)}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+          >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             {loading ? 'Recalculating...' : 'Recalculate'}
           </button>
@@ -121,4 +126,3 @@ export function SocialNetworkAnalysisView() {
     </>
   );
 }
-

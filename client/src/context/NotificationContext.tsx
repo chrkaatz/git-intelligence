@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { X, CheckCircle, AlertCircle, Info, Loader2 } from 'lucide-react';
 
 export type NotificationType = 'info' | 'success' | 'error' | 'loading';
@@ -26,7 +26,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const showNotification = useCallback(
     (type: NotificationType, message: string, duration: number = 5000) => {
-      let notificationId: string;
+      let notificationId = '';
 
       // Deduplicate: don't show the same message if it already exists
       setNotifications((prev) => {
@@ -82,11 +82,7 @@ function NotificationContainer({
   return (
     <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-md w-full">
       {notifications.map((notification) => (
-        <NotificationItem
-          key={notification.id}
-          notification={notification}
-          onRemove={onRemove}
-        />
+        <NotificationItem key={notification.id} notification={notification} onRemove={onRemove} />
       ))}
     </div>
   );
@@ -158,4 +154,3 @@ function NotificationItem({
     </div>
   );
 }
-

@@ -13,7 +13,10 @@ import type {
   CrossRepoHotspot,
 } from './types';
 
-export async function getCodebaseHealth(repoPath: string, useCache: boolean = true): Promise<CodebaseHealth> {
+export async function getCodebaseHealth(
+  repoPath: string,
+  useCache: boolean = true
+): Promise<CodebaseHealth> {
   // Check cache first (default: 1 hour cache)
   if (useCache) {
     const cached = await getCachedCodebaseHealth(repoPath, 3600000); // 1 hour
@@ -33,7 +36,13 @@ export async function getCodebaseHealth(repoPath: string, useCache: boolean = tr
     }
 
     // Get all commits with numstat to track file changes
-    const numstatRaw = await git.raw(['log', '--all', '--numstat', '--pretty=format:%H|%ad', '--date=iso']);
+    const numstatRaw = await git.raw([
+      'log',
+      '--all',
+      '--numstat',
+      '--pretty=format:%H|%ad',
+      '--date=iso',
+    ]);
 
     // Track file commits and directories
     const fileCommits = new Map<string, number>();
@@ -121,10 +130,7 @@ export async function getCodebaseHealth(repoPath: string, useCache: boolean = tr
             // Track rewritten lines (deletions + additions in same commit)
             if (added > 0 && deleted > 0) {
               const rewritten = Math.min(added, deleted);
-              fileRewrittenLines.set(
-                filePath,
-                (fileRewrittenLines.get(filePath) || 0) + rewritten
-              );
+              fileRewrittenLines.set(filePath, (fileRewrittenLines.get(filePath) || 0) + rewritten);
             }
 
             // Track total lines
@@ -155,7 +161,7 @@ export async function getCodebaseHealth(repoPath: string, useCache: boolean = tr
 
     commitFiles.forEach((files, commitHash) => {
       const fileArray = Array.from(files);
-      fileArray.forEach(file => {
+      fileArray.forEach((file) => {
         fileTotalCommits.set(file, (fileTotalCommits.get(file) || 0) + 1);
       });
 
@@ -185,16 +191,19 @@ export async function getCodebaseHealth(repoPath: string, useCache: boolean = tr
           coChangePercentage,
         };
       })
-      .filter(pair => pair.coChanges >= 3) // Only show pairs that changed together at least 3 times
+      .filter((pair) => pair.coChanges >= 3) // Only show pairs that changed together at least 3 times
       .sort((a, b) => b.coChanges - a.coChanges);
 
     // 3. Stability
     const now = new Date();
     const stabilityFiles: StabilityFile[] = Array.from(fileFirstSeen.keys())
-      .map(file => {
+      .map((file) => {
         const firstSeen = fileFirstSeen.get(file)!;
         const lastSeen = fileLastSeen.get(file)!;
-        const ageDays = Math.max(1, Math.floor((now.getTime() - firstSeen.getTime()) / (1000 * 60 * 60 * 24)));
+        const ageDays = Math.max(
+          1,
+          Math.floor((now.getTime() - firstSeen.getTime()) / (1000 * 60 * 60 * 24))
+        );
         const changeFrequency = fileChangeCount.get(file) || 0;
         const changesPerDay = ageDays > 0 ? changeFrequency / ageDays : 0;
 
@@ -214,7 +223,7 @@ export async function getCodebaseHealth(repoPath: string, useCache: boolean = tr
           status,
         };
       })
-      .filter(f => f.changeFrequency > 0)
+      .filter((f) => f.changeFrequency > 0)
       .sort((a, b) => b.changeFrequency - a.changeFrequency);
 
     // 4. Complexity
@@ -226,7 +235,7 @@ export async function getCodebaseHealth(repoPath: string, useCache: boolean = tr
           averageDiffSize: Math.round(average),
         };
       })
-      .filter(f => f.averageDiffSize > 0)
+      .filter((f) => f.averageDiffSize > 0)
       .sort((a, b) => b.averageDiffSize - a.averageDiffSize);
 
     const largestDiffs: LargestDiff[] = Array.from(fileLargestDiff.entries())
@@ -248,7 +257,7 @@ export async function getCodebaseHealth(repoPath: string, useCache: boolean = tr
           rewrittenLines,
         };
       })
-      .filter(f => f.rewrittenLines > 0 && f.totalLines > 100) // Only files with significant changes
+      .filter((f) => f.rewrittenLines > 0 && f.totalLines > 100) // Only files with significant changes
       .sort((a, b) => b.rewritePercentage - a.rewritePercentage);
 
     const health = {
@@ -313,15 +322,18 @@ export async function getCrossRepoCodebaseHealth(
       const health = await getCodebaseHealth(repo.path, useCache);
 
       // Aggregate file commits (prefix with repo name to avoid collisions)
-      health.hotspots.files.forEach(file => {
+      health.hotspots.files.forEach((file) => {
         const key = `${repo.name}:${file.file}`;
         aggregatedFileCommits.set(key, (aggregatedFileCommits.get(key) || 0) + file.commits);
       });
 
       // Aggregate directory commits
-      health.hotspots.directories.forEach(dir => {
+      health.hotspots.directories.forEach((dir) => {
         const key = `${repo.name}:${dir.directory}`;
-        aggregatedDirectoryCommits.set(key, (aggregatedDirectoryCommits.get(key) || 0) + dir.commits);
+        aggregatedDirectoryCommits.set(
+          key,
+          (aggregatedDirectoryCommits.get(key) || 0) + dir.commits
+        );
       });
 
       // Calculate totals for this repo
@@ -365,7 +377,6 @@ export async function getCrossRepoCodebaseHealth(
       aggregatedDirectories,
     },
     totalRepos: repositories.length,
-    repoNames: repositories.map(r => r.name),
+    repoNames: repositories.map((r) => r.name),
   };
 }
-

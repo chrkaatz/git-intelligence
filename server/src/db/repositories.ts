@@ -76,4 +76,3 @@ export async function removeRepository(id: string): Promise<void> {
     await database.write();
   }
 }
-

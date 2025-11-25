@@ -56,7 +56,8 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.error || err?.message || 'Failed to upload repository';
+      const errorMessage =
+        err?.response?.data?.error || err?.message || 'Failed to upload repository';
       setError(errorMessage);
     } finally {
       setIsUploading(false);
@@ -122,7 +123,10 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
             </div>
           )}
           <div className="mb-4">
-            <label htmlFor="repository-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="repository-name"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               Repository Name
             </label>
             <input
@@ -176,9 +180,13 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
               onMouseDown={(e) => e.stopPropagation()}
             >
               <div className="space-y-2 text-center">
-                <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
-                  selectedFile ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
-                }`}>
+                <div
+                  className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
+                    selectedFile
+                      ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
+                  }`}
+                >
                   <FolderGit2 className="w-6 h-6" />
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-300">
@@ -198,11 +206,15 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
                       onChange={handleFileChange}
                     />
                   </label>
-                  <span className="pl-1 text-gray-500 dark:text-gray-400">{!selectedFile && 'or drag and drop'}</span>
+                  <span className="pl-1 text-gray-500 dark:text-gray-400">
+                    {!selectedFile && 'or drag and drop'}
+                  </span>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {selectedFile ? (
-                    <span className="font-medium text-gray-900 dark:text-white">{selectedFile.name}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {selectedFile.name}
+                    </span>
                   ) : (
                     'ZIP archives up to 50MB'
                   )}
@@ -245,4 +257,3 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
     </div>
   );
 };
-

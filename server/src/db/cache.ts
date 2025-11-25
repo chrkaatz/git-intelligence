@@ -83,4 +83,3 @@ export async function setCachedCodebaseHealth(repoPath: string, health: any): Pr
   };
   await database.write();
 }
-

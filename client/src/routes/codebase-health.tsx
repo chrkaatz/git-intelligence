@@ -4,4 +4,3 @@ import { CodebaseHealthView } from '../components/CodebaseHealthView';
 export const Route = createFileRoute('/codebase-health')({
   component: () => <CodebaseHealthView />,
 });
-

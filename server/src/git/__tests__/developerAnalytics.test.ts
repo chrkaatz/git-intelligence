@@ -23,7 +23,9 @@ describe('developerAnalytics', () => {
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
 
-      await expect(getDeveloperAnalytics('/test/repo', false)).rejects.toThrow('Not a git repository');
+      await expect(getDeveloperAnalytics('/test/repo', false)).rejects.toThrow(
+        'Not a git repository'
+      );
     });
 
     it('should process commits and calculate analytics', async () => {
@@ -36,12 +38,14 @@ describe('developerAnalytics', () => {
           total: 2,
           all: [],
         }),
-        raw: vi.fn().mockResolvedValue(
-          `${hash1}|John Doe|john@example.com|2024-01-01T10:00:00Z|G|Initial commit\n` +
-          '10\t5\tfile1.ts\n' +
-          `${hash2}|John Doe|john@example.com|2024-01-02T11:00:00Z|N|Fix bug\n` +
-          '3\t1\tfile2.ts\n'
-        ),
+        raw: vi
+          .fn()
+          .mockResolvedValue(
+            `${hash1}|John Doe|john@example.com|2024-01-01T10:00:00Z|G|Initial commit\n` +
+              '10\t5\tfile1.ts\n' +
+              `${hash2}|John Doe|john@example.com|2024-01-02T11:00:00Z|N|Fix bug\n` +
+              '3\t1\tfile2.ts\n'
+          ),
       };
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
@@ -63,10 +67,12 @@ describe('developerAnalytics', () => {
           total: 1,
           all: [],
         }),
-        raw: vi.fn().mockResolvedValue(
-          `${hash}|John Doe|john@example.com|2024-01-01T10:00:00Z|G|fix: bug in file\n` +
-          '10\t5\tfile1.ts\n'
-        ),
+        raw: vi
+          .fn()
+          .mockResolvedValue(
+            `${hash}|John Doe|john@example.com|2024-01-01T10:00:00Z|G|fix: bug in file\n` +
+              '10\t5\tfile1.ts\n'
+          ),
       };
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
@@ -86,10 +92,12 @@ describe('developerAnalytics', () => {
           total: 1,
           all: [],
         }),
-        raw: vi.fn().mockResolvedValue(
-          `${hash}|John Doe|john@example.com|2024-01-01T10:00:00Z|G|revert: previous change\n` +
-          '10\t5\tfile1.ts\n'
-        ),
+        raw: vi
+          .fn()
+          .mockResolvedValue(
+            `${hash}|John Doe|john@example.com|2024-01-01T10:00:00Z|G|revert: previous change\n` +
+              '10\t5\tfile1.ts\n'
+          ),
       };
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
@@ -133,10 +141,12 @@ describe('developerAnalytics', () => {
             total: 1,
             all: [],
           }),
-          raw: vi.fn().mockResolvedValue(
-            `${hash}|John Doe|john@example.com|2024-01-0${callCount}T10:00:00Z|G|Initial commit\n` +
-            '10\t5\tfile1.ts\n'
-          ),
+          raw: vi
+            .fn()
+            .mockResolvedValue(
+              `${hash}|John Doe|john@example.com|2024-01-0${callCount}T10:00:00Z|G|Initial commit\n` +
+                '10\t5\tfile1.ts\n'
+            ),
         };
       };
 
@@ -150,4 +160,3 @@ describe('developerAnalytics', () => {
     });
   });
 });
-

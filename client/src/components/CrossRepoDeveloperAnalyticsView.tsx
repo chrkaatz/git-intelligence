@@ -1,7 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { CrossRepoDeveloperAnalytics as CrossRepoDeveloperAnalyticsComponent } from './CrossRepoDeveloperAnalytics';
-import { getCrossRepoDeveloperAnalytics, type CrossRepoDeveloperAnalytics as CrossRepoDeveloperAnalyticsType } from '../api';
+import {
+  getCrossRepoDeveloperAnalytics,
+  type CrossRepoDeveloperAnalytics as CrossRepoDeveloperAnalyticsType,
+} from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
 
@@ -32,7 +35,11 @@ export function CrossRepoDeveloperAnalyticsView() {
       setError(null);
 
       // Show loading notification
-      const loadingId = showNotification('loading', 'Calculating cross-repo analytics across all repositories... This may take a while.', 0);
+      const loadingId = showNotification(
+        'loading',
+        'Calculating cross-repo analytics across all repositories... This may take a while.',
+        0
+      );
       loadingNotificationIdRef.current = loadingId;
 
       try {
@@ -43,7 +50,11 @@ export function CrossRepoDeveloperAnalyticsView() {
           removeNotification(loadingNotificationIdRef.current);
           loadingNotificationIdRef.current = null;
         }
-        showNotification('success', `Cross-repo analytics calculated for ${data.totalRepos} repositories!`, 3000);
+        showNotification(
+          'success',
+          `Cross-repo analytics calculated for ${data.totalRepos} repositories!`,
+          3000
+        );
       } catch (err) {
         const errorMessage = 'Failed to load cross-repo developer analytics';
         setError(errorMessage);
@@ -88,10 +99,10 @@ export function CrossRepoDeveloperAnalyticsView() {
         <CrossRepoDeveloperAnalyticsComponent analytics={analytics} loading={loading} />
       ) : (
         <div className="text-center py-12 text-gray-500">
-          No project selected. Select a project from the list to view cross-repo developer analytics.
+          No project selected. Select a project from the list to view cross-repo developer
+          analytics.
         </div>
       )}
     </>
   );
 }
-

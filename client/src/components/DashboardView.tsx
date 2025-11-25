@@ -72,9 +72,7 @@ export function DashboardView() {
     return (
       <>
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Dashboard
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
             Select a repository to view statistics
           </p>
@@ -97,13 +95,9 @@ export function DashboardView() {
   return (
     <>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Dashboard
-        </h1>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
         {repoPath && stats && (
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">
-            {repoName}
-          </p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{repoName}</p>
         )}
       </div>
 
@@ -138,4 +132,3 @@ export function DashboardView() {
     </>
   );
 }
-

@@ -9,7 +9,10 @@ import type {
 } from './types';
 import { normalizeEmail, mergeAuthorsBySimilarity, calculateLongitudinalPatterns } from './utils';
 
-export async function getDeveloperAnalytics(repoPath: string, useCache: boolean = true): Promise<DeveloperAnalytics> {
+export async function getDeveloperAnalytics(
+  repoPath: string,
+  useCache: boolean = true
+): Promise<DeveloperAnalytics> {
   console.log(`Calculating developer analytics for ${repoPath}`);
   const git = simpleGit(repoPath);
 
@@ -26,7 +29,13 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
     // Get numstat data with commit info including commit message
     // Format: commit_hash|author_name|author_email|date|gpg_status|message
     // Followed by numstat lines: added\tdeleted\tfile
-    const numstatRaw = await git.raw(['log', '--all', '--numstat', '--pretty=format:%H|%an|%ae|%ad|%G?|%s', '--date=iso']);
+    const numstatRaw = await git.raw([
+      'log',
+      '--all',
+      '--numstat',
+      '--pretty=format:%H|%an|%ae|%ad|%G?|%s',
+      '--date=iso',
+    ]);
 
     // Use email (normalized) as key to deduplicate authors with different names
     const authors = new Map<string, AuthorData>();
@@ -41,7 +50,13 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
     const allCommits: Array<{ authorName: string; authorEmail: string; date: Date }> = [];
 
     const lines = numstatRaw.split('\n');
-    let currentCommit: { authorName: string; authorEmail: string; date: Date; isSigned: boolean; message: string } | null = null;
+    let currentCommit: {
+      authorName: string;
+      authorEmail: string;
+      date: Date;
+      isSigned: boolean;
+      message: string;
+    } | null = null;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -134,8 +149,10 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
         // Track active time windows
         const hour = date.getHours();
         const dayOfWeek = date.getDay();
-        author.activeTimeWindows.hourOfDay[hour] = (author.activeTimeWindows.hourOfDay[hour] || 0) + 1;
-        author.activeTimeWindows.dayOfWeek[dayOfWeek] = (author.activeTimeWindows.dayOfWeek[dayOfWeek] || 0) + 1;
+        author.activeTimeWindows.hourOfDay[hour] =
+          (author.activeTimeWindows.hourOfDay[hour] || 0) + 1;
+        author.activeTimeWindows.dayOfWeek[dayOfWeek] =
+          (author.activeTimeWindows.dayOfWeek[dayOfWeek] || 0) + 1;
 
         continue;
       }
@@ -183,13 +200,18 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
               } else {
                 // File already exists - check for churn
                 // Churn: lines modified within 30 days of first commit by a different author
-                const daysSinceFirstCommit = (currentCommit.date.getTime() - fileFirstCommit.firstCommitDate.getTime()) / (1000 * 60 * 60 * 24);
+                const daysSinceFirstCommit =
+                  (currentCommit.date.getTime() - fileFirstCommit.firstCommitDate.getTime()) /
+                  (1000 * 60 * 60 * 24);
                 const CHURN_WINDOW_DAYS = 30;
 
                 // Always count as total lines
                 churnData.totalLines += totalChanged;
 
-                if (daysSinceFirstCommit <= CHURN_WINDOW_DAYS && fileFirstCommit.firstAuthorEmail !== normalizedEmail) {
+                if (
+                  daysSinceFirstCommit <= CHURN_WINDOW_DAYS &&
+                  fileFirstCommit.firstAuthorEmail !== normalizedEmail
+                ) {
                   // This is churn - another author modifying the file shortly after it was created
                   churnData.churnLines += totalChanged;
                 }
@@ -205,12 +227,13 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
 
     // Convert to array and format
     const authorList: DeveloperAuthorStats[] = Array.from(mergedAuthors.values())
-      .map(a => {
+      .map((a) => {
         const normalizedEmail = normalizeEmail(a.email);
         const churnData = authorChurn.get(normalizedEmail) || { churnLines: 0, totalLines: 0 };
-        const churnRatio = churnData.totalLines > 0
-          ? ((churnData.churnLines / churnData.totalLines) * 100).toFixed(1)
-          : '0.0';
+        const churnRatio =
+          churnData.totalLines > 0
+            ? ((churnData.churnLines / churnData.totalLines) * 100).toFixed(1)
+            : '0.0';
 
         return {
           name: a.name,
@@ -224,11 +247,13 @@ export async function getDeveloperAnalytics(repoPath: string, useCache: boolean 
           percentage: totalCommits > 0 ? ((a.commits / totalCommits) * 100).toFixed(1) : '0.0',
           activeTimeWindows: a.activeTimeWindows,
           signedCommits: a.signedCommits,
-          signedCommitsPercentage: a.commits > 0 ? ((a.signedCommits / a.commits) * 100).toFixed(1) : '0.0',
+          signedCommitsPercentage:
+            a.commits > 0 ? ((a.signedCommits / a.commits) * 100).toFixed(1) : '0.0',
           fixCommits: a.fixCommits,
           fixCommitRatio: a.commits > 0 ? ((a.fixCommits / a.commits) * 100).toFixed(1) : '0.0',
           revertCommits: a.revertCommits,
-          revertCommitRatio: a.commits > 0 ? ((a.revertCommits / a.commits) * 100).toFixed(1) : '0.0',
+          revertCommitRatio:
+            a.commits > 0 ? ((a.revertCommits / a.commits) * 100).toFixed(1) : '0.0',
           churn: churnData.churnLines,
           churnRatio,
         };
@@ -266,32 +291,38 @@ export async function getCrossRepoDeveloperAnalytics(
   }
 
   // Aggregate analytics across all repositories
-  const authorMap = new Map<string, {
-    name: string;
-    email: string;
-    commits: number;
-    linesAdded: number;
-    linesRemoved: number;
-    netLines: number;
-    firstCommit: Date | null;
-    lastCommit: Date | null;
-    activeTimeWindows: {
-      hourOfDay: Record<number, number>;
-      dayOfWeek: Record<number, number>;
-    };
-    signedCommits: number;
-    fixCommits: number;
-    revertCommits: number;
-    churn: number;
-    churnTotalLines: number;
-    repoSpread: Map<string, {
-      repoName: string;
-      repoPath: string;
+  const authorMap = new Map<
+    string,
+    {
+      name: string;
+      email: string;
       commits: number;
       linesAdded: number;
       linesRemoved: number;
-    }>;
-  }>();
+      netLines: number;
+      firstCommit: Date | null;
+      lastCommit: Date | null;
+      activeTimeWindows: {
+        hourOfDay: Record<number, number>;
+        dayOfWeek: Record<number, number>;
+      };
+      signedCommits: number;
+      fixCommits: number;
+      revertCommits: number;
+      churn: number;
+      churnTotalLines: number;
+      repoSpread: Map<
+        string,
+        {
+          repoName: string;
+          repoPath: string;
+          commits: number;
+          linesAdded: number;
+          linesRemoved: number;
+        }
+      >;
+    }
+  >();
 
   let totalCommitsAcrossRepos = 0;
 
@@ -391,11 +422,10 @@ export async function getCrossRepoDeveloperAnalytics(
 
   // Convert to array and format
   const authors: CrossRepoDeveloperStats[] = Array.from(authorMap.values())
-    .map(a => {
+    .map((a) => {
       const repoSpreadArray = Array.from(a.repoSpread.values());
-      const churnRatio = a.churnTotalLines > 0
-        ? ((a.churn / a.churnTotalLines) * 100).toFixed(1)
-        : '0.0';
+      const churnRatio =
+        a.churnTotalLines > 0 ? ((a.churn / a.churnTotalLines) * 100).toFixed(1) : '0.0';
 
       return {
         name: a.name,
@@ -406,22 +436,18 @@ export async function getCrossRepoDeveloperAnalytics(
         netLines: a.netLines,
         firstCommit: a.firstCommit?.toISOString() || new Date().toISOString(),
         lastCommit: a.lastCommit?.toISOString() || new Date().toISOString(),
-        percentage: totalCommitsAcrossRepos > 0
-          ? ((a.commits / totalCommitsAcrossRepos) * 100).toFixed(1)
-          : '0.0',
+        percentage:
+          totalCommitsAcrossRepos > 0
+            ? ((a.commits / totalCommitsAcrossRepos) * 100).toFixed(1)
+            : '0.0',
         activeTimeWindows: a.activeTimeWindows,
         signedCommits: a.signedCommits,
-        signedCommitsPercentage: a.commits > 0
-          ? ((a.signedCommits / a.commits) * 100).toFixed(1)
-          : '0.0',
+        signedCommitsPercentage:
+          a.commits > 0 ? ((a.signedCommits / a.commits) * 100).toFixed(1) : '0.0',
         fixCommits: a.fixCommits,
-        fixCommitRatio: a.commits > 0
-          ? ((a.fixCommits / a.commits) * 100).toFixed(1)
-          : '0.0',
+        fixCommitRatio: a.commits > 0 ? ((a.fixCommits / a.commits) * 100).toFixed(1) : '0.0',
         revertCommits: a.revertCommits,
-        revertCommitRatio: a.commits > 0
-          ? ((a.revertCommits / a.commits) * 100).toFixed(1)
-          : '0.0',
+        revertCommitRatio: a.commits > 0 ? ((a.revertCommits / a.commits) * 100).toFixed(1) : '0.0',
         churn: a.churn,
         churnRatio,
         repoSpread: repoSpreadArray.sort((a, b) => b.commits - a.commits),
@@ -433,7 +459,6 @@ export async function getCrossRepoDeveloperAnalytics(
   return {
     authors,
     totalRepos: repositories.length,
-    repoNames: repositories.map(r => r.name),
+    repoNames: repositories.map((r) => r.name),
   };
 }
-

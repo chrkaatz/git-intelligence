@@ -55,7 +55,8 @@ describe('stats', () => {
             },
           ],
         }),
-        raw: vi.fn()
+        raw: vi
+          .fn()
           .mockResolvedValueOnce('file1.ts\nfile2.js\n') // ls-files
           .mockResolvedValueOnce('2024-01-01T10:00:00Z\n10\t5\tfile1.ts\n'), // log with numstat (date format)
       };
@@ -98,7 +99,8 @@ describe('stats', () => {
             },
           ],
         }),
-        raw: vi.fn()
+        raw: vi
+          .fn()
           .mockResolvedValueOnce('file1.ts\n')
           .mockResolvedValueOnce('2024-01-01T10:00:00Z\n10\t5\tfile1.ts\n'),
       };
@@ -112,4 +114,3 @@ describe('stats', () => {
     });
   });
 });
-

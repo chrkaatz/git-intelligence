@@ -1,14 +1,38 @@
 import { useState, Fragment } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 import type { CrossRepoDeveloperStats, CrossRepoDeveloperAnalytics } from '../api';
-import { Code, GitCommit, TrendingUp, Shield, Mail, AlertTriangle, RotateCcw, Activity, FolderOpen } from 'lucide-react';
+import {
+  Code,
+  GitCommit,
+  TrendingUp,
+  Mail,
+  AlertTriangle,
+  RotateCcw,
+  Activity,
+  FolderOpen,
+} from 'lucide-react';
 
 interface CrossRepoDeveloperAnalyticsProps {
   analytics: CrossRepoDeveloperAnalytics;
   loading?: boolean;
 }
 
-export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDeveloperAnalyticsProps) {
+export function CrossRepoDeveloperAnalytics({
+  analytics,
+  loading,
+}: CrossRepoDeveloperAnalyticsProps) {
   const [selectedAuthor, setSelectedAuthor] = useState<CrossRepoDeveloperStats | null>(null);
   const [expandedAuthor, setExpandedAuthor] = useState<string | null>(null);
 
@@ -23,22 +47,23 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
   if (!analytics || !analytics.authors || analytics.authors.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
-        No cross-repo developer data available. Add multiple repositories to a project to see cross-repo analytics.
+        No cross-repo developer data available. Add multiple repositories to a project to see
+        cross-repo analytics.
       </div>
     );
   }
 
   // Prepare data for charts
-  const commitsData = analytics.authors.slice(0, 10).map(a => ({
+  const commitsData = analytics.authors.slice(0, 10).map((a) => ({
     name: a.name.length > 15 ? a.name.substring(0, 15) + '...' : a.name,
     commits: a.commits,
     fullName: a.name,
   }));
 
   const repoSpreadData = analytics.authors
-    .filter(a => a.repoCount > 1)
+    .filter((a) => a.repoCount > 1)
     .slice(0, 10)
-    .map(a => ({
+    .map((a) => ({
       name: a.name.length > 15 ? a.name.substring(0, 15) + '...' : a.name,
       repoCount: a.repoCount,
       fullName: a.name,
@@ -46,7 +71,7 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
 
   // Prepare repo spread pie chart data for selected author
   const repoSpreadPieData = selectedAuthor
-    ? selectedAuthor.repoSpread.map(repo => ({
+    ? selectedAuthor.repoSpread.map((repo) => ({
         name: repo.repoName,
         value: repo.commits,
       }))
@@ -65,11 +90,15 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Total Repositories</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.totalRepos}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {analytics.totalRepos}
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Total Developers</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.authors.length}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {analytics.authors.length}
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Total Commits</p>
@@ -101,7 +130,9 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Total Developers</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.authors.length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {analytics.authors.length}
+              </p>
             </div>
             <Code className="w-8 h-8 text-blue-500" />
           </div>
@@ -133,7 +164,7 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Multi-Repo Developers</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {analytics.authors.filter(a => a.repoCount > 1).length}
+                {analytics.authors.filter((a) => a.repoCount > 1).length}
               </p>
             </div>
             <FolderOpen className="w-8 h-8 text-purple-500" />
@@ -229,12 +260,14 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }: { name?: string; percent?: number }) =>
+                    `${name ?? ''}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                  }
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {repoSpreadPieData.map((entry, index) => (
+                  {repoSpreadPieData.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -298,9 +331,12 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
                         <div>
                           <button
                             onClick={() => {
-                              setExpandedAuthor(expandedAuthor === author.email ? null : author.email);
+                              setExpandedAuthor(
+                                expandedAuthor === author.email ? null : author.email
+                              );
                             }}
-                            className="text-sm font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left">
+                            className="text-sm font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left"
+                          >
                             {author.name}
                           </button>
                           <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
@@ -311,14 +347,20 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">{author.repoCount}</div>
+                      <div className="text-sm text-gray-900 dark:text-white">
+                        {author.repoCount}
+                      </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
                         {author.repoCount > 1 ? 'Multi-repo' : 'Single-repo'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">{author.commits.toLocaleString()}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{author.percentage}%</div>
+                      <div className="text-sm text-gray-900 dark:text-white">
+                        {author.commits.toLocaleString()}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {author.percentage}%
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-green-600 dark:text-green-400">
@@ -331,12 +373,15 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`text-sm font-medium ${
-                        author.netLines >= 0
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {author.netLines >= 0 ? '+' : ''}{author.netLines.toLocaleString()}
+                      <div
+                        className={`text-sm font-medium ${
+                          author.netLines >= 0
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}
+                      >
+                        {author.netLines >= 0 ? '+' : ''}
+                        {author.netLines.toLocaleString()}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -357,7 +402,9 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <button
-                        onClick={() => setSelectedAuthor(selectedAuthor?.email === author.email ? null : author)}
+                        onClick={() =>
+                          setSelectedAuthor(selectedAuthor?.email === author.email ? null : author)
+                        }
                         className={`px-3 py-1 rounded ${
                           selectedAuthor?.email === author.email
                             ? 'bg-blue-600 text-white'
@@ -369,7 +416,10 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
                     </td>
                   </tr>
                   {expandedAuthor === author.email && author.repoSpread.length > 0 && (
-                    <tr key={`${author.email}-${index}-spread`} className="bg-gray-50 dark:bg-gray-900">
+                    <tr
+                      key={`${author.email}-${index}-spread`}
+                      className="bg-gray-50 dark:bg-gray-900"
+                    >
                       <td colSpan={9} className="px-6 py-4">
                         <div className="space-y-2">
                           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -381,7 +431,9 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
                                 key={idx}
                                 className="bg-white dark:bg-gray-800 rounded p-3 border border-gray-200 dark:border-gray-700"
                               >
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">{repo.repoName}</p>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {repo.repoName}
+                                </p>
                                 <div className="mt-1 space-y-1 text-xs text-gray-500 dark:text-gray-400">
                                   <div>Commits: {repo.commits.toLocaleString()}</div>
                                   <div>Added: +{repo.linesAdded.toLocaleString()}</div>
@@ -403,4 +455,3 @@ export function CrossRepoDeveloperAnalytics({ analytics, loading }: CrossRepoDev
     </div>
   );
 }
-

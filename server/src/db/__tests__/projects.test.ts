@@ -1,11 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  getProjects,
-  getProject,
-  addProject,
-  updateProject,
-  removeProject,
-} from '../projects';
+import { getProjects, getProject, addProject, updateProject, removeProject } from '../projects';
 import { getDb, resetDb } from '../database';
 import { createTestDb } from './helpers';
 import type { DatabaseSchema } from '../types';
@@ -253,4 +247,3 @@ describe('projects', () => {
     });
   });
 });
-

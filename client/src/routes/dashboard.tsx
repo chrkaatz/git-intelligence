@@ -4,4 +4,3 @@ import { DashboardView } from '../components/DashboardView';
 export const Route = createFileRoute('/dashboard')({
   component: () => <DashboardView />,
 });
-

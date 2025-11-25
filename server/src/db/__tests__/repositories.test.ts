@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  getRepositories,
-  getRepository,
-  addRepository,
-  removeRepository,
-} from '../repositories';
+import { getRepositories, getRepository, addRepository, removeRepository } from '../repositories';
 import { getDb, resetDb } from '../database';
 import { createTestDb } from './helpers';
 import type { DatabaseSchema } from '../types';
@@ -304,4 +299,3 @@ describe('repositories', () => {
     });
   });
 });
-
