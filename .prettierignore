@@ -10,7 +10,8 @@ coverage/
 # Generated files
 *.min.js
 *.min.css
-routeTree.gen.ts
+**/routeTree.gen.ts
+src/routeTree.gen.ts
 
 # Database files
 *.json
