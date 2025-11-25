@@ -7,6 +7,7 @@ import { ExtensionChart } from './ExtensionChart';
 import { LocChart } from './LocChart';
 import { getStats, type GitStats } from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { useNotifications } from '../context/NotificationContext';
 
 export function DashboardView() {
   const params = useParams({ strict: false }) as { repoPath?: string };
@@ -14,6 +15,7 @@ export function DashboardView() {
   const [stats, setStats] = useState<GitStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { showNotification, removeNotification } = useNotifications();
 
   useEffect(() => {
     if (!repoPath) {
@@ -26,18 +28,29 @@ export function DashboardView() {
     const fetchStats = async () => {
       setLoading(true);
       setError(null);
+
+      // Show loading notification
+      const loadingId = showNotification('loading', 'Analyzing repository statistics...', 0);
+
       try {
         const data = await getStats(decodedPath);
         setStats(data);
+        // Remove loading notification and show success
+        removeNotification(loadingId);
+        showNotification('success', 'Repository statistics loaded successfully!', 3000);
       } catch (err) {
-        setError('Failed to load repository statistics');
+        const errorMessage = 'Failed to load repository statistics';
+        setError(errorMessage);
+        // Remove loading notification and show error
+        removeNotification(loadingId);
+        showNotification('error', errorMessage, 5000);
       } finally {
         setLoading(false);
       }
     };
 
     fetchStats();
-  }, [repoPath]);
+  }, [repoPath, showNotification]);
 
   if (!repoPath) {
     return (
@@ -58,16 +71,24 @@ export function DashboardView() {
   }
 
   const decodedPath = decodeURIComponent(repoPath);
+  // Extract repository name from path for cleaner display
+  const getRepoName = (path: string) => {
+    const parts = path.split('/');
+    return parts[parts.length - 1] || path;
+  };
+  const repoName = decodedPath ? getRepoName(decodedPath) : '';
 
   return (
     <>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
           Dashboard
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Analyzing {decodedPath}
-        </p>
+        {repoPath && stats && (
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">
+            {repoName}
+          </p>
+        )}
       </div>
 
       {loading && !stats ? (

@@ -15,6 +15,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DeveloperAnalyticsRepoPathRouteImport } from './routes/developer-analytics.$repoPath'
 import { Route as DashboardRepoPathRouteImport } from './routes/dashboard.$repoPath'
+import { Route as CrossRepoAnalyticsProjectIdRouteImport } from './routes/cross-repo-analytics.$projectId'
 
 const ProjectsRoute = ProjectsRouteImport.update({
   id: '/projects',
@@ -47,12 +48,19 @@ const DashboardRepoPathRoute = DashboardRepoPathRouteImport.update({
   path: '/$repoPath',
   getParentRoute: () => DashboardRoute,
 } as any)
+const CrossRepoAnalyticsProjectIdRoute =
+  CrossRepoAnalyticsProjectIdRouteImport.update({
+    id: '/cross-repo-analytics/$projectId',
+    path: '/cross-repo-analytics/$projectId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/developer-analytics': typeof DeveloperAnalyticsRouteWithChildren
   '/projects': typeof ProjectsRoute
+  '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
   '/dashboard/$repoPath': typeof DashboardRepoPathRoute
   '/developer-analytics/$repoPath': typeof DeveloperAnalyticsRepoPathRoute
 }
@@ -61,6 +69,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRouteWithChildren
   '/developer-analytics': typeof DeveloperAnalyticsRouteWithChildren
   '/projects': typeof ProjectsRoute
+  '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
   '/dashboard/$repoPath': typeof DashboardRepoPathRoute
   '/developer-analytics/$repoPath': typeof DeveloperAnalyticsRepoPathRoute
 }
@@ -70,6 +79,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/developer-analytics': typeof DeveloperAnalyticsRouteWithChildren
   '/projects': typeof ProjectsRoute
+  '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
   '/dashboard/$repoPath': typeof DashboardRepoPathRoute
   '/developer-analytics/$repoPath': typeof DeveloperAnalyticsRepoPathRoute
 }
@@ -80,6 +90,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/developer-analytics'
     | '/projects'
+    | '/cross-repo-analytics/$projectId'
     | '/dashboard/$repoPath'
     | '/developer-analytics/$repoPath'
   fileRoutesByTo: FileRoutesByTo
@@ -88,6 +99,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/developer-analytics'
     | '/projects'
+    | '/cross-repo-analytics/$projectId'
     | '/dashboard/$repoPath'
     | '/developer-analytics/$repoPath'
   id:
@@ -96,6 +108,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/developer-analytics'
     | '/projects'
+    | '/cross-repo-analytics/$projectId'
     | '/dashboard/$repoPath'
     | '/developer-analytics/$repoPath'
   fileRoutesById: FileRoutesById
@@ -105,6 +118,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   DeveloperAnalyticsRoute: typeof DeveloperAnalyticsRouteWithChildren
   ProjectsRoute: typeof ProjectsRoute
+  CrossRepoAnalyticsProjectIdRoute: typeof CrossRepoAnalyticsProjectIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -151,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRepoPathRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/cross-repo-analytics/$projectId': {
+      id: '/cross-repo-analytics/$projectId'
+      path: '/cross-repo-analytics/$projectId'
+      fullPath: '/cross-repo-analytics/$projectId'
+      preLoaderRoute: typeof CrossRepoAnalyticsProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -182,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   DeveloperAnalyticsRoute: DeveloperAnalyticsRouteWithChildren,
   ProjectsRoute: ProjectsRoute,
+  CrossRepoAnalyticsProjectIdRoute: CrossRepoAnalyticsProjectIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

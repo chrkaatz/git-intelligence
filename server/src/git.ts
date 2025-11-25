@@ -1,5 +1,5 @@
 import simpleGit from 'simple-git';
-import { getCachedStats, setCachedStats } from './db';
+import { getCachedStats, setCachedStats, getRepositories, type Repository } from './db';
 
 export interface DeveloperAuthorStats {
   name: string;
@@ -57,6 +57,23 @@ export interface LongitudinalPatterns {
 export interface DeveloperAnalytics {
   authors: DeveloperAuthorStats[];
   longitudinalPatterns?: LongitudinalPatterns;
+}
+
+export interface CrossRepoDeveloperStats extends DeveloperAuthorStats {
+  repoSpread: {
+    repoName: string;
+    repoPath: string;
+    commits: number;
+    linesAdded: number;
+    linesRemoved: number;
+  }[];
+  repoCount: number;
+}
+
+export interface CrossRepoDeveloperAnalytics {
+  authors: CrossRepoDeveloperStats[];
+  totalRepos: number;
+  repoNames: string[];
 }
 
 interface AuthorStats {
@@ -863,5 +880,194 @@ function calculateLongitudinalPatterns(
     authorActivityOverTime,
     onboardingCurve,
     dormancyDetection,
+  };
+}
+
+export async function getCrossRepoDeveloperAnalytics(
+  projectId: string,
+  useCache: boolean = true
+): Promise<CrossRepoDeveloperAnalytics> {
+  console.log(`Calculating cross-repo developer analytics for project ${projectId}`);
+
+  // Get all repositories for this project
+  const repositories = await getRepositories(projectId);
+
+  if (repositories.length === 0) {
+    return {
+      authors: [],
+      totalRepos: 0,
+      repoNames: [],
+    };
+  }
+
+  // Aggregate analytics across all repositories
+  const authorMap = new Map<string, {
+    name: string;
+    email: string;
+    commits: number;
+    linesAdded: number;
+    linesRemoved: number;
+    netLines: number;
+    firstCommit: Date | null;
+    lastCommit: Date | null;
+    activeTimeWindows: {
+      hourOfDay: Record<number, number>;
+      dayOfWeek: Record<number, number>;
+    };
+    signedCommits: number;
+    fixCommits: number;
+    revertCommits: number;
+    churn: number;
+    churnTotalLines: number;
+    repoSpread: Map<string, {
+      repoName: string;
+      repoPath: string;
+      commits: number;
+      linesAdded: number;
+      linesRemoved: number;
+    }>;
+  }>();
+
+  let totalCommitsAcrossRepos = 0;
+
+  // Process each repository
+  for (const repo of repositories) {
+    try {
+      const analytics = await getDeveloperAnalytics(repo.path, useCache);
+
+      for (const author of analytics.authors) {
+        const normalizedEmail = normalizeEmail(author.email);
+
+        if (!authorMap.has(normalizedEmail)) {
+          authorMap.set(normalizedEmail, {
+            name: author.name,
+            email: author.email,
+            commits: 0,
+            linesAdded: 0,
+            linesRemoved: 0,
+            netLines: 0,
+            firstCommit: null,
+            lastCommit: null,
+            activeTimeWindows: {
+              hourOfDay: {},
+              dayOfWeek: {},
+            },
+            signedCommits: 0,
+            fixCommits: 0,
+            revertCommits: 0,
+            churn: 0,
+            churnTotalLines: 0,
+            repoSpread: new Map(),
+          });
+        }
+
+        const aggregated = authorMap.get(normalizedEmail)!;
+
+        // Aggregate metrics
+        aggregated.commits += author.commits;
+        aggregated.linesAdded += author.linesAdded;
+        aggregated.linesRemoved += author.linesRemoved;
+        aggregated.netLines += author.netLines;
+        aggregated.signedCommits += author.signedCommits;
+        aggregated.fixCommits += author.fixCommits;
+        aggregated.revertCommits += author.revertCommits;
+        aggregated.churn += author.churn;
+
+        // Parse churn ratio to get total lines
+        const churnRatio = parseFloat(author.churnRatio);
+        if (churnRatio > 0 && author.churn > 0) {
+          aggregated.churnTotalLines += Math.round(author.churn / (churnRatio / 100));
+        } else {
+          aggregated.churnTotalLines += author.linesAdded + author.linesRemoved;
+        }
+
+        // Track first and last commits
+        const firstCommit = new Date(author.firstCommit);
+        const lastCommit = new Date(author.lastCommit);
+        if (!aggregated.firstCommit || firstCommit < aggregated.firstCommit) {
+          aggregated.firstCommit = firstCommit;
+        }
+        if (!aggregated.lastCommit || lastCommit > aggregated.lastCommit) {
+          aggregated.lastCommit = lastCommit;
+        }
+
+        // Aggregate active time windows
+        Object.entries(author.activeTimeWindows.hourOfDay).forEach(([hour, count]) => {
+          aggregated.activeTimeWindows.hourOfDay[parseInt(hour)] =
+            (aggregated.activeTimeWindows.hourOfDay[parseInt(hour)] || 0) + count;
+        });
+        Object.entries(author.activeTimeWindows.dayOfWeek).forEach(([day, count]) => {
+          aggregated.activeTimeWindows.dayOfWeek[parseInt(day)] =
+            (aggregated.activeTimeWindows.dayOfWeek[parseInt(day)] || 0) + count;
+        });
+
+        // Track repo spread
+        if (!aggregated.repoSpread.has(repo.id)) {
+          aggregated.repoSpread.set(repo.id, {
+            repoName: repo.name,
+            repoPath: repo.path,
+            commits: 0,
+            linesAdded: 0,
+            linesRemoved: 0,
+          });
+        }
+        const repoData = aggregated.repoSpread.get(repo.id)!;
+        repoData.commits += author.commits;
+        repoData.linesAdded += author.linesAdded;
+        repoData.linesRemoved += author.linesRemoved;
+      }
+
+      totalCommitsAcrossRepos += analytics.authors.reduce((sum, a) => sum + a.commits, 0);
+    } catch (error) {
+      console.error(`Failed to analyze repository ${repo.path}:`, error);
+      // Continue with other repositories
+    }
+  }
+
+  // Convert to array and format
+  const authors: CrossRepoDeveloperStats[] = Array.from(authorMap.values())
+    .map(a => {
+      const repoSpreadArray = Array.from(a.repoSpread.values());
+      const churnRatio = a.churnTotalLines > 0
+        ? ((a.churn / a.churnTotalLines) * 100).toFixed(1)
+        : '0.0';
+
+      return {
+        name: a.name,
+        email: a.email,
+        commits: a.commits,
+        linesAdded: a.linesAdded,
+        linesRemoved: a.linesRemoved,
+        netLines: a.netLines,
+        firstCommit: a.firstCommit?.toISOString() || new Date().toISOString(),
+        lastCommit: a.lastCommit?.toISOString() || new Date().toISOString(),
+        percentage: totalCommitsAcrossRepos > 0
+          ? ((a.commits / totalCommitsAcrossRepos) * 100).toFixed(1)
+          : '0.0',
+        activeTimeWindows: a.activeTimeWindows,
+        signedCommits: a.signedCommits,
+        signedCommitsPercentage: a.commits > 0
+          ? ((a.signedCommits / a.commits) * 100).toFixed(1)
+          : '0.0',
+        fixCommits: a.fixCommits,
+        fixCommitRatio: a.commits > 0
+          ? ((a.fixCommits / a.commits) * 100).toFixed(1)
+          : '0.0',
+        revertCommits: a.revertCommits,
+        revertCommitRatio: a.commits > 0
+          ? ((a.revertCommits / a.commits) * 100).toFixed(1)
+          : '0.0',
+        churn: a.churn,
+        churnRatio,
+        repoSpread: repoSpreadArray.sort((a, b) => b.commits - a.commits),
+        repoCount: repoSpreadArray.length,
+      };
+    })
+    .sort((a, b) => b.commits - a.commits);
+
+  return {
+    authors,
+    totalRepos: repositories.length,
+    repoNames: repositories.map(r => r.name),
   };
 }

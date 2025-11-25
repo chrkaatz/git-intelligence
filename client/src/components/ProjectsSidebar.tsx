@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
-import { Plus, Trash2, FolderGit2, FolderOpen, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, FolderGit2, FolderOpen, ChevronDown, ChevronRight, BarChart3 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export function ProjectsSidebar() {
@@ -102,17 +102,30 @@ export function ProjectsSidebar() {
                     ({projectRepos.length})
                   </span>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (confirm('Are you sure you want to remove this project and all its repositories?')) {
-                      handleDeleteProject(project.id);
-                    }
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded transition-all"
-                  title="Remove Project">
-                  <Trash2 className="w-3 h-3" />
-                </button>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {projectRepos.length > 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate({ to: '/cross-repo-analytics/$projectId', params: { projectId: project.id } });
+                      }}
+                      className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 rounded transition-all"
+                      title="View Cross-Repo Analytics">
+                      <BarChart3 className="w-3 h-3" />
+                    </button>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm('Are you sure you want to remove this project and all its repositories?')) {
+                        handleDeleteProject(project.id);
+                      }
+                    }}
+                    className="p-1 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded transition-all"
+                    title="Remove Project">
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
 
               {/* Repositories */}

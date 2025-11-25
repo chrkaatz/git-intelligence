@@ -22,8 +22,8 @@ export const AuthorList: React.FC<AuthorListProps> = ({ authors }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {authors.slice(0, 10).map((author) => (
-              <tr key={author.email} className="hover:bg-gray-50 transition-colors">
+            {authors.slice(0, 10).map((author, index) => (
+              <tr key={`${author.email}-${index}`} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4">
                   <div>
                     <div className="font-medium text-gray-900">{author.name}</div>

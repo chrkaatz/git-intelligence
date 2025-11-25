@@ -67,6 +67,23 @@ export interface DeveloperAnalytics {
   longitudinalPatterns?: LongitudinalPatterns;
 }
 
+export interface CrossRepoDeveloperStats extends DeveloperAuthorStats {
+  repoSpread: {
+    repoName: string;
+    repoPath: string;
+    commits: number;
+    linesAdded: number;
+    linesRemoved: number;
+  }[];
+  repoCount: number;
+}
+
+export interface CrossRepoDeveloperAnalytics {
+  authors: CrossRepoDeveloperStats[];
+  totalRepos: number;
+  repoNames: string[];
+}
+
 export interface ActivityStats {
   hourOfDay: Record<number, number>;
   dayOfWeek: Record<number, number>;
@@ -178,5 +195,10 @@ export const getStats = async (path: string): Promise<GitStats> => {
 
 export const getDeveloperAnalytics = async (path: string): Promise<DeveloperAnalytics> => {
   const response = await api.get('/developer-analytics', { params: { path } });
+  return response.data;
+};
+
+export const getCrossRepoDeveloperAnalytics = async (projectId: string): Promise<CrossRepoDeveloperAnalytics> => {
+  const response = await api.get('/cross-repo-developer-analytics', { params: { projectId } });
   return response.data;
 };

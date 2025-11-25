@@ -1,6 +1,7 @@
 import type { Project, Repository } from '../api';
-import { FolderGit2, Trash2, ExternalLink, MapPin, Plus, ChevronDown, ChevronRight, FolderOpen } from 'lucide-react';
+import { FolderGit2, Trash2, ExternalLink, MapPin, Plus, ChevronDown, ChevronRight, FolderOpen, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 
 interface ProjectsListProps {
   projects: Project[];
@@ -23,6 +24,7 @@ export function ProjectsList({
   onAddProject,
   onAddRepository,
 }: ProjectsListProps) {
+  const navigate = useNavigate();
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set(projects.map(p => p.id)));
   const [projectRepoMap] = useState(() => {
     const map = new Map<string, Repository[]>();
@@ -120,6 +122,14 @@ export function ProjectsList({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {projectRepos.length > 1 && (
+                        <button
+                          onClick={() => navigate({ to: '/cross-repo-analytics/$projectId', params: { projectId: project.id } })}
+                          className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                          title="View Cross-Repo Analytics">
+                          <BarChart3 className="w-4 h-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() => onAddRepository(project.id)}
                         className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"

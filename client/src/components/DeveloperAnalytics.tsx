@@ -61,119 +61,96 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
     : [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Developers</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{authors.length}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Developers</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{authors.length}</p>
             </div>
-            <Code className="w-8 h-8 text-blue-500" />
+            <Code className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Commits</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Commits</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
                 {authors.reduce((sum, a) => sum + a.commits, 0).toLocaleString()}
               </p>
             </div>
-            <GitCommit className="w-8 h-8 text-green-500" />
+            <GitCommit className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Lines Added</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Lines Added</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
                 {authors.reduce((sum, a) => sum + a.linesAdded, 0).toLocaleString()}
               </p>
             </div>
-            <TrendingUp className="w-8 h-8 text-green-500" />
+            <TrendingUp className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Signed Commits</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Signed</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
                 {authors.reduce((sum, a) => sum + a.signedCommits, 0).toLocaleString()}
               </p>
             </div>
-            <Shield className="w-8 h-8 text-purple-500" />
+            <Shield className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
       </div>
 
       {/* Quality-Adjacent Signals Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Fix Commits</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Fix Commits</p>
+              <p className="text-xl font-semibold text-gray-900 dark:text-white mt-1">
                 {authors.reduce((sum, a) => sum + a.fixCommits, 0).toLocaleString()}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {authors.length > 0
-                  ? (
-                      (authors.reduce((sum, a) => sum + a.fixCommits, 0) /
-                        authors.reduce((sum, a) => sum + a.commits, 0)) *
-                      100
-                    ).toFixed(1)
-                  : '0.0'}
-                % of total commits
-              </p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-orange-500" />
+            <AlertTriangle className="w-5 h-5 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Revert Commits</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Revert Commits</p>
+              <p className="text-xl font-semibold text-gray-900 dark:text-white mt-1">
                 {authors.reduce((sum, a) => sum + a.revertCommits, 0).toLocaleString()}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {authors.length > 0
-                  ? (
-                      (authors.reduce((sum, a) => sum + a.revertCommits, 0) /
-                        authors.reduce((sum, a) => sum + a.commits, 0)) *
-                      100
-                    ).toFixed(1)
-                  : '0.0'}
-                % of total commits
-              </p>
             </div>
-            <RotateCcw className="w-8 h-8 text-red-500" />
+            <RotateCcw className="w-5 h-5 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Churn</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Churn</p>
+              <p className="text-xl font-semibold text-gray-900 dark:text-white mt-1">
                 {authors.reduce((sum, a) => sum + a.churn, 0).toLocaleString()}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Lines modified shortly after creation
-              </p>
             </div>
-            <Activity className="w-8 h-8 text-yellow-500" />
+            <Activity className="w-5 h-5 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Commits per Author */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Commits per Author (Top 10)
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+            Commits per Author
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={commitsData}>
@@ -188,9 +165,9 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
         </div>
 
         {/* Lines Added/Removed */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Lines Added/Removed (Top 10)
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+            Lines Added/Removed
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={linesData}>
@@ -208,10 +185,10 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
 
       {/* Active Time Windows for Selected Author */}
       {selectedAuthor && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Activity by Hour of Day - {selectedAuthor.name}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+              Activity by Hour - {selectedAuthor.name}
             </h3>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={hourData}>
@@ -224,9 +201,9 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Activity by Day of Week - {selectedAuthor.name}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+              Activity by Day - {selectedAuthor.name}
             </h3>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={dayData}>
@@ -242,10 +219,10 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
       )}
 
       {/* Developer List */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Developer Details
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="px-5 py-3 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Developers
           </h3>
         </div>
         <div className="overflow-x-auto">
@@ -291,9 +268,9 @@ export function DeveloperAnalytics({ authors, longitudinalPatterns, loading }: D
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {authors.map((author) => (
+              {authors.map((author, index) => (
                 <tr
-                  key={author.email}
+                  key={`${author.email}-${index}`}
                   className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${
                     selectedAuthor?.email === author.email ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                   }`}
