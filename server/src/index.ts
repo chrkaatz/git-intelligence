@@ -15,6 +15,8 @@ import {
   getCrossRepoRepositoryEvolution,
   getBusFactorAndOwnership,
   getCrossRepoBusFactorAndOwnership,
+  getSocialNetworkAnalysis,
+  getCrossRepoSocialNetworkAnalysis,
 } from './git';
 import {
   getProjects,
@@ -442,6 +444,51 @@ app.get('/cross-repo-bus-factor-and-ownership', async (req, res) => {
     console.error(error);
     res.status(500).json({
       error: 'Failed to get cross-repo bus factor and ownership metrics',
+    });
+  }
+});
+
+app.get('/social-network-analysis', async (req, res) => {
+  const { path, refresh } = req.query;
+  if (!path || typeof path !== 'string') {
+    return res.status(400).json({ error: 'Path is required' });
+  }
+  try {
+    // Decode the path in case it's URL-encoded (Express should decode automatically, but handle both cases)
+    let decodedPath = path;
+    try {
+      decodedPath = decodeURIComponent(path);
+    } catch {
+      // If decoding fails, use the original path (it might already be decoded)
+      decodedPath = path;
+    }
+    // Use cache by default, unless refresh=true
+    const useCache = refresh !== 'true';
+    const analysis = await getSocialNetworkAnalysis(decodedPath, useCache);
+    res.json(analysis);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get social network analysis' });
+  }
+});
+
+app.get('/cross-repo-social-network-analysis', async (req, res) => {
+  const { projectId, refresh } = req.query;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+  try {
+    // Use cache by default, unless refresh=true
+    const useCache = refresh !== 'true';
+    const analysis = await getCrossRepoSocialNetworkAnalysis(
+      projectId,
+      useCache
+    );
+    res.json(analysis);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: 'Failed to get cross-repo social network analysis',
     });
   }
 });

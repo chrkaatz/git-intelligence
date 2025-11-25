@@ -20,6 +20,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ExclamationTriangleIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
@@ -47,6 +48,12 @@ const navigation = [
     to: '/bus-factor-and-ownership',
     icon: ExclamationTriangleIcon,
     id: 'bus-factor-and-ownership',
+  },
+  {
+    name: 'Social Network Analysis',
+    to: '/social-network-analysis',
+    icon: UserGroupIcon,
+    id: 'social-network-analysis',
   },
   {
     name: 'Projects',
@@ -107,7 +114,9 @@ export default function Layout({ children, sidebar }: LayoutProps) {
         ? '/codebase-health'
         : currentPath.startsWith('/cross-repo-bus-factor-and-ownership')
           ? '/bus-factor-and-ownership'
-          : currentPath;
+          : currentPath.startsWith('/cross-repo-social-network-analysis')
+            ? '/social-network-analysis'
+            : currentPath;
   const currentView =
     navigation.find((item) => normalizedPath.startsWith(item.to))?.id ||
     'dashboard';

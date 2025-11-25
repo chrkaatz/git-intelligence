@@ -5,4 +5,5 @@ export * from './developerAnalytics';
 export * from './codebaseHealth';
 export * from './repositoryEvolution';
 export * from './busFactor';
+export * from './socialNetwork';
 

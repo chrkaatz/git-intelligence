@@ -471,3 +471,95 @@ export const getCrossRepoBusFactorAndOwnership = async (projectId: string, refre
   const response = await api.get('/cross-repo-bus-factor-and-ownership', { params: { projectId, refresh: refresh ? 'true' : undefined } });
   return response.data;
 };
+
+// Social / Organizational Network Analysis Types
+export interface CollaborationEdge {
+  author1: string;
+  author1Email: string;
+  author2: string;
+  author2Email: string;
+  sharedFiles: number;
+  sharedFilesList: string[];
+  collaborationStrength: number;
+}
+
+export interface CollaborationNode {
+  author: string;
+  authorEmail: string;
+  degree: number;
+  totalSharedFiles: number;
+}
+
+export interface CollaborationGraph {
+  nodes: CollaborationNode[];
+  edges: CollaborationEdge[];
+  clusters?: {
+    clusterId: number;
+    authors: string[];
+    authorEmails: string[];
+    size: number;
+  }[];
+}
+
+export interface KnowledgeSilo {
+  file: string;
+  authorCount: number;
+  authors: string[];
+  authorEmails: string[];
+  totalCommits: number;
+  lastCommitDate: string;
+  daysSinceLastCommit: number;
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface OrphanedCode {
+  file: string;
+  lastCommitDate: string;
+  daysSinceLastCommit: number;
+  lastAuthor: string;
+  lastAuthorEmail: string;
+  totalCommits: number;
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface SocialNetworkAnalysis {
+  collaborationGraph: CollaborationGraph;
+  knowledgeSilos: KnowledgeSilo[];
+  orphanedCode: OrphanedCode[];
+}
+
+export interface CrossRepoCollaboration {
+  author1: string;
+  author1Email: string;
+  author2: string;
+  author2Email: string;
+  sharedRepos: string[];
+  sharedReposCount: number;
+  collaborationStrength: number;
+}
+
+export interface RepoCluster {
+  clusterId: number;
+  repos: string[];
+  repoPaths: string[];
+  authors: string[];
+  authorEmails: string[];
+  size: number;
+}
+
+export interface CrossRepoSocialNetworkAnalysis {
+  crossRepoCollaboration: CrossRepoCollaboration[];
+  repoClusters: RepoCluster[];
+  totalRepos: number;
+  repoNames: string[];
+}
+
+export const getSocialNetworkAnalysis = async (path: string, refresh?: boolean): Promise<SocialNetworkAnalysis> => {
+  const response = await api.get('/social-network-analysis', { params: { path, refresh: refresh ? 'true' : undefined } });
+  return response.data;
+};
+
+export const getCrossRepoSocialNetworkAnalysis = async (projectId: string, refresh?: boolean): Promise<CrossRepoSocialNetworkAnalysis> => {
+  const response = await api.get('/cross-repo-social-network-analysis', { params: { projectId, refresh: refresh ? 'true' : undefined } });
+  return response.data;
+};

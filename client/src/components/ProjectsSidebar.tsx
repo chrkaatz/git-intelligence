@@ -105,6 +105,11 @@ export function ProjectsSidebar({
         to: '/bus-factor-and-ownership/$repoPath',
         params: { repoPath: encodedPath },
       });
+    } else if (currentPath.startsWith('/social-network-analysis')) {
+      navigate({
+        to: '/social-network-analysis/$repoPath',
+        params: { repoPath: encodedPath },
+      });
     } else {
       navigate({
         to: '/dashboard/$repoPath',
