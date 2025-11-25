@@ -6,10 +6,19 @@ import fs from 'fs';
 
 const DB_FILE = path.join(process.cwd(), 'db.json');
 
-export interface Project {
+export interface Repository {
   id: string;
+  projectId: string;
   path: string;
   name: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -22,13 +31,17 @@ export interface CachedStats {
 
 interface DatabaseSchema {
   projects: Project[];
-  analysisCache: Record<string, CachedStats>; // keyed by project path
+  repositories: Repository[];
+  analysisCache: Record<string, CachedStats>; // keyed by repository path
+  schemaVersion?: number; // Track schema version for migrations
 }
 
 // Default data structure
 const defaultData: DatabaseSchema = {
   projects: [],
+  repositories: [],
   analysisCache: {},
+  schemaVersion: 2, // Current schema version
 };
 
 // Initialize database
@@ -46,16 +59,30 @@ async function getDb(): Promise<Low<DatabaseSchema>> {
     if (fs.existsSync(oldDbFile)) {
       try {
         const oldData = JSON.parse(fs.readFileSync(oldDbFile, 'utf-8'));
+        // Migrate old structure (repositories as projects) to new structure
+        const defaultProject: Project = {
+          id: uuidv4(),
+          name: 'Default Project',
+          description: 'Migrated from old structure',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        const repositories: Repository[] = oldData.map((p: any) => ({
+          id: p.id || uuidv4(),
+          projectId: defaultProject.id,
+          path: p.path,
+          name: p.name || path.basename(p.path),
+          createdAt: p.createdAt || new Date().toISOString(),
+          updatedAt: p.updatedAt || new Date().toISOString(),
+        }));
         const migratedData: DatabaseSchema = {
-          projects: oldData.map((p: any) => ({
-            ...p,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          })),
+          projects: [defaultProject],
+          repositories,
           analysisCache: {},
+          schemaVersion: 2,
         };
         fs.writeFileSync(DB_FILE, JSON.stringify(migratedData, null, 2));
-        console.log('Migrated projects.json to db.json');
+        console.log('Migrated projects.json to db.json with new schema');
       } catch (error) {
         console.error('Failed to migrate projects.json:', error);
         fs.writeFileSync(DB_FILE, JSON.stringify(defaultData, null, 2));
@@ -75,8 +102,17 @@ async function getDb(): Promise<Low<DatabaseSchema>> {
     await db.write();
   }
 
+  // Migrate existing data if schema version is old
+  if (!db.data.schemaVersion || db.data.schemaVersion < 2) {
+    await migrateToSchemaV2(db);
+  }
+
   if (!db.data.projects) {
     db.data.projects = [];
+  }
+
+  if (!db.data.repositories) {
+    db.data.repositories = [];
   }
 
   if (!db.data.analysisCache) {
@@ -86,69 +122,82 @@ async function getDb(): Promise<Low<DatabaseSchema>> {
   return db;
 }
 
+// Migration function to convert old schema (projects as repositories) to new schema
+async function migrateToSchemaV2(db: Low<DatabaseSchema>): Promise<void> {
+  console.log('Migrating database to schema version 2...');
+
+  // If we have old "projects" that are actually repositories
+  if (db.data.projects && db.data.projects.length > 0) {
+    const oldProjects = db.data.projects as any[];
+
+    // Check if any project has a "path" field (old schema)
+    const hasOldSchema = oldProjects.some((p: any) => p.path);
+
+    if (hasOldSchema) {
+      // Create a default project
+      const defaultProject: Project = {
+        id: uuidv4(),
+        name: 'Default Project',
+        description: 'Migrated from old structure',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Convert old projects to repositories
+      const repositories: Repository[] = oldProjects.map((p: any) => ({
+        id: p.id || uuidv4(),
+        projectId: defaultProject.id,
+        path: p.path,
+        name: p.name || path.basename(p.path),
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString(),
+      }));
+
+      // Update database
+      db.data.projects = [defaultProject];
+      db.data.repositories = repositories;
+      db.data.schemaVersion = 2;
+
+      await db.write();
+      console.log(`Migrated ${repositories.length} repositories to new schema`);
+    }
+  }
+
+  // Ensure schema version is set
+  if (!db.data.schemaVersion) {
+    db.data.schemaVersion = 2;
+    await db.write();
+  }
+}
+
+// Project functions
 export async function getProjects(): Promise<Project[]> {
   const database = await getDb();
   return database.data.projects;
 }
 
+export async function getProject(id: string): Promise<Project | null> {
+  const database = await getDb();
+  return database.data.projects.find((p) => p.id === id) || null;
+}
+
 export async function addProject(
-  repoPath: string,
-  name?: string,
-  replace?: boolean
+  name: string,
+  description?: string
 ): Promise<Project> {
   const database = await getDb();
   const projects = database.data.projects;
 
-  const projectName = name || path.basename(repoPath);
-
   // Check if project with same name exists
-  const existingByName = projects.find((p) => p.name === projectName);
-  if (existingByName) {
-    if (replace) {
-      // Remove the existing project with the same name
-      const filtered = projects.filter((p) => p.id !== existingByName.id);
-      const updatedProject: Project = {
-        ...existingByName,
-        path: repoPath,
-        name: projectName,
-        updatedAt: new Date().toISOString(),
-      };
-      filtered.push(updatedProject);
-      database.data.projects = filtered;
-      // Clear cache for this project
-      delete database.data.analysisCache[repoPath];
-      await database.write();
-      return updatedProject;
-    } else {
-      // Return existing project if not replacing
-      return existingByName;
-    }
-  }
-
-  // Check if project with same path exists
-  const existingByPath = projects.find((p) => p.path === repoPath);
-  if (existingByPath) {
-    if (replace) {
-      // Update the existing project's name
-      const updatedProject: Project = {
-        ...existingByPath,
-        name: projectName,
-        updatedAt: new Date().toISOString(),
-      };
-      const filtered = projects.filter((p) => p.id !== existingByPath.id);
-      filtered.push(updatedProject);
-      database.data.projects = filtered;
-      await database.write();
-      return updatedProject;
-    } else {
-      return existingByPath;
-    }
+  const existing = projects.find((p) => p.name === name);
+  if (existing) {
+    return existing;
   }
 
   const newProject: Project = {
     id: uuidv4(),
-    path: repoPath,
-    name: projectName,
+    name,
+    description,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -159,15 +208,118 @@ export async function addProject(
   return newProject;
 }
 
-export async function removeProject(id: string): Promise<void> {
+export async function updateProject(
+  id: string,
+  updates: { name?: string; description?: string }
+): Promise<Project | null> {
   const database = await getDb();
   const project = database.data.projects.find((p) => p.id === id);
 
-  if (project) {
-    // Remove from projects
-    database.data.projects = database.data.projects.filter((p) => p.id !== id);
-    // Clear cache for this project
-    delete database.data.analysisCache[project.path];
+  if (!project) {
+    return null;
+  }
+
+  const updatedProject: Project = {
+    ...project,
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  };
+
+  database.data.projects = database.data.projects.map((p) =>
+    p.id === id ? updatedProject : p
+  );
+  await database.write();
+  return updatedProject;
+}
+
+export async function removeProject(id: string): Promise<void> {
+  const database = await getDb();
+
+  // Remove project
+  database.data.projects = database.data.projects.filter((p) => p.id !== id);
+
+  // Remove all repositories in this project
+  const reposToRemove = database.data.repositories.filter((r) => r.projectId === id);
+  reposToRemove.forEach((repo) => {
+    delete database.data.analysisCache[repo.path];
+  });
+  database.data.repositories = database.data.repositories.filter(
+    (r) => r.projectId !== id
+  );
+
+  await database.write();
+}
+
+// Repository functions
+export async function getRepositories(projectId?: string): Promise<Repository[]> {
+  const database = await getDb();
+  if (projectId) {
+    return database.data.repositories.filter((r) => r.projectId === projectId);
+  }
+  return database.data.repositories;
+}
+
+export async function getRepository(id: string): Promise<Repository | null> {
+  const database = await getDb();
+  return database.data.repositories.find((r) => r.id === id) || null;
+}
+
+export async function addRepository(
+  projectId: string,
+  repoPath: string,
+  name?: string,
+  replace?: boolean
+): Promise<Repository> {
+  const database = await getDb();
+  const repositories = database.data.repositories;
+
+  const repoName = name || path.basename(repoPath);
+
+  // Check if repository with same path exists
+  const existingByPath = repositories.find((r) => r.path === repoPath);
+  if (existingByPath) {
+    if (replace) {
+      // Update the existing repository
+      const updatedRepo: Repository = {
+        ...existingByPath,
+        projectId,
+        name: repoName,
+        updatedAt: new Date().toISOString(),
+      };
+      database.data.repositories = database.data.repositories.map((r) =>
+        r.id === existingByPath.id ? updatedRepo : r
+      );
+      await database.write();
+      return updatedRepo;
+    } else {
+      return existingByPath;
+    }
+  }
+
+  const newRepository: Repository = {
+    id: uuidv4(),
+    projectId,
+    path: repoPath,
+    name: repoName,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  repositories.push(newRepository);
+  database.data.repositories = repositories;
+  await database.write();
+  return newRepository;
+}
+
+export async function removeRepository(id: string): Promise<void> {
+  const database = await getDb();
+  const repository = database.data.repositories.find((r) => r.id === id);
+
+  if (repository) {
+    // Remove from repositories
+    database.data.repositories = database.data.repositories.filter((r) => r.id !== id);
+    // Clear cache for this repository
+    delete database.data.analysisCache[repository.path];
     await database.write();
   }
 }

@@ -6,7 +6,18 @@ import path from 'path';
 import fs from 'fs';
 import simpleGit from 'simple-git';
 import { getStats, getDeveloperAnalytics } from './git';
-import { getProjects, addProject, removeProject, clearCache } from './db';
+import {
+  getProjects,
+  getProject,
+  addProject as addProjectToDb,
+  updateProject,
+  removeProject as removeProjectFromDb,
+  getRepositories,
+  getRepository,
+  addRepository,
+  removeRepository,
+  clearCache,
+} from './db';
 
 const app = express();
 const port = 3001;
@@ -22,17 +33,108 @@ const upload = multer({
   },
 });
 
+// Projects endpoints
 app.get('/projects', async (req, res) => {
   try {
     const projects = await getProjects();
-    // If no projects, add current working directory as default
-    if (projects.length === 0) {
-      await addProject(process.cwd());
-      return res.json(await getProjects());
-    }
     res.json(projects);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch projects' });
+  }
+});
+
+app.get('/projects/:id', async (req, res) => {
+  try {
+    const project = await getProject(req.params.id);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    res.json(project);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch project' });
+  }
+});
+
+app.post('/projects', async (req, res) => {
+  const { name, description } = req.body;
+  if (!name || typeof name !== 'string') {
+    return res.status(400).json({ error: 'Name is required' });
+  }
+  try {
+    const project = await addProjectToDb(name, description);
+    res.json(project);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add project' });
+  }
+});
+
+app.put('/projects/:id', async (req, res) => {
+  const { name, description } = req.body;
+  try {
+    const project = await updateProject(req.params.id, { name, description });
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    res.json(project);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update project' });
+  }
+});
+
+app.delete('/projects/:id', async (req, res) => {
+  try {
+    await removeProjectFromDb(req.params.id);
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove project' });
+  }
+});
+
+// Repositories endpoints
+app.get('/repositories', async (req, res) => {
+  try {
+    const projectId = req.query.projectId as string | undefined;
+    const repositories = await getRepositories(projectId);
+    res.json(repositories);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch repositories' });
+  }
+});
+
+app.get('/repositories/:id', async (req, res) => {
+  try {
+    const repository = await getRepository(req.params.id);
+    if (!repository) {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
+    res.json(repository);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch repository' });
+  }
+});
+
+app.post('/repositories', async (req, res) => {
+  const { projectId, path, name, replace } = req.body;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+  if (!path || typeof path !== 'string') {
+    return res.status(400).json({ error: 'Path is required' });
+  }
+  try {
+    const repository = await addRepository(projectId, path, name, replace);
+    res.json(repository);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add repository' });
+  }
+});
+
+app.delete('/repositories/:id', async (req, res) => {
+  try {
+    await removeRepository(req.params.id);
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove repository' });
   }
 });
 
@@ -48,10 +150,15 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
   // Parse form fields from multipart/form-data
   // Note: req.body fields are available when using multer
-  const projectName = req.body?.name?.trim() || undefined;
+  const projectId = req.body?.projectId?.trim();
+  const repoName = req.body?.name?.trim() || undefined;
   const replace = req.body?.replace === 'true' || req.body?.replace === true;
 
-  console.log('Project name:', projectName, 'Replace:', replace);
+  if (!projectId) {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+
+  console.log('Project ID:', projectId, 'Repository name:', repoName, 'Replace:', replace);
 
   let extractPath: string | null = null;
 
@@ -103,11 +210,11 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       });
     }
 
-    console.log('Adding project to database...');
-    const project = await addProject(repoPath, projectName, replace);
-    console.log('Project added successfully:', project.id);
+    console.log('Adding repository to database...');
+    const repository = await addRepository(projectId, repoPath, repoName, replace);
+    console.log('Repository added successfully:', repository.id);
 
-    res.json(project);
+    res.json(repository);
   } catch (error: any) {
     console.error('Upload error:', error);
     console.error('Error stack:', error?.stack);
@@ -143,28 +250,6 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-app.post('/projects', async (req, res) => {
-  const { path } = req.body;
-  if (!path || typeof path !== 'string') {
-    return res.status(400).json({ error: 'Path is required' });
-  }
-  try {
-    const project = await addProject(path);
-    res.json(project);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to add project' });
-  }
-});
-
-app.delete('/projects/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    await removeProject(id);
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to remove project' });
-  }
-});
 
 app.post('/cache/clear', async (req, res) => {
   const { path } = req.body;

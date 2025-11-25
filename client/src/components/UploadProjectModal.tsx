@@ -1,20 +1,22 @@
 import { useState, useRef } from 'react';
 import { Loader2, FolderGit2 } from 'lucide-react';
-import { uploadProject } from '../api';
+import { uploadRepository } from '../api';
 
 interface UploadProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  projectId?: string;
 }
 
 export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
+  projectId,
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [projectName, setProjectName] = useState('');
+  const [repositoryName, setRepositoryName] = useState('');
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,27 +28,27 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
       setError(null);
-      // Auto-fill project name from filename if not already set
-      if (!projectName) {
+      // Auto-fill repository name from filename if not already set
+      if (!repositoryName) {
         const fileName = e.target.files[0].name;
         const nameWithoutExt = fileName.replace(/\.zip$/i, '');
-        setProjectName(nameWithoutExt);
+        setRepositoryName(nameWithoutExt);
       }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile || isUploading) return;
+    if (!selectedFile || isUploading || !projectId) return;
 
     setIsUploading(true);
     setError(null);
     try {
-      const name = projectName.trim() || undefined;
-      await uploadProject(selectedFile, name, replaceExisting);
+      const name = repositoryName.trim() || undefined;
+      await uploadRepository(selectedFile, projectId, name, replaceExisting);
       // Reset form
       setSelectedFile(null);
-      setProjectName('');
+      setRepositoryName('');
       setReplaceExisting(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -54,7 +56,7 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.error || err?.message || 'Failed to upload project';
+      const errorMessage = err?.response?.data?.error || err?.message || 'Failed to upload repository';
       setError(errorMessage);
     } finally {
       setIsUploading(false);
@@ -63,7 +65,7 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
 
   const handleCancel = () => {
     setSelectedFile(null);
-    setProjectName('');
+    setRepositoryName('');
     setReplaceExisting(false);
     setError(null);
     if (fileInputRef.current) {
@@ -112,23 +114,30 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
               <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
             </div>
           )}
+          {!projectId && (
+            <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                Please select a project first
+              </p>
+            </div>
+          )}
           <div className="mb-4">
-            <label htmlFor="project-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Project Name
+            <label htmlFor="repository-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Repository Name
             </label>
             <input
-              id="project-name"
+              id="repository-name"
               type="text"
-              value={projectName}
+              value={repositoryName}
               onChange={(e) => {
-                setProjectName(e.target.value);
+                setRepositoryName(e.target.value);
                 setError(null);
               }}
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
-              placeholder="Enter project name (optional)"
+              placeholder="Enter repository name (optional)"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={isUploading}
+              disabled={isUploading || !projectId}
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Leave empty to use the archive filename
@@ -145,11 +154,11 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
                 }}
                 onClick={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
-                disabled={isUploading}
+                disabled={isUploading || !projectId}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">
-                Replace existing project with the same name
+                Replace existing repository with the same path
               </span>
             </label>
           </div>
@@ -218,7 +227,7 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
               onClick={(e) => {
                 e.stopPropagation();
               }}
-              disabled={!selectedFile || isUploading}
+              disabled={!selectedFile || isUploading || !projectId}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isUploading ? (
@@ -227,7 +236,7 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
                   Uploading...
                 </>
               ) : (
-                'Upload Project'
+                'Upload Repository'
               )}
             </button>
           </div>

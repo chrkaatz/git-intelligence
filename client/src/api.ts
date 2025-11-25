@@ -52,6 +52,15 @@ export interface GitStats {
 
 export interface Project {
   id: string;
+  name: string;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Repository {
+  id: string;
+  projectId: string;
   path: string;
   name: string;
   createdAt?: string;
@@ -62,19 +71,56 @@ const api = axios.create({
   baseURL: 'http://localhost:3001',
 });
 
+// Projects API
 export const getProjects = async (): Promise<Project[]> => {
   const response = await api.get('/projects');
   return response.data;
 };
 
-export const addProject = async (path: string): Promise<Project> => {
-  const response = await api.post('/projects', { path });
+export const getProject = async (id: string): Promise<Project> => {
+  const response = await api.get(`/projects/${id}`);
   return response.data;
 };
 
-export const uploadProject = async (file: File, name?: string, replace?: boolean): Promise<Project> => {
+export const addProject = async (name: string, description?: string): Promise<Project> => {
+  const response = await api.post('/projects', { name, description });
+  return response.data;
+};
+
+export const updateProject = async (id: string, updates: { name?: string; description?: string }): Promise<Project> => {
+  const response = await api.put(`/projects/${id}`, updates);
+  return response.data;
+};
+
+export const removeProject = async (id: string): Promise<void> => {
+  await api.delete(`/projects/${id}`);
+};
+
+// Repositories API
+export const getRepositories = async (projectId?: string): Promise<Repository[]> => {
+  const params = projectId ? { projectId } : {};
+  const response = await api.get('/repositories', { params });
+  return response.data;
+};
+
+export const getRepository = async (id: string): Promise<Repository> => {
+  const response = await api.get(`/repositories/${id}`);
+  return response.data;
+};
+
+export const addRepository = async (projectId: string, path: string, name?: string, replace?: boolean): Promise<Repository> => {
+  const response = await api.post('/repositories', { projectId, path, name, replace });
+  return response.data;
+};
+
+export const removeRepository = async (id: string): Promise<void> => {
+  await api.delete(`/repositories/${id}`);
+};
+
+export const uploadRepository = async (file: File, projectId: string, name?: string, replace?: boolean): Promise<Repository> => {
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('projectId', projectId);
   if (name) {
     formData.append('name', name);
   }
@@ -87,10 +133,6 @@ export const uploadProject = async (file: File, name?: string, replace?: boolean
     },
   });
   return response.data;
-};
-
-export const removeProject = async (id: string): Promise<void> => {
-  await api.delete(`/projects/${id}`);
 };
 
 export const getStats = async (path: string): Promise<GitStats> => {
