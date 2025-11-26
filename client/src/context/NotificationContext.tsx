@@ -169,15 +169,13 @@ function NotificationItem({
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium">{notification.message}</p>
       </div>
-      {notification.duration !== 0 && (
-        <button
-          onClick={() => onRemove(notification.id)}
-          className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          aria-label="Close notification"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      )}
+      <button
+        onClick={() => onRemove(notification.id)}
+        className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        aria-label="Close notification"
+      >
+        <X className="w-4 h-4" />
+      </button>
     </div>
   );
 }
