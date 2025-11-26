@@ -24,6 +24,16 @@ Currently it works only on local machines.
   - Code churn metrics
   - Longitudinal patterns (author activity over time, onboarding curves, dormancy detection)
 
+- **Risk Analytics**:
+  - High-risk hotspots combining churn, complexity proxies, and ownership concentration
+  - Temporal coupling hotspots (files that frequently change together)
+  - Trend analysis of risky files to anticipate regressions
+
+- **Technical Debt Indicators**:
+  - Detection of huge, WIP, and "quick fix"/"temporary" commits
+  - Identification of commented-out code, large binaries, and vendored code growth
+  - Branch-level signals such as long-lived and excessively many branches
+
 - **Codebase Health**:
   - **Hotspots**: Identify most frequently changed files and directories
   - **Change Coupling**: Detect files that change together
@@ -53,6 +63,7 @@ Currently it works only on local machines.
 - Cross-repo collaboration patterns
 - Repository clusters (repos worked on by same teams)
 - Synchronization patterns (commits across repos on same dates)
+- Portfolio-level views of organization-wide activity, unstable/dying repositories, and overloaded contributors
 
 ### Project Management
 
