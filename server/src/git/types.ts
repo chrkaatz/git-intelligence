@@ -430,3 +430,65 @@ export interface CrossRepoSocialNetworkAnalysis {
   totalRepos: number;
   repoNames: string[];
 }
+
+// Risk Analytics Types
+export interface HighRiskHotspot {
+  file: string;
+  riskScore: number; // 0-100
+  churn: number; // Number of commits
+  complexity: number; // Average diff size
+  ownershipDiversity: number; // Number of authors
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface TemporalCouplingHotspot {
+  file: string;
+  couplingCount: number; // Number of files it changes with
+  relatedFiles: string[]; // Top related files
+  totalCoChanges: number; // Total co-change count
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface RiskyFileTrend {
+  file: string;
+  currentRiskScore: number;
+  trendPoints: { date: string; riskScore: number }[];
+  trendDirection: 'increasing' | 'decreasing' | 'stable';
+  trendPercentage: number; // Percentage change
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface RiskAnalytics {
+  highRiskHotspots: HighRiskHotspot[];
+  temporalCouplingHotspots: TemporalCouplingHotspot[];
+  riskyFileTrends: RiskyFileTrend[];
+}
+
+export interface CrossRepoRiskAnalytics {
+  highRiskHotspots: {
+    repositories: {
+      repoName: string;
+      repoPath: string;
+      hotspots: HighRiskHotspot[];
+    }[];
+    aggregatedFiles: HighRiskHotspot[];
+  };
+  temporalCouplingHotspots: {
+    repositories: {
+      repoName: string;
+      repoPath: string;
+      hotspots: TemporalCouplingHotspot[];
+    }[];
+    aggregatedFiles: TemporalCouplingHotspot[];
+  };
+  riskyFileTrends: {
+    repositories: {
+      repoName: string;
+      repoPath: string;
+      trends: RiskyFileTrend[];
+    }[];
+    aggregatedFiles: RiskyFileTrend[];
+  };
+  totalRepos: number;
+  repoNames: string[];
+}

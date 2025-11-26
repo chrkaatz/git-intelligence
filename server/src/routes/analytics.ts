@@ -11,6 +11,8 @@ import {
   getCrossRepoBusFactorAndOwnership,
   getSocialNetworkAnalysis,
   getCrossRepoSocialNetworkAnalysis,
+  getRiskAnalytics,
+  getCrossRepoRiskAnalytics,
 } from '../git/index.js';
 import { getRepository } from '../db.js';
 
@@ -221,6 +223,41 @@ router.get('/cross-repo-social-network-analysis', async (req: Request, res: Resp
     res.status(500).json({
       error: 'Failed to get cross-repo social network analysis',
     });
+  }
+});
+
+// Risk analytics
+router.get('/risk-analytics', async (req: Request, res: Response) => {
+  const { repoId, refresh } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
+  }
+  try {
+    const repoPath = await resolveRepositoryPath(repoId);
+    const useCache = refresh !== 'true';
+    const analytics = await getRiskAnalytics(repoPath, useCache);
+    res.json(analytics);
+  } catch (error: any) {
+    console.error(error);
+    if (error.message === 'Repository not found') {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
+    res.status(500).json({ error: 'Failed to get risk analytics' });
+  }
+});
+
+router.get('/cross-repo-risk-analytics', async (req: Request, res: Response) => {
+  const { projectId, refresh } = req.query;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+  try {
+    const useCache = refresh !== 'true';
+    const analytics = await getCrossRepoRiskAnalytics(projectId, useCache);
+    res.json(analytics);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get cross-repo risk analytics' });
   }
 });
 

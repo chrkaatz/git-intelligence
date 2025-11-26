@@ -11,6 +11,7 @@ import {
   Heart,
   TrendingUp,
   ChevronLeft,
+  Shield,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -47,7 +48,7 @@ export function ProjectsSidebar({
       }
       // Fallback: try to extract from pathname
       const pathMatch = location.pathname.match(
-        /\/(dashboard|developer-analytics|codebase-health|repository-evolution|bus-factor-and-ownership|social-network-analysis)\/([^/]+)$/
+        /\/(dashboard|developer-analytics|codebase-health|repository-evolution|bus-factor-and-ownership|social-network-analysis|risk-analytics)\/([^/]+)$/
       );
       if (pathMatch && pathMatch[2]) {
         return pathMatch[2];
@@ -105,6 +106,11 @@ export function ProjectsSidebar({
     } else if (currentPath.startsWith('/social-network-analysis')) {
       navigate({
         to: '/social-network-analysis/$repoId',
+        params: { repoId: repo.id },
+      });
+    } else if (currentPath.startsWith('/risk-analytics')) {
+      navigate({
+        to: '/risk-analytics/$repoId',
         params: { repoId: repo.id },
       });
     } else {
@@ -298,6 +304,19 @@ export function ProjectsSidebar({
                       title="View Cross-Repo Repository Evolution"
                     >
                       <TrendingUp className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate({
+                          to: '/cross-repo-risk-analytics/$projectId',
+                          params: { projectId: project.id },
+                        });
+                      }}
+                      className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 rounded transition-all"
+                      title="View Cross-Repo Risk Analytics"
+                    >
+                      <Shield className="w-3 h-3" />
                     </button>
                   </div>
                 )}
