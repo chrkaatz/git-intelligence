@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ProjectsList } from './ProjectsList';
-import { UploadProjectModal } from './UploadProjectModal';
+import { AddRepoModal } from './AddRepoModal';
 import { useApp } from '../context/AppContext';
 import { getRepositories } from '../api';
 
@@ -71,7 +71,7 @@ export function ProjectsView() {
 
   return (
     <>
-      <UploadProjectModal
+      <AddRepoModal
         isOpen={isAddingRepository}
         onClose={() => {
           setIsAddingRepository(false);
