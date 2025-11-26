@@ -25,7 +25,7 @@ export interface Job {
   onProgress?: (progress: number, step?: string) => void;
 }
 
-class JobQueue extends EventEmitter {
+export class JobQueue extends EventEmitter {
   private jobs: Map<string, Job> = new Map();
   private runningJobs: Set<string> = new Set();
   private maxConcurrentJobs = 2; // Limit concurrent technical debt analyses
