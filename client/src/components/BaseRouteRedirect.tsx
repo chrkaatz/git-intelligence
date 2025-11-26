@@ -33,13 +33,15 @@ export function BaseRouteRedirect({ targetRoute, children }: BaseRouteRedirectPr
     if (lastSelectedRepo && lastSelectedRepo.trim()) {
       hasRedirected.current = true;
       // Construct the full route path
-      const fullRoute = `${targetRoute}/$repoId` as any;
+      // TanStack Router requires literal route strings for type inference,
+      // but we're constructing the route dynamically based on targetRoute
+      const fullRoute = `${targetRoute}/$repoId`;
       // Redirect to the repo-specific route
       navigate({
-        to: fullRoute as any,
-        params: { repoId: lastSelectedRepo } as any,
+        to: fullRoute,
+        params: { repoId: lastSelectedRepo },
         replace: true,
-      });
+      } as unknown as Parameters<typeof navigate>[0]);
     }
   }, [targetRoute, navigate, isRepoSpecificRoute]);
 

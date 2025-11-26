@@ -5,7 +5,8 @@ import {
   getCrossRepoSocialNetworkAnalysis,
   type CrossRepoSocialNetworkAnalysis as CrossRepoSocialNetworkAnalysisType,
 } from '../api';
-import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { RecalculateButton } from './common/RecalculateButton';
 import { useNotifications } from '../context/NotificationContext';
 
 export function CrossRepoSocialNetworkAnalysisView() {
@@ -44,10 +45,11 @@ export function CrossRepoSocialNetworkAnalysisView() {
           ? 'Cross-repo social network analysis recalculated successfully!'
           : `Cross-repo social network analysis calculated for ${data.totalRepos} repositories!`;
         showNotification('success', successMessage, 3000);
-      } catch (err: any) {
+      } catch (err: unknown) {
         const errorMessage =
-          err?.response?.data?.error ||
-          err?.message ||
+          (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+            ?.error ||
+          (err as { message?: string })?.message ||
           'Failed to load cross-repo social network analysis';
         setError(errorMessage);
         // Remove loading notification and show error
@@ -82,16 +84,7 @@ export function CrossRepoSocialNetworkAnalysisView() {
             </p>
           )}
         </div>
-        {projectId && (
-          <button
-            onClick={() => fetchAnalytics(true)}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Recalculating...' : 'Recalculate'}
-          </button>
-        )}
+        {projectId && <RecalculateButton loading={loading} onClick={() => fetchAnalytics(true)} />}
       </div>
 
       {loading && !analytics ? (

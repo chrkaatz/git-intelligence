@@ -54,8 +54,12 @@ export function DeveloperAnalyticsView() {
           loadingNotificationIdRef.current = null;
         }
         showNotification('success', 'Developer analytics calculated successfully!', 3000);
-      } catch (err) {
-        const errorMessage = 'Failed to load developer analytics';
+      } catch (err: unknown) {
+        const errorMessage =
+          (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+            ?.error ||
+          (err as { message?: string })?.message ||
+          'Failed to load developer analytics';
         setError(errorMessage);
         // Remove loading notification and show error
         if (loadingNotificationIdRef.current) {

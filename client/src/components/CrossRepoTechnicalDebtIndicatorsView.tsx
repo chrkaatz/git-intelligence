@@ -5,7 +5,8 @@ import {
   getCrossRepoTechnicalDebtIndicators,
   type CrossRepoTechnicalDebtIndicators as CrossRepoTechnicalDebtIndicatorsType,
 } from '../api';
-import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { RecalculateButton } from './common/RecalculateButton';
 import { useNotifications } from '../context/NotificationContext';
 import { useApp } from '../context/AppContext';
 
@@ -59,8 +60,12 @@ export function CrossRepoTechnicalDebtIndicatorsView() {
           ? 'Cross-repo technical debt indicators recalculated successfully!'
           : 'Cross-repo technical debt indicators calculated successfully!';
         showNotification('success', successMessage, 3000);
-      } catch (err) {
-        const errorMessage = 'Failed to load cross-repo technical debt indicators';
+      } catch (err: unknown) {
+        const errorMessage =
+          (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+            ?.error ||
+          (err as { message?: string })?.message ||
+          'Failed to load cross-repo technical debt indicators';
         setError(errorMessage);
         // Remove loading notification and show error
         if (loadingNotificationIdRef.current) {
@@ -91,16 +96,7 @@ export function CrossRepoTechnicalDebtIndicatorsView() {
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{projectName}</p>
           )}
         </div>
-        {projectId && (
-          <button
-            onClick={() => fetchIndicators(true)}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Recalculating...' : 'Recalculate'}
-          </button>
-        )}
+        {projectId && <RecalculateButton loading={loading} onClick={() => fetchIndicators(true)} />}
       </div>
 
       {loading && !indicators ? (

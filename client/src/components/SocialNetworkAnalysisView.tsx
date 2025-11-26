@@ -5,7 +5,8 @@ import {
   getSocialNetworkAnalysis,
   type SocialNetworkAnalysis as SocialNetworkAnalysisType,
 } from '../api';
-import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { RecalculateButton } from './common/RecalculateButton';
 import { useNotifications } from '../context/NotificationContext';
 import { useApp } from '../context/AppContext';
 
@@ -50,9 +51,12 @@ export function SocialNetworkAnalysisView() {
           ? 'Social network analysis recalculated successfully!'
           : 'Social network analysis calculated successfully!';
         showNotification('success', successMessage, 3000);
-      } catch (err: any) {
+      } catch (err: unknown) {
         const errorMessage =
-          err?.response?.data?.error || err?.message || 'Failed to load social network analysis';
+          (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+            ?.error ||
+          (err as { message?: string })?.message ||
+          'Failed to load social network analysis';
         setError(errorMessage);
         // Remove loading notification and show error
         if (loadingNotificationIdRef.current) {
@@ -84,16 +88,7 @@ export function SocialNetworkAnalysisView() {
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{repoName}</p>
           )}
         </div>
-        {repoId && (
-          <button
-            onClick={() => fetchAnalysis(true)}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Recalculating...' : 'Recalculate'}
-          </button>
-        )}
+        {repoId && <RecalculateButton loading={loading} onClick={() => fetchAnalysis(true)} />}
       </div>
 
       {loading && !analysis ? (

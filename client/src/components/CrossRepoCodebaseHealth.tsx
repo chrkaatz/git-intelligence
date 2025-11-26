@@ -150,7 +150,7 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
                     border: '1px solid var(--tw-color-gray-700)',
                     borderRadius: '0.5rem',
                   }}
-                  formatter={(value: any, name: string) => {
+                  formatter={(value: number | string, name: string) => {
                     if (name === 'commits') return [value.toLocaleString(), 'Commits'];
                     if (name === 'files') return [value.toLocaleString(), 'Files'];
                     if (name === 'directories') return [value.toLocaleString(), 'Directories'];
@@ -162,7 +162,7 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
                   dataKey="commits"
                   fill="#f97316"
                   name="Commits"
-                  onClick={(data: any) => {
+                  onClick={(data: { name?: string; fullName?: string }) => {
                     const repo = health.hotspots.repositories.find(
                       (r) => r.repoName === data.name || r.repoName === data.fullName
                     );

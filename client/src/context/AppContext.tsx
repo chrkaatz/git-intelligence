@@ -37,7 +37,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setRepositories(repoList);
     } catch (err) {
       setError('Failed to load data');
-      console.error(err);
+      console.error('Failed to load data:', err);
     } finally {
       setLoading(false);
     }
@@ -51,7 +51,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       await addProject(name, description);
       await refreshData();
-    } catch (err) {
+    } catch {
       throw new Error('Failed to add project');
     }
   };
@@ -60,7 +60,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       await removeProject(id);
       await refreshData();
-    } catch (err) {
+    } catch {
       throw new Error('Failed to remove project');
     }
   };
@@ -69,7 +69,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       await removeRepository(id);
       await refreshData();
-    } catch (err) {
+    } catch {
       throw new Error('Failed to remove repository');
     }
   };
@@ -92,6 +92,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useApp() {
   const context = useContext(AppContext);
   if (context === undefined) {

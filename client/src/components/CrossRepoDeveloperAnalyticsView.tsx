@@ -55,8 +55,12 @@ export function CrossRepoDeveloperAnalyticsView() {
           `Cross-repo analytics calculated for ${data.totalRepos} repositories!`,
           3000
         );
-      } catch (err) {
-        const errorMessage = 'Failed to load cross-repo developer analytics';
+      } catch (err: unknown) {
+        const errorMessage =
+          (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+            ?.error ||
+          (err as { message?: string })?.message ||
+          'Failed to load cross-repo developer analytics';
         setError(errorMessage);
         // Remove loading notification and show error
         if (loadingNotificationIdRef.current) {
@@ -71,7 +75,7 @@ export function CrossRepoDeveloperAnalyticsView() {
     };
 
     fetchAnalytics();
-  }, [projectId]);
+  }, [projectId, showNotification, removeNotification]);
 
   return (
     <>

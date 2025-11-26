@@ -18,7 +18,7 @@ describe('API Functions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock axios.create to return our mock instance
-    mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
+    mockedAxios.create.mockReturnValue(mockAxiosInstance as ReturnType<typeof axios.create>);
   });
 
   describe('Projects API', () => {

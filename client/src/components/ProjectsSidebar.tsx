@@ -43,7 +43,7 @@ export function ProjectsSidebar({
     try {
       const location = router.location;
       // Try to get from route params if available
-      const routeParams = (location as any).params || {};
+      const routeParams = (location as { params?: { repoId?: string } }).params || {};
       if (routeParams.repoId) {
         return routeParams.repoId;
       }
@@ -54,7 +54,7 @@ export function ProjectsSidebar({
       if (pathMatch && pathMatch[2]) {
         return pathMatch[2];
       }
-    } catch (e) {
+    } catch {
       // Ignore errors
     }
     return '';
@@ -63,7 +63,11 @@ export function ProjectsSidebar({
   // Auto-expand projects with repositories
   useEffect(() => {
     const projectsWithRepos = new Set(repositories.map((r) => r.projectId));
-    setExpandedProjects(projectsWithRepos);
+    // Use setTimeout to avoid calling setState synchronously in effect
+    const timeoutId = setTimeout(() => {
+      setExpandedProjects(projectsWithRepos);
+    }, 0);
+    return () => clearTimeout(timeoutId);
   }, [repositories]);
 
   const toggleProject = (projectId: string) => {

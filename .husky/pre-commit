@@ -6,9 +6,8 @@ prettier $(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g') -
 
 git update-index --again
 
-# FIXME: Linting is not working
-# echo "Running linting..."
-# npm run lint
+echo "Running linting..."
+npm run lint
 
 echo "Running tests..."
 npm test

@@ -55,8 +55,12 @@ export function DashboardView() {
           loadingNotificationIdRef.current = null;
         }
         showNotification('success', 'Repository statistics loaded successfully!', 3000);
-      } catch (err) {
-        const errorMessage = 'Failed to load repository statistics';
+      } catch (err: unknown) {
+        const errorMessage =
+          (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+            ?.error ||
+          (err as { message?: string })?.message ||
+          'Failed to load repository statistics';
         setError(errorMessage);
         // Remove loading notification and show error
         if (loadingNotificationIdRef.current) {

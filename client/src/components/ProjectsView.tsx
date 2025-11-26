@@ -33,7 +33,7 @@ export function ProjectsView() {
     try {
       await handleAddProject(name, description);
       setIsAddingProject(false);
-    } catch (err) {
+    } catch {
       alert('Failed to add project');
     }
   };
@@ -43,7 +43,7 @@ export function ProjectsView() {
     if (!confirm('Are you sure you want to remove this project and all its repositories?')) return;
     try {
       await handleDeleteProject(id);
-    } catch (err) {
+    } catch {
       alert('Failed to remove project');
     }
   };
@@ -53,7 +53,7 @@ export function ProjectsView() {
     if (!confirm('Are you sure you want to remove this repository?')) return;
     try {
       await handleDeleteRepository(id);
-    } catch (err) {
+    } catch {
       alert('Failed to remove repository');
     }
   };
