@@ -2,6 +2,8 @@
 
 A comprehensive full-stack web application for analyzing and visualizing Git repository statistics. Git Intelligence provides deep insights into project activity, contributor performance, codebase health, and repository evolution through an intuitive dashboard interface.
 
+Currently it works only on local machines.
+
 ## 🚀 Features
 
 ### Core Analytics
