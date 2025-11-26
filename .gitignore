@@ -146,3 +146,5 @@ server/db.json
 server/projects.json
 
 **/.tanstack/
+
+.DS_Store
