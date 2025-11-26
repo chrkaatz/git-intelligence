@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getProjects, getProject, addProject, updateProject, removeProject } from '../db';
+import { getProjects, getProject, addProject, updateProject, removeProject } from '../db.js';
 
 const router = Router();
 

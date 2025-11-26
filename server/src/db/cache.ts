@@ -1,4 +1,4 @@
-import { getDb } from './database';
+import { getDb } from './database.js';
 
 export async function getCachedStats(
   repoPath: string,

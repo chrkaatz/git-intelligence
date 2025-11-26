@@ -1,13 +1,17 @@
 import simpleGit from 'simple-git';
-import { getRepositories } from '../db';
+import { getRepositories } from '../db.js';
 import type {
   DeveloperAnalytics,
   DeveloperAuthorStats,
   CrossRepoDeveloperAnalytics,
   CrossRepoDeveloperStats,
   AuthorData,
-} from './types';
-import { normalizeEmail, mergeAuthorsBySimilarity, calculateLongitudinalPatterns } from './utils';
+} from './types.js';
+import {
+  normalizeEmail,
+  mergeAuthorsBySimilarity,
+  calculateLongitudinalPatterns,
+} from './utils.js';
 
 export async function getDeveloperAnalytics(
   repoPath: string,

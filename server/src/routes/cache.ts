@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getRepository, clearCache } from '../db';
+import { getRepository, clearCache } from '../db.js';
 
 const router = Router();
 

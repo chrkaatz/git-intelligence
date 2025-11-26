@@ -11,8 +11,8 @@ import {
   getCrossRepoBusFactorAndOwnership,
   getSocialNetworkAnalysis,
   getCrossRepoSocialNetworkAnalysis,
-} from '../git';
-import { getRepository } from '../db';
+} from '../git/index.js';
+import { getRepository } from '../db.js';
 
 const router = Router();
 

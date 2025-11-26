@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import { getDb } from './database';
-import type { Repository } from './types';
+import { getDb } from './database.js';
+import type { Repository } from './types.js';
 
 export async function getRepositories(projectId?: string): Promise<Repository[]> {
   const database = await getDb();

@@ -216,7 +216,7 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
                       {selectedFile.name}
                     </span>
                   ) : (
-                    'ZIP archives up to 50MB'
+                    'ZIP archives up to 100MB'
                   )}
                 </p>
               </div>

@@ -1,11 +1,11 @@
 import express from 'express';
 import cors from 'cors';
-import projectsRouter from './routes/projects';
-import repositoriesRouter from './routes/repositories';
-import uploadRouter from './routes/upload';
-import analyticsRouter from './routes/analytics';
-import cacheRouter from './routes/cache';
-import { errorHandler } from './middleware/errorHandler';
+import projectsRouter from './routes/projects.js';
+import repositoriesRouter from './routes/repositories.js';
+import uploadRouter from './routes/upload.js';
+import analyticsRouter from './routes/analytics.js';
+import cacheRouter from './routes/cache.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 const port = 3001;

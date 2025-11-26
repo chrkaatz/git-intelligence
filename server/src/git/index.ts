@@ -1,8 +1,8 @@
 // Re-export all functions and types for backward compatibility
-export * from './types';
-export * from './stats';
-export * from './developerAnalytics';
-export * from './codebaseHealth';
-export * from './repositoryEvolution';
-export * from './busFactor';
-export * from './socialNetwork';
+export * from './types.js';
+export * from './stats.js';
+export * from './developerAnalytics.js';
+export * from './codebaseHealth.js';
+export * from './repositoryEvolution.js';
+export * from './busFactor.js';
+export * from './socialNetwork.js';

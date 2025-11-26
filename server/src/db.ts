@@ -5,11 +5,22 @@ export type {
   CachedStats,
   CachedCodebaseHealth,
   DatabaseSchema,
-} from './db/types';
+} from './db/types.js';
 
-export { getProjects, getProject, addProject, updateProject, removeProject } from './db/projects';
+export {
+  getProjects,
+  getProject,
+  addProject,
+  updateProject,
+  removeProject,
+} from './db/projects.js';
 
-export { getRepositories, getRepository, addRepository, removeRepository } from './db/repositories';
+export {
+  getRepositories,
+  getRepository,
+  addRepository,
+  removeRepository,
+} from './db/repositories.js';
 
 export {
   getCachedStats,
@@ -17,4 +28,4 @@ export {
   clearCache,
   getCachedCodebaseHealth,
   setCachedCodebaseHealth,
-} from './db/cache';
+} from './db/cache.js';

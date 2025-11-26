@@ -1,6 +1,6 @@
 import simpleGit from 'simple-git';
-import { getRepositories } from '../db';
-import { normalizeEmail } from './utils';
+import { getRepositories } from '../db.js';
+import { normalizeEmail } from './utils.js';
 import type {
   BusFactorAndOwnership,
   SingleMaintainerFile,
@@ -8,7 +8,7 @@ import type {
   OwnerChurn,
   CrossRepoBusFactorAndOwnership,
   SingleMaintainerRepo,
-} from './types';
+} from './types.js';
 
 export async function getBusFactorAndOwnership(
   repoPath: string,

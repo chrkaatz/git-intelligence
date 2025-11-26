@@ -3,7 +3,7 @@ import { JSONFile } from 'lowdb/node';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
-import type { DatabaseSchema, Project, Repository } from './types';
+import type { DatabaseSchema, Project, Repository } from './types.js';
 
 const DB_FILE = path.join(process.cwd(), 'db.json');
 

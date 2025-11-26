@@ -3,8 +3,8 @@ import AdmZip from 'adm-zip';
 import path from 'path';
 import fs from 'fs';
 import simpleGit from 'simple-git';
-import { upload } from '../config/multer';
-import { addRepository } from '../db';
+import { upload } from '../config/multer.js';
+import { addRepository } from '../db.js';
 
 const router = Router();
 

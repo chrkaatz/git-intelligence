@@ -1,6 +1,6 @@
 import simpleGit from 'simple-git';
-import { getRepositories } from '../db';
-import { normalizeEmail } from './utils';
+import { getRepositories } from '../db.js';
+import { normalizeEmail } from './utils.js';
 import type {
   SocialNetworkAnalysis,
   CollaborationGraph,
@@ -11,7 +11,7 @@ import type {
   CrossRepoSocialNetworkAnalysis,
   CrossRepoCollaboration,
   RepoCluster,
-} from './types';
+} from './types.js';
 
 export async function getSocialNetworkAnalysis(
   repoPath: string,

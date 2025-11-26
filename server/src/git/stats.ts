@@ -1,6 +1,6 @@
 import simpleGit from 'simple-git';
-import { getCachedStats, setCachedStats } from '../db';
-import type { AuthorStats, ActivityStats } from './types';
+import { getCachedStats, setCachedStats } from '../db.js';
+import type { AuthorStats, ActivityStats } from './types.js';
 
 export async function getStats(repoPath: string, useCache: boolean = true) {
   // Check cache first (default: 1 hour cache)

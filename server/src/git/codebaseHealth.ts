@@ -1,5 +1,5 @@
 import simpleGit from 'simple-git';
-import { getCachedCodebaseHealth, setCachedCodebaseHealth, getRepositories } from '../db';
+import { getCachedCodebaseHealth, setCachedCodebaseHealth, getRepositories } from '../db.js';
 import type {
   CodebaseHealth,
   FileHotspot,
@@ -11,7 +11,7 @@ import type {
   MostRewritten,
   CrossRepoCodebaseHealth,
   CrossRepoHotspot,
-} from './types';
+} from './types.js';
 
 export async function getCodebaseHealth(
   repoPath: string,

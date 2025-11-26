@@ -1,5 +1,5 @@
 import simpleGit from 'simple-git';
-import { getRepositories } from '../db';
+import { getRepositories } from '../db.js';
 import type {
   RepositoryEvolution,
   CommitFrequency,
@@ -8,7 +8,7 @@ import type {
   ChangeBurst,
   ChurnMetrics,
   CrossRepoRepositoryEvolution,
-} from './types';
+} from './types.js';
 
 export async function getRepositoryEvolution(
   repoPath: string,

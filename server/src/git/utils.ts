@@ -4,7 +4,7 @@ import type {
   AuthorActivityOverTime,
   OnboardingData,
   DormancyData,
-} from './types';
+} from './types.js';
 
 // Helper function to format week string (YYYY-WW)
 export function formatWeek(date: Date): string {
