@@ -46,6 +46,12 @@ These metrics detect design, complexity, and maintainability problems through co
 - **Files with high churn / low age** — Unstable code requiring frequent modifications
 - **Files with high age / low churn** — Stable foundation code that has settled into a mature state
 
+### Repository hygiene
+
+- **Branch count and lifetime** — Total number of branches and age of unmerged branches, indicating repository maintenance quality and potential technical debt from abandoned work
+- **Dependency management automation** — Presence of Dependabot or Renovate configuration files, indicating automated dependency updates and reduced security/vulnerability risk
+- **CI/CD automation** — Presence of GitHub Actions workflows or other CI configuration files, indicating automated testing, quality gates, and deployment practices
+
 ### Complexity proxies
 
 Without requiring code parsing, these metrics approximate complexity:
@@ -151,6 +157,8 @@ Commit history reveals various forms of technical debt through patterns in chang
 - **"Quick fix"/"temporary" mentions** — Commit messages indicating short-term solutions
 - **Large binary files added** — Repository hygiene issues from inappropriate file additions
 - **Vendored code growth** — Expansion of third-party dependencies embedded in the repository
+- **Long-lived branches** — Branches that exist for extended periods without merging, indicating abandoned features, incomplete work, or process issues
+- **Excessive branch proliferation** — High number of active branches suggesting lack of branch cleanup, unclear branching strategy, or abandoned work accumulating as technical debt
 
 ### Dependency drift (if lockfiles exist)
 
@@ -159,6 +167,13 @@ Even without executing builds:
 - **Lockfile diff comparison** — Analysis of dependency changes across repositories or tags
 - **Dependency bump tracking** — Monitoring of dependency update frequency and patterns
 - **Long-unupdated repository detection** — Identification of repositories with stale dependencies
+
+### Missing automation (negative indicators)
+
+Absence of these signals indicates technical debt:
+
+- **No dependency update automation** — Missing Dependabot/Renovate configuration suggests manual dependency management, increasing risk of security vulnerabilities and outdated dependencies
+- **No CI/CD workflows** — Absence of GitHub Actions or other CI configuration indicates lack of automated testing and quality assurance, increasing risk of regressions and deployment issues
 
 ---
 

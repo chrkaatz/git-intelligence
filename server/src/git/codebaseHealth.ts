@@ -11,7 +11,216 @@ import type {
   MostRewritten,
   CrossRepoCodebaseHealth,
   CrossRepoHotspot,
+  RepositoryHygiene,
+  BranchInfo,
 } from './types.js';
+import fs from 'fs';
+import path from 'path';
+
+/**
+ * Analyze repository hygiene indicators:
+ * - Branch count and lifetime
+ * - Dependency management automation (Dependabot, Renovate)
+ * - CI/CD automation (GitHub Actions, GitLab CI, CircleCI, Jenkins)
+ */
+async function analyzeRepositoryHygiene(
+  repoPath: string,
+  git: ReturnType<typeof simpleGit>
+): Promise<RepositoryHygiene> {
+  const now = new Date();
+
+  // 1. Branch Analysis
+  let branchCount = 0;
+  let unmergedBranchCount = 0;
+  let oldestUnmergedBranchDays = 0;
+  const unmergedBranches: BranchInfo[] = [];
+
+  try {
+    // Get all branches using for-each-ref (more reliable)
+    const branchesRaw = await git.raw([
+      'for-each-ref',
+      '--format=%(refname:short)|%(committerdate:iso)',
+      'refs/heads/',
+      'refs/remotes/',
+    ]);
+    const branches = branchesRaw
+      .split('\n')
+      .filter((line) => line.trim() && !line.includes('HEAD'))
+      .map((line) => {
+        const [name, dateStr] = line.split('|');
+        return {
+          name: name?.trim() || '',
+          date: dateStr ? new Date(dateStr.trim()) : null,
+        };
+      })
+      .filter((b) => b.name && b.date && !isNaN(b.date.getTime()));
+
+    branchCount = branches.length;
+
+    // Get merged branches (branches that have been merged into main/master)
+    let mergedBranches: Set<string> = new Set();
+    try {
+      // Try to find main branch
+      const mainBranches = ['main', 'master', 'develop'];
+      let mainBranch = null;
+      for (const branch of mainBranches) {
+        try {
+          await git.raw(['show-ref', '--verify', '--quiet', `refs/heads/${branch}`]);
+          mainBranch = branch;
+          break;
+        } catch {
+          // Branch doesn't exist, try next
+        }
+      }
+
+      if (mainBranch) {
+        const mergedRaw = await git.raw(['branch', '-a', '--merged', mainBranch]);
+        mergedBranches = new Set(
+          mergedRaw
+            .split('\n')
+            .filter((line) => line.trim() && !line.includes('HEAD'))
+            .map((line) => {
+              // Clean up branch name (remove * prefix, remotes/origin/ prefix)
+              return line
+                .trim()
+                .replace(/^\*\s*/, '')
+                .replace(/^remotes\/origin\//, '')
+                .replace(/^remotes\//, '');
+            })
+        );
+      }
+    } catch (error) {
+      console.warn('Could not determine merged branches:', error);
+    }
+
+    // Analyze unmerged branches
+    for (const branch of branches) {
+      const branchName = branch.name.replace(/^origin\//, '').replace(/^remotes\//, '');
+      if (branchName === 'main' || branchName === 'master' || branchName === 'develop') {
+        continue; // Skip main branches
+      }
+
+      const isMerged = mergedBranches.has(branchName) || mergedBranches.has(`origin/${branchName}`);
+      if (!isMerged && branch.date) {
+        unmergedBranchCount++;
+        const daysSince = Math.floor(
+          (now.getTime() - branch.date.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        if (daysSince > oldestUnmergedBranchDays) {
+          oldestUnmergedBranchDays = daysSince;
+        }
+        unmergedBranches.push({
+          name: branchName,
+          lastCommitDate: branch.date.toISOString(),
+          daysSinceLastCommit: daysSince,
+          isMerged: false,
+        });
+      }
+    }
+
+    // Sort by age (oldest first)
+    unmergedBranches.sort((a, b) => b.daysSinceLastCommit - a.daysSinceLastCommit);
+  } catch (error) {
+    console.warn('Error analyzing branches:', error);
+  }
+
+  // 2. Dependency Management Automation
+  const dependencyConfigFiles: string[] = [];
+  const dependencyPaths = [
+    '.github/dependabot.yml',
+    '.github/dependabot.yaml',
+    '.dependabot.yml',
+    '.dependabot.yaml',
+    '.renovate.json',
+    '.renovate.json5',
+    'renovate.json',
+    'renovate.json5',
+  ];
+
+  let hasDependabot = false;
+  let hasRenovate = false;
+
+  for (const configPath of dependencyPaths) {
+    const fullPath = path.join(repoPath, configPath);
+    if (fs.existsSync(fullPath)) {
+      dependencyConfigFiles.push(configPath);
+      if (configPath.includes('dependabot')) {
+        hasDependabot = true;
+      } else if (configPath.includes('renovate')) {
+        hasRenovate = true;
+      }
+    }
+  }
+
+  // 3. CI/CD Automation
+  const cicdConfigFiles: string[] = [];
+  let hasGitHubActions = false;
+  let hasGitLabCI = false;
+  let hasCircleCI = false;
+  let hasJenkins = false;
+
+  // Check GitHub Actions
+  const githubActionsPath = path.join(repoPath, '.github', 'workflows');
+  if (fs.existsSync(githubActionsPath) && fs.statSync(githubActionsPath).isDirectory()) {
+    const workflows = fs.readdirSync(githubActionsPath).filter((file) => {
+      const filePath = path.join(githubActionsPath, file);
+      return fs.statSync(filePath).isFile() && (file.endsWith('.yml') || file.endsWith('.yaml'));
+    });
+    if (workflows.length > 0) {
+      hasGitHubActions = true;
+      workflows.forEach((workflow) => {
+        cicdConfigFiles.push(`.github/workflows/${workflow}`);
+      });
+    }
+  }
+
+  // Check GitLab CI
+  const gitlabCIPath = path.join(repoPath, '.gitlab-ci.yml');
+  if (fs.existsSync(gitlabCIPath)) {
+    hasGitLabCI = true;
+    cicdConfigFiles.push('.gitlab-ci.yml');
+  }
+
+  // Check CircleCI
+  const circleCIPath = path.join(repoPath, '.circleci');
+  if (fs.existsSync(circleCIPath) && fs.statSync(circleCIPath).isDirectory()) {
+    const configFile = path.join(circleCIPath, 'config.yml');
+    if (fs.existsSync(configFile)) {
+      hasCircleCI = true;
+      cicdConfigFiles.push('.circleci/config.yml');
+    }
+  }
+
+  // Check Jenkins
+  const jenkinsPaths = ['Jenkinsfile', 'Jenkinsfile.groovy', '.jenkins/Jenkinsfile'];
+  for (const jenkinsPath of jenkinsPaths) {
+    const fullPath = path.join(repoPath, jenkinsPath);
+    if (fs.existsSync(fullPath)) {
+      hasJenkins = true;
+      cicdConfigFiles.push(jenkinsPath);
+      break;
+    }
+  }
+
+  return {
+    branchCount,
+    unmergedBranchCount,
+    oldestUnmergedBranchDays,
+    unmergedBranches: unmergedBranches.slice(0, 20), // Limit to top 20 oldest
+    dependencyAutomation: {
+      hasDependabot,
+      hasRenovate,
+      configFiles: dependencyConfigFiles,
+    },
+    cicdAutomation: {
+      hasGitHubActions,
+      hasGitLabCI,
+      hasCircleCI,
+      hasJenkins,
+      configFiles: cicdConfigFiles,
+    },
+  };
+}
 
 export async function getCodebaseHealth(
   repoPath: string,
@@ -260,6 +469,9 @@ export async function getCodebaseHealth(
       .filter((f) => f.rewrittenLines > 0 && f.totalLines > 100) // Only files with significant changes
       .sort((a, b) => b.rewritePercentage - a.rewritePercentage);
 
+    // 5. Repository Hygiene
+    const hygiene = await analyzeRepositoryHygiene(repoPath, git);
+
     const health = {
       hotspots: {
         files: fileHotspots,
@@ -276,6 +488,7 @@ export async function getCodebaseHealth(
         largestDiffs,
         mostRewritten,
       },
+      hygiene,
     };
 
     // Cache the results

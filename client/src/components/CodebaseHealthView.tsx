@@ -115,6 +115,7 @@ export function CodebaseHealthView() {
           changeCoupling={codebaseHealth.changeCoupling}
           stability={codebaseHealth.stability}
           complexity={codebaseHealth.complexity}
+          hygiene={codebaseHealth.hygiene}
         />
       ) : (
         <div className="text-center py-12 text-gray-500">

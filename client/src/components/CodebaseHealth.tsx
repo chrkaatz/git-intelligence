@@ -13,13 +13,26 @@ import {
   Cell,
 } from 'recharts';
 import type { CodebaseHealth as CodebaseHealthType } from '../api';
-import { Flame, Link2, TrendingUp, FileText, Folder, AlertTriangle, Activity } from 'lucide-react';
+import {
+  Flame,
+  Link2,
+  TrendingUp,
+  FileText,
+  Folder,
+  AlertTriangle,
+  Activity,
+  Shield,
+  GitBranch,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react';
 
 interface CodebaseHealthProps {
   hotspots: CodebaseHealthType['hotspots'];
   changeCoupling: CodebaseHealthType['changeCoupling'];
   stability: CodebaseHealthType['stability'];
   complexity: CodebaseHealthType['complexity'];
+  hygiene: CodebaseHealthType['hygiene'];
 }
 
 export function CodebaseHealth({
@@ -27,9 +40,10 @@ export function CodebaseHealth({
   changeCoupling,
   stability,
   complexity,
+  hygiene,
 }: CodebaseHealthProps) {
   const [selectedSection, setSelectedSection] = useState<
-    'hotspots' | 'coupling' | 'stability' | 'complexity'
+    'hotspots' | 'coupling' | 'stability' | 'complexity' | 'hygiene'
   >('hotspots');
 
   return (
@@ -79,6 +93,17 @@ export function CodebaseHealth({
         >
           <FileText className="w-4 h-4 inline mr-2" />
           Complexity
+        </button>
+        <button
+          onClick={() => setSelectedSection('hygiene')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            selectedSection === 'hygiene'
+              ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+          }`}
+        >
+          <Shield className="w-4 h-4 inline mr-2" />
+          Repository Hygiene
         </button>
       </div>
 
@@ -471,6 +496,220 @@ export function CodebaseHealth({
                 No average diff size data available.
               </p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Hygiene Section */}
+      {selectedSection === 'hygiene' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Shield className="w-5 h-5 text-blue-500" />
+              Repository Hygiene Indicators
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Indicators of repository maintenance quality, automation practices, and potential
+              technical debt.
+            </p>
+          </div>
+
+          {/* Branch Count and Lifetime */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <GitBranch className="w-5 h-5" />
+              Branch Management
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Branches</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {hygiene.branchCount}
+                </div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  Unmerged Branches
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {hygiene.unmergedBranchCount}
+                </div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  Oldest Unmerged (days)
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {hygiene.oldestUnmergedBranchDays}
+                </div>
+              </div>
+            </div>
+            {hygiene.unmergedBranches.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Oldest Unmerged Branches
+                </h4>
+                <div className="space-y-2">
+                  {hygiene.unmergedBranches.slice(0, 10).map((branch, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded"
+                    >
+                      <span className="text-sm text-gray-700 dark:text-gray-300 font-mono">
+                        {branch.name}
+                      </span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {branch.daysSinceLastCommit} days ago
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(branch.lastCommitDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Dependency Management Automation */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Dependency Management Automation
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  {hygiene.dependencyAutomation.hasDependabot ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-500" />
+                  )}
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Dependabot
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {hygiene.dependencyAutomation.hasRenovate ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-500" />
+                  )}
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Renovate
+                  </span>
+                </div>
+              </div>
+              {hygiene.dependencyAutomation.configFiles.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Configuration Files Found
+                  </h4>
+                  <div className="space-y-1">
+                    {hygiene.dependencyAutomation.configFiles.map((file, idx) => (
+                      <div
+                        key={idx}
+                        className="text-sm text-gray-600 dark:text-gray-400 font-mono bg-gray-50 dark:bg-gray-900 rounded px-2 py-1"
+                      >
+                        {file}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!hygiene.dependencyAutomation.hasDependabot &&
+                !hygiene.dependencyAutomation.hasRenovate && (
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800 p-4">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                      No dependency management automation detected. Consider setting up Dependabot
+                      or Renovate to automate dependency updates and reduce security risks.
+                    </p>
+                  </div>
+                )}
+            </div>
+          </div>
+
+          {/* CI/CD Automation */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Activity className="w-5 h-5" />
+              CI/CD Automation
+            </h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex items-center gap-2">
+                  {hygiene.cicdAutomation.hasGitHubActions ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-500" />
+                  )}
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    GitHub Actions
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {hygiene.cicdAutomation.hasGitLabCI ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-500" />
+                  )}
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    GitLab CI
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {hygiene.cicdAutomation.hasCircleCI ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-500" />
+                  )}
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    CircleCI
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {hygiene.cicdAutomation.hasJenkins ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-500" />
+                  )}
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Jenkins
+                  </span>
+                </div>
+              </div>
+              {hygiene.cicdAutomation.configFiles.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Configuration Files Found
+                  </h4>
+                  <div className="space-y-1">
+                    {hygiene.cicdAutomation.configFiles.map((file, idx) => (
+                      <div
+                        key={idx}
+                        className="text-sm text-gray-600 dark:text-gray-400 font-mono bg-gray-50 dark:bg-gray-900 rounded px-2 py-1"
+                      >
+                        {file}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!hygiene.cicdAutomation.hasGitHubActions &&
+                !hygiene.cicdAutomation.hasGitLabCI &&
+                !hygiene.cicdAutomation.hasCircleCI &&
+                !hygiene.cicdAutomation.hasJenkins && (
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800 p-4">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                      No CI/CD automation detected. Consider setting up GitHub Actions, GitLab CI,
+                      CircleCI, or Jenkins to automate testing, quality gates, and deployment
+                      practices.
+                    </p>
+                  </div>
+                )}
+            </div>
           </div>
         </div>
       )}

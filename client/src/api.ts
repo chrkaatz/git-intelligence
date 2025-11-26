@@ -286,11 +286,38 @@ export interface Complexity {
   mostRewritten: MostRewritten[];
 }
 
+export interface BranchInfo {
+  name: string;
+  lastCommitDate: string;
+  daysSinceLastCommit: number;
+  isMerged: boolean;
+}
+
+export interface RepositoryHygiene {
+  branchCount: number;
+  unmergedBranchCount: number;
+  oldestUnmergedBranchDays: number;
+  unmergedBranches: BranchInfo[];
+  dependencyAutomation: {
+    hasDependabot: boolean;
+    hasRenovate: boolean;
+    configFiles: string[];
+  };
+  cicdAutomation: {
+    hasGitHubActions: boolean;
+    hasGitLabCI: boolean;
+    hasCircleCI: boolean;
+    hasJenkins: boolean;
+    configFiles: string[];
+  };
+}
+
 export interface CodebaseHealth {
   hotspots: Hotspots;
   changeCoupling: ChangeCoupling;
   stability: Stability;
   complexity: Complexity;
+  hygiene: RepositoryHygiene;
 }
 
 export const getCodebaseHealth = async (
