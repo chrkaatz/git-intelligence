@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { SummaryCards } from './SummaryCards';
-import type { GitStats } from '../api';
+import { SummaryCards } from '../SummaryCards';
+import type { GitStats } from '../../api';
 
 describe('SummaryCards', () => {
   const mockStats: GitStats = {

@@ -23,11 +23,8 @@ export default defineConfig({
     },
     testTimeout: 10000,
     silent: false,
-    outputTruncateLength: 200,
-    outputDiffLines: 10,
     // Reduce noise from console output
     logHeapUsage: false,
-    reporter: ['verbose'],
   },
   resolve: {
     alias: {

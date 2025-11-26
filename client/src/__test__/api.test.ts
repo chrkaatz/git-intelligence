@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import axios from 'axios';
-import type { Project, Repository, GitStats } from './api';
+import type { Project, Repository, GitStats } from '../api';
 
 // Mock axios before importing api module
 vi.mock('axios');
@@ -31,7 +31,7 @@ describe('API Functions', () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockProjects });
 
       // Dynamic import to get fresh module with mocked axios
-      const { getProjects } = await import('./api');
+      const { getProjects } = await import('../api');
       const result = await getProjects();
 
       expect(result).toEqual(mockProjects);
@@ -43,7 +43,7 @@ describe('API Functions', () => {
 
       mockAxiosInstance.get.mockResolvedValue({ data: mockProject });
 
-      const { getProject } = await import('./api');
+      const { getProject } = await import('../api');
       const result = await getProject('1');
 
       expect(result).toEqual(mockProject);
@@ -55,7 +55,7 @@ describe('API Functions', () => {
 
       mockAxiosInstance.post.mockResolvedValue({ data: newProject });
 
-      const { addProject } = await import('./api');
+      const { addProject } = await import('../api');
       const result = await addProject('New Project', 'Description');
 
       expect(result).toEqual(newProject);
@@ -70,7 +70,7 @@ describe('API Functions', () => {
 
       mockAxiosInstance.put.mockResolvedValue({ data: updatedProject });
 
-      const { updateProject } = await import('./api');
+      const { updateProject } = await import('../api');
       const result = await updateProject('1', { name: 'Updated Project' });
 
       expect(result).toEqual(updatedProject);
@@ -82,7 +82,7 @@ describe('API Functions', () => {
     it('removeProject should delete a project', async () => {
       mockAxiosInstance.delete.mockResolvedValue({});
 
-      const { removeProject } = await import('./api');
+      const { removeProject } = await import('../api');
       await removeProject('1');
 
       expect(mockAxiosInstance.delete).toHaveBeenCalledWith('/projects/1');
@@ -98,7 +98,7 @@ describe('API Functions', () => {
 
       mockAxiosInstance.get.mockResolvedValue({ data: mockRepos });
 
-      const { getRepositories } = await import('./api');
+      const { getRepositories } = await import('../api');
       const result = await getRepositories();
 
       expect(result).toEqual(mockRepos);
@@ -112,7 +112,7 @@ describe('API Functions', () => {
 
       mockAxiosInstance.get.mockResolvedValue({ data: mockRepos });
 
-      const { getRepositories } = await import('./api');
+      const { getRepositories } = await import('../api');
       const result = await getRepositories('1');
 
       expect(result).toEqual(mockRepos);
@@ -126,7 +126,7 @@ describe('API Functions', () => {
 
       mockAxiosInstance.get.mockResolvedValue({ data: mockRepo });
 
-      const { getRepository } = await import('./api');
+      const { getRepository } = await import('../api');
       const result = await getRepository('1');
 
       expect(result).toEqual(mockRepo);
@@ -138,7 +138,7 @@ describe('API Functions', () => {
 
       mockAxiosInstance.post.mockResolvedValue({ data: newRepo });
 
-      const { addRepository } = await import('./api');
+      const { addRepository } = await import('../api');
       const result = await addRepository('1', '/path/1', 'New Repo');
 
       expect(result).toEqual(newRepo);
@@ -153,7 +153,7 @@ describe('API Functions', () => {
     it('removeRepository should delete a repository', async () => {
       mockAxiosInstance.delete.mockResolvedValue({});
 
-      const { removeRepository } = await import('./api');
+      const { removeRepository } = await import('../api');
       await removeRepository('1');
 
       expect(mockAxiosInstance.delete).toHaveBeenCalledWith('/repositories/1');
@@ -181,7 +181,7 @@ describe('API Functions', () => {
 
       mockAxiosInstance.get.mockResolvedValue({ data: mockStats });
 
-      const { getStats } = await import('./api');
+      const { getStats } = await import('../api');
       const repoId = 'test-repo-id-123';
       const result = await getStats(repoId);
 

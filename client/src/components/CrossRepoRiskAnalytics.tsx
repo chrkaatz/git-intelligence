@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { CrossRepoRiskAnalytics as CrossRepoRiskAnalyticsType } from '../api';
+import { getRiskLabel } from './common/riskUtils';
 import { Flame, Link2, TrendingUp, GitBranch } from 'lucide-react';
 
 interface CrossRepoRiskAnalyticsProps {
@@ -11,19 +12,6 @@ export function CrossRepoRiskAnalytics({ analytics, loading }: CrossRepoRiskAnal
   const [selectedSection, setSelectedSection] = useState<'high-risk' | 'coupling' | 'trends'>(
     'high-risk'
   );
-
-  const getRiskLabel = (riskLevel: 'low' | 'medium' | 'high') => {
-    switch (riskLevel) {
-      case 'high':
-        return 'High Risk';
-      case 'medium':
-        return 'Medium Risk';
-      case 'low':
-        return 'Low Risk';
-      default:
-        return 'Unknown';
-    }
-  };
 
   if (loading) {
     return (

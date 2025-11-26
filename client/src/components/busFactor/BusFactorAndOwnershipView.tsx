@@ -4,11 +4,11 @@ import { BusFactorAndOwnership as BusFactorAndOwnershipComponent } from './BusFa
 import {
   getBusFactorAndOwnership,
   type BusFactorAndOwnership as BusFactorAndOwnershipType,
-} from '../api';
+} from '../../api';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { RecalculateButton } from './common/RecalculateButton';
-import { useNotifications } from '../context/NotificationContext';
-import { useApp } from '../context/AppContext';
+import { RecalculateButton } from '../common/RecalculateButton';
+import { useNotifications } from '../../context/NotificationContext';
+import { useApp } from '../../context/AppContext';
 
 export function BusFactorAndOwnershipView() {
   const params = useParams({ strict: false }) as { repoId?: string };

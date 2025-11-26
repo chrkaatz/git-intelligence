@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { SocialNetworkAnalysis as SocialNetworkAnalysisType } from '../api';
 import { Network, Users, FileText, Archive } from 'lucide-react';
+import { getRiskLabel } from './common/riskUtils';
 
 interface SocialNetworkAnalysisProps {
   collaborationGraph: SocialNetworkAnalysisType['collaborationGraph'];
@@ -16,19 +17,6 @@ export function SocialNetworkAnalysis({
   const [selectedSection, setSelectedSection] = useState<'collaboration' | 'silos' | 'orphaned'>(
     'collaboration'
   );
-
-  const getRiskLabel = (riskLevel: 'low' | 'medium' | 'high') => {
-    switch (riskLevel) {
-      case 'high':
-        return 'High Risk';
-      case 'medium':
-        return 'Medium Risk';
-      case 'low':
-        return 'Low Risk';
-      default:
-        return 'Unknown';
-    }
-  };
 
   return (
     <div className="space-y-6">

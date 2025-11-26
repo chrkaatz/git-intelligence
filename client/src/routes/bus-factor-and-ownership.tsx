@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { BusFactorAndOwnershipView } from '../components/BusFactorAndOwnershipView';
+import { BusFactorAndOwnershipView } from '../components/busFactor/BusFactorAndOwnershipView';
 import { BaseRouteRedirect } from '../components/BaseRouteRedirect';
 
 export const Route = createFileRoute('/bus-factor-and-ownership')({

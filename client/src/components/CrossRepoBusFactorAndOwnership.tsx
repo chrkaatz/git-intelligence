@@ -11,6 +11,7 @@ import {
   Cell,
 } from 'recharts';
 import type { CrossRepoBusFactorAndOwnership as CrossRepoBusFactorAndOwnershipType } from '../api';
+import { getRiskColor, getRiskLabel } from './common/riskUtils';
 import { UserX, Users, TrendingDown, GitBranch } from 'lucide-react';
 
 interface CrossRepoBusFactorAndOwnershipProps {
@@ -26,32 +27,6 @@ export function CrossRepoBusFactorAndOwnership({
     'single-maintainer' | 'fragmentation' | 'owner-churn'
   >('single-maintainer');
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
-
-  const getRiskColor = (riskLevel: 'low' | 'medium' | 'high') => {
-    switch (riskLevel) {
-      case 'high':
-        return '#ef4444'; // red
-      case 'medium':
-        return '#f59e0b'; // yellow
-      case 'low':
-        return '#10b981'; // green
-      default:
-        return '#6b7280'; // gray
-    }
-  };
-
-  const getRiskLabel = (riskLevel: 'low' | 'medium' | 'high') => {
-    switch (riskLevel) {
-      case 'high':
-        return 'High Risk';
-      case 'medium':
-        return 'Medium Risk';
-      case 'low':
-        return 'Low Risk';
-      default:
-        return 'Unknown';
-    }
-  };
 
   if (loading) {
     return (

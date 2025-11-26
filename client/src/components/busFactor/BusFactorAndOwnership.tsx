@@ -10,7 +10,8 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import type { BusFactorAndOwnership as BusFactorAndOwnershipType } from '../api';
+import type { BusFactorAndOwnership as BusFactorAndOwnershipType } from '../../api';
+import { getRiskColor, getRiskLabel } from '../common/riskUtils';
 import { AlertTriangle, Users, UserX, TrendingDown } from 'lucide-react';
 
 interface BusFactorAndOwnershipProps {
@@ -27,32 +28,6 @@ export function BusFactorAndOwnership({
   const [selectedSection, setSelectedSection] = useState<
     'single-maintainer' | 'fragmentation' | 'owner-churn'
   >('single-maintainer');
-
-  const getRiskColor = (riskLevel: 'low' | 'medium' | 'high') => {
-    switch (riskLevel) {
-      case 'high':
-        return '#ef4444'; // red
-      case 'medium':
-        return '#f59e0b'; // yellow
-      case 'low':
-        return '#10b981'; // green
-      default:
-        return '#6b7280'; // gray
-    }
-  };
-
-  const getRiskLabel = (riskLevel: 'low' | 'medium' | 'high') => {
-    switch (riskLevel) {
-      case 'high':
-        return 'High Risk';
-      case 'medium':
-        return 'Medium Risk';
-      case 'low':
-        return 'Low Risk';
-      default:
-        return 'Unknown';
-    }
-  };
 
   return (
     <div className="space-y-6">

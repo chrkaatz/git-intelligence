@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { AuthorList } from './AuthorList';
-import type { AuthorStats } from '../api';
+import { AuthorList } from '../AuthorList';
+import type { AuthorStats } from '../../api';
 
 describe('AuthorList', () => {
   const mockAuthors: AuthorStats[] = [
