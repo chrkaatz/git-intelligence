@@ -54,13 +54,14 @@ describe('BusFactorAndOwnershipView', () => {
   });
 
   it('renders placeholder when no repository is selected', async () => {
-    renderWithProviders();
-
-    expect(
-      screen.getByText(
-        /No repository selected. Select a repository from the list to view bus factor and ownership analytics./i
-      )
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      renderWithProviders();
+      expect(
+        screen.getByText(
+          /No repository selected. Select a repository from the list to view bus factor and ownership analytics./i
+        )
+      ).toBeInTheDocument();
+    });
   });
 
   it('fetches and displays analytics when repoId is present', async () => {

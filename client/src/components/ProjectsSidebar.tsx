@@ -285,7 +285,7 @@ export function ProjectsSidebar({
                         });
                       }}
                       className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 rounded transition-all"
-                      title="View Cross-Repo Developer Analytics"
+                      title="View Cross-Repo Portfolio Analytics"
                     >
                       <BarChart3 className="w-3 h-3" />
                     </button>
