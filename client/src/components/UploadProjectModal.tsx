@@ -20,20 +20,30 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
+  const processFile = (file: File) => {
+    // Validate file type
+    if (!file.name.toLowerCase().endsWith('.zip')) {
+      setError('Please upload a ZIP file');
+      return;
+    }
+    setSelectedFile(file);
+    setError(null);
+    // Auto-fill repository name from filename if not already set
+    if (!repositoryName) {
+      const fileName = file.name;
+      const nameWithoutExt = fileName.replace(/\.zip$/i, '');
+      setRepositoryName(nameWithoutExt);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-      setError(null);
-      // Auto-fill repository name from filename if not already set
-      if (!repositoryName) {
-        const fileName = e.target.files[0].name;
-        const nameWithoutExt = fileName.replace(/\.zip$/i, '');
-        setRepositoryName(nameWithoutExt);
-      }
+      processFile(e.target.files[0]);
     }
   };
 
@@ -55,9 +65,12 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
       }
       onSuccess();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage =
-        err?.response?.data?.error || err?.message || 'Failed to upload repository';
+        (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+          ?.error ||
+        (err as { message?: string })?.message ||
+        'Failed to upload repository';
       setError(errorMessage);
     } finally {
       setIsUploading(false);
@@ -92,6 +105,43 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragging to false if we're leaving the drop zone itself
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (isUploading || !projectId) return;
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      processFile(file);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]"
@@ -105,6 +155,14 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
         }}
         onMouseDown={(e) => {
           // Stop mousedown events from propagating
+          e.stopPropagation();
+        }}
+        onDragOver={(e) => {
+          // Prevent drag events from propagating to backdrop
+          e.stopPropagation();
+        }}
+        onDrop={(e) => {
+          // Prevent drop events from propagating to backdrop
           e.stopPropagation();
         }}
       >
@@ -172,12 +230,18 @@ export const UploadProjectModal: React.FC<UploadProjectModalProps> = ({
             </label>
             <div
               className={`mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-dashed rounded-xl transition-all cursor-pointer ${
-                selectedFile
-                  ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-900'
+                isDragging
+                  ? 'border-blue-500 bg-blue-100 dark:bg-blue-900/40'
+                  : selectedFile
+                    ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-900'
               }`}
               onClick={handleDropZoneClick}
               onMouseDown={(e) => e.stopPropagation()}
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             >
               <div className="space-y-2 text-center">
                 <div
