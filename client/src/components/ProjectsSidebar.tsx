@@ -31,7 +31,7 @@ export function ProjectsSidebar({
   isCollapsed = false,
   onExpand,
 }: ProjectsSidebarProps) {
-  const { projects, repositories, handleDeleteProject, handleDeleteRepository } = useApp();
+  const { projects, repositories, handleDeleteRepository } = useApp();
   const navigate = useNavigate();
   const router = useRouterState();
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
@@ -258,67 +258,49 @@ export function ProjectsSidebar({
                     ({projectRepos.length})
                   </span>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {projectRepos.length > 1 && (
-                    <>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate({
-                            to: '/cross-repo-analytics/$projectId',
-                            params: { projectId: project.id },
-                          });
-                        }}
-                        className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 rounded transition-all"
-                        title="View Cross-Repo Developer Analytics"
-                      >
-                        <BarChart3 className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate({
-                            to: '/cross-repo-codebase-health/$projectId',
-                            params: { projectId: project.id },
-                          });
-                        }}
-                        className="p-1 hover:bg-orange-50 dark:hover:bg-orange-900/20 text-gray-400 hover:text-orange-500 rounded transition-all"
-                        title="View Cross-Repo Codebase Health"
-                      >
-                        <Heart className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate({
-                            to: '/cross-repo-repository-evolution/$projectId',
-                            params: { projectId: project.id },
-                          });
-                        }}
-                        className="p-1 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-400 hover:text-purple-500 rounded transition-all"
-                        title="View Cross-Repo Repository Evolution"
-                      >
-                        <TrendingUp className="w-3 h-3" />
-                      </button>
-                    </>
-                  )}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (
-                        confirm(
-                          'Are you sure you want to remove this project and all its repositories?'
-                        )
-                      ) {
-                        handleDeleteProject(project.id);
-                      }
-                    }}
-                    className="p-1 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded transition-all"
-                    title="Remove Project"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
+                {projectRepos.length > 1 && (
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate({
+                          to: '/cross-repo-analytics/$projectId',
+                          params: { projectId: project.id },
+                        });
+                      }}
+                      className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 rounded transition-all"
+                      title="View Cross-Repo Developer Analytics"
+                    >
+                      <BarChart3 className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate({
+                          to: '/cross-repo-codebase-health/$projectId',
+                          params: { projectId: project.id },
+                        });
+                      }}
+                      className="p-1 hover:bg-orange-50 dark:hover:bg-orange-900/20 text-gray-400 hover:text-orange-500 rounded transition-all"
+                      title="View Cross-Repo Codebase Health"
+                    >
+                      <Heart className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate({
+                          to: '/cross-repo-repository-evolution/$projectId',
+                          params: { projectId: project.id },
+                        });
+                      }}
+                      className="p-1 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-400 hover:text-purple-500 rounded transition-all"
+                      title="View Cross-Repo Repository Evolution"
+                    >
+                      <TrendingUp className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Repositories */}
