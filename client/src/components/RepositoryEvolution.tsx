@@ -379,7 +379,7 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Recent Change Bursts (showing refactors in orange)
                   </h4>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                  <div className="space-y-2 max-h-[600px] overflow-y-auto">
                     {evolution.changeBursts
                       .slice(-20)
                       .reverse()
