@@ -388,6 +388,57 @@ export function CodebaseHealth({
               <p className="text-xs text-green-700 dark:text-green-400 mt-1">Low churn, high age</p>
             </div>
           </div>
+
+          {/* Risky Files List */}
+          {stability.files.filter((f) => f.status === 'unstable').length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-800 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Risky Files (Unstable)
+                </h3>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Files with high change frequency and low age, indicating potential instability or
+                ongoing refactoring.
+              </p>
+              <div className="space-y-2">
+                {stability.files
+                  .filter((f) => f.status === 'unstable')
+                  .sort((a, b) => b.changeFrequency - a.changeFrequency)
+                  .map((file, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm text-gray-900 dark:text-white font-mono truncate block">
+                          {file.file}
+                        </span>
+                      </div>
+                      <div className="ml-4 flex items-center gap-6 flex-shrink-0">
+                        <div className="text-right">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 block">
+                            Age
+                          </span>
+                          <span className="text-sm font-semibold text-red-600 dark:text-red-400">
+                            {file.ageDays} days
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 block">
+                            Changes
+                          </span>
+                          <span className="text-sm font-semibold text-red-600 dark:text-red-400">
+                            {file.changeFrequency}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
