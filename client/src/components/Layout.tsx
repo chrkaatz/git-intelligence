@@ -392,13 +392,16 @@ export default function Layout({ children, sidebar }: LayoutProps) {
         <main
           className={classNames(
             'transition-all duration-300',
+            // Main padding accounts for nav sidebar width
             navSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72'
           )}
         >
           <div
             className={classNames(
               'transition-all duration-300',
-              !sidebar || projectsSidebarCollapsed ? '' : 'xl:pl-96'
+              // Inner div padding accounts for projects sidebar width
+              // When collapsed: 16px, when expanded: 96px, when no sidebar: 0
+              !sidebar ? '' : projectsSidebarCollapsed ? 'xl:pl-16' : 'xl:pl-96'
             )}
           >
             <div className="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
