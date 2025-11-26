@@ -1,4 +1,43 @@
-# Release Notes - Git Intelligence v0.0.1
+# Release Notes - Git Intelligence
+
+## v0.0.2
+
+**Release Date:** November 26, 2025  
+**Tag:** `v0.0.2`  
+**Commit:** `8b54a81ed5fcbd909d11c1d48ef63ca3ccbad1c5`
+
+---
+
+### 🔍 Overview
+
+Git Intelligence v0.0.2 is a refinement release focused on **technical debt analytics**, **risk analysis robustness**, and **improved UX consistency**. It introduces a new Technical Debt Indicators view, strengthens backend test coverage, and streamlines several UI components.
+
+### ✨ Highlights
+
+- **Technical Debt Indicators**
+  - New Technical Debt Indicators feature with dedicated backend analysis and API endpoint
+  - Frontend UI components and charts to surface files and areas with elevated technical debt risk
+  - Integration into the existing analytics navigation for a cohesive experience
+
+- **Risk & Portfolio Analytics**
+  - Added and refined unit tests for risk analytics functionality and shared risk utility functions
+  - Introduced a Cross-Repository Portfolio Analytics view with corresponding tests to analyze risk and health across multiple repositories
+
+- **Infrastructure & Quality**
+  - Refactored `JobQueue` implementation and added comprehensive unit tests for more reliable background analysis execution
+  - Expanded test coverage for technical debt indicators and risk analytics, improving overall backend reliability
+
+- **UX & UI Improvements**
+  - Refactored multiple components to use a shared `RecalculateButton` for consistent refresh interactions
+  - Simplified `NotificationItem` close button rendering for a cleaner and more maintainable notification UI
+
+---
+
+## v0.0.1
+
+**Release Date:** November 26, 2025  
+**Tag:** `v0.0.1`  
+**Commit:** `35ac54efb724970872947efc418e8f194b503bbb`
 
 **Release Date:** November 26, 2025  
 **Tag:** `v0.0.1`  
@@ -235,38 +274,6 @@ All analytics endpoints support `?refresh=true` to bypass cache.
 
 - Maximum file size: 100MB
 - Supported format: ZIP archives containing Git repositories
-
-## 📝 Changelog
-
-### v0.0.1 (November 26, 2025)
-
-#### Initial Release Features
-
-- ✅ Complete dashboard with overview metrics
-- ✅ Developer analytics with longitudinal patterns
-- ✅ Codebase health analysis (hotspots, coupling, stability, complexity)
-- ✅ Repository evolution tracking (commits, releases, growth, bursts)
-- ✅ Bus factor and ownership analysis
-- ✅ Social network analysis
-- ✅ Risk analytics
-- ✅ Cross-repository analytics
-- ✅ Multi-project support
-- ✅ Repository upload via ZIP archives with drag-and-drop
-- ✅ Path-based repository analysis
-- ✅ Analysis result caching
-- ✅ Dark mode support (system preference)
-- ✅ Responsive design
-- ✅ Comprehensive test coverage
-
-#### Recent Improvements
-
-- Enhanced change bursts display with increased max height
-- Added Risky Files section to Codebase Health
-- Added Repository Hygiene metrics
-- Enhanced UploadProjectModal with drag-and-drop support
-- Improved file validation for ZIP files
-- Updated to support ZIP archives up to 100MB
-- Streamlined UI for cross-repo analytics
 
 ## ⚠️ Known Limitations
 
