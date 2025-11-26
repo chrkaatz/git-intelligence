@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TechnicalDebtIndicatorsRouteImport } from './routes/technical-debt-indicators'
 import { Route as SocialNetworkAnalysisRouteImport } from './routes/social-network-analysis'
 import { Route as RiskAnalyticsRouteImport } from './routes/risk-analytics'
 import { Route as RepositoryEvolutionRouteImport } from './routes/repository-evolution'
@@ -18,11 +19,13 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CodebaseHealthRouteImport } from './routes/codebase-health'
 import { Route as BusFactorAndOwnershipRouteImport } from './routes/bus-factor-and-ownership'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TechnicalDebtIndicatorsRepoIdRouteImport } from './routes/technical-debt-indicators.$repoId'
 import { Route as SocialNetworkAnalysisRepoIdRouteImport } from './routes/social-network-analysis.$repoId'
 import { Route as RiskAnalyticsRepoIdRouteImport } from './routes/risk-analytics.$repoId'
 import { Route as RepositoryEvolutionRepoIdRouteImport } from './routes/repository-evolution.$repoId'
 import { Route as DeveloperAnalyticsRepoIdRouteImport } from './routes/developer-analytics.$repoId'
 import { Route as DashboardRepoIdRouteImport } from './routes/dashboard.$repoId'
+import { Route as CrossRepoTechnicalDebtIndicatorsProjectIdRouteImport } from './routes/cross-repo-technical-debt-indicators.$projectId'
 import { Route as CrossRepoSocialNetworkAnalysisProjectIdRouteImport } from './routes/cross-repo-social-network-analysis.$projectId'
 import { Route as CrossRepoRiskAnalyticsProjectIdRouteImport } from './routes/cross-repo-risk-analytics.$projectId'
 import { Route as CrossRepoRepositoryEvolutionProjectIdRouteImport } from './routes/cross-repo-repository-evolution.$projectId'
@@ -32,6 +35,11 @@ import { Route as CrossRepoAnalyticsProjectIdRouteImport } from './routes/cross-
 import { Route as CodebaseHealthRepoIdRouteImport } from './routes/codebase-health.$repoId'
 import { Route as BusFactorAndOwnershipRepoIdRouteImport } from './routes/bus-factor-and-ownership.$repoId'
 
+const TechnicalDebtIndicatorsRoute = TechnicalDebtIndicatorsRouteImport.update({
+  id: '/technical-debt-indicators',
+  path: '/technical-debt-indicators',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SocialNetworkAnalysisRoute = SocialNetworkAnalysisRouteImport.update({
   id: '/social-network-analysis',
   path: '/social-network-analysis',
@@ -77,6 +85,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TechnicalDebtIndicatorsRepoIdRoute =
+  TechnicalDebtIndicatorsRepoIdRouteImport.update({
+    id: '/$repoId',
+    path: '/$repoId',
+    getParentRoute: () => TechnicalDebtIndicatorsRoute,
+  } as any)
 const SocialNetworkAnalysisRepoIdRoute =
   SocialNetworkAnalysisRepoIdRouteImport.update({
     id: '/$repoId',
@@ -105,6 +119,12 @@ const DashboardRepoIdRoute = DashboardRepoIdRouteImport.update({
   path: '/$repoId',
   getParentRoute: () => DashboardRoute,
 } as any)
+const CrossRepoTechnicalDebtIndicatorsProjectIdRoute =
+  CrossRepoTechnicalDebtIndicatorsProjectIdRouteImport.update({
+    id: '/cross-repo-technical-debt-indicators/$projectId',
+    path: '/cross-repo-technical-debt-indicators/$projectId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CrossRepoSocialNetworkAnalysisProjectIdRoute =
   CrossRepoSocialNetworkAnalysisProjectIdRouteImport.update({
     id: '/cross-repo-social-network-analysis/$projectId',
@@ -163,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/repository-evolution': typeof RepositoryEvolutionRouteWithChildren
   '/risk-analytics': typeof RiskAnalyticsRouteWithChildren
   '/social-network-analysis': typeof SocialNetworkAnalysisRouteWithChildren
+  '/technical-debt-indicators': typeof TechnicalDebtIndicatorsRouteWithChildren
   '/bus-factor-and-ownership/$repoId': typeof BusFactorAndOwnershipRepoIdRoute
   '/codebase-health/$repoId': typeof CodebaseHealthRepoIdRoute
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
@@ -171,11 +192,13 @@ export interface FileRoutesByFullPath {
   '/cross-repo-repository-evolution/$projectId': typeof CrossRepoRepositoryEvolutionProjectIdRoute
   '/cross-repo-risk-analytics/$projectId': typeof CrossRepoRiskAnalyticsProjectIdRoute
   '/cross-repo-social-network-analysis/$projectId': typeof CrossRepoSocialNetworkAnalysisProjectIdRoute
+  '/cross-repo-technical-debt-indicators/$projectId': typeof CrossRepoTechnicalDebtIndicatorsProjectIdRoute
   '/dashboard/$repoId': typeof DashboardRepoIdRoute
   '/developer-analytics/$repoId': typeof DeveloperAnalyticsRepoIdRoute
   '/repository-evolution/$repoId': typeof RepositoryEvolutionRepoIdRoute
   '/risk-analytics/$repoId': typeof RiskAnalyticsRepoIdRoute
   '/social-network-analysis/$repoId': typeof SocialNetworkAnalysisRepoIdRoute
+  '/technical-debt-indicators/$repoId': typeof TechnicalDebtIndicatorsRepoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -187,6 +210,7 @@ export interface FileRoutesByTo {
   '/repository-evolution': typeof RepositoryEvolutionRouteWithChildren
   '/risk-analytics': typeof RiskAnalyticsRouteWithChildren
   '/social-network-analysis': typeof SocialNetworkAnalysisRouteWithChildren
+  '/technical-debt-indicators': typeof TechnicalDebtIndicatorsRouteWithChildren
   '/bus-factor-and-ownership/$repoId': typeof BusFactorAndOwnershipRepoIdRoute
   '/codebase-health/$repoId': typeof CodebaseHealthRepoIdRoute
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
@@ -195,11 +219,13 @@ export interface FileRoutesByTo {
   '/cross-repo-repository-evolution/$projectId': typeof CrossRepoRepositoryEvolutionProjectIdRoute
   '/cross-repo-risk-analytics/$projectId': typeof CrossRepoRiskAnalyticsProjectIdRoute
   '/cross-repo-social-network-analysis/$projectId': typeof CrossRepoSocialNetworkAnalysisProjectIdRoute
+  '/cross-repo-technical-debt-indicators/$projectId': typeof CrossRepoTechnicalDebtIndicatorsProjectIdRoute
   '/dashboard/$repoId': typeof DashboardRepoIdRoute
   '/developer-analytics/$repoId': typeof DeveloperAnalyticsRepoIdRoute
   '/repository-evolution/$repoId': typeof RepositoryEvolutionRepoIdRoute
   '/risk-analytics/$repoId': typeof RiskAnalyticsRepoIdRoute
   '/social-network-analysis/$repoId': typeof SocialNetworkAnalysisRepoIdRoute
+  '/technical-debt-indicators/$repoId': typeof TechnicalDebtIndicatorsRepoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -212,6 +238,7 @@ export interface FileRoutesById {
   '/repository-evolution': typeof RepositoryEvolutionRouteWithChildren
   '/risk-analytics': typeof RiskAnalyticsRouteWithChildren
   '/social-network-analysis': typeof SocialNetworkAnalysisRouteWithChildren
+  '/technical-debt-indicators': typeof TechnicalDebtIndicatorsRouteWithChildren
   '/bus-factor-and-ownership/$repoId': typeof BusFactorAndOwnershipRepoIdRoute
   '/codebase-health/$repoId': typeof CodebaseHealthRepoIdRoute
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
@@ -220,11 +247,13 @@ export interface FileRoutesById {
   '/cross-repo-repository-evolution/$projectId': typeof CrossRepoRepositoryEvolutionProjectIdRoute
   '/cross-repo-risk-analytics/$projectId': typeof CrossRepoRiskAnalyticsProjectIdRoute
   '/cross-repo-social-network-analysis/$projectId': typeof CrossRepoSocialNetworkAnalysisProjectIdRoute
+  '/cross-repo-technical-debt-indicators/$projectId': typeof CrossRepoTechnicalDebtIndicatorsProjectIdRoute
   '/dashboard/$repoId': typeof DashboardRepoIdRoute
   '/developer-analytics/$repoId': typeof DeveloperAnalyticsRepoIdRoute
   '/repository-evolution/$repoId': typeof RepositoryEvolutionRepoIdRoute
   '/risk-analytics/$repoId': typeof RiskAnalyticsRepoIdRoute
   '/social-network-analysis/$repoId': typeof SocialNetworkAnalysisRepoIdRoute
+  '/technical-debt-indicators/$repoId': typeof TechnicalDebtIndicatorsRepoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -238,6 +267,7 @@ export interface FileRouteTypes {
     | '/repository-evolution'
     | '/risk-analytics'
     | '/social-network-analysis'
+    | '/technical-debt-indicators'
     | '/bus-factor-and-ownership/$repoId'
     | '/codebase-health/$repoId'
     | '/cross-repo-analytics/$projectId'
@@ -246,11 +276,13 @@ export interface FileRouteTypes {
     | '/cross-repo-repository-evolution/$projectId'
     | '/cross-repo-risk-analytics/$projectId'
     | '/cross-repo-social-network-analysis/$projectId'
+    | '/cross-repo-technical-debt-indicators/$projectId'
     | '/dashboard/$repoId'
     | '/developer-analytics/$repoId'
     | '/repository-evolution/$repoId'
     | '/risk-analytics/$repoId'
     | '/social-network-analysis/$repoId'
+    | '/technical-debt-indicators/$repoId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -262,6 +294,7 @@ export interface FileRouteTypes {
     | '/repository-evolution'
     | '/risk-analytics'
     | '/social-network-analysis'
+    | '/technical-debt-indicators'
     | '/bus-factor-and-ownership/$repoId'
     | '/codebase-health/$repoId'
     | '/cross-repo-analytics/$projectId'
@@ -270,11 +303,13 @@ export interface FileRouteTypes {
     | '/cross-repo-repository-evolution/$projectId'
     | '/cross-repo-risk-analytics/$projectId'
     | '/cross-repo-social-network-analysis/$projectId'
+    | '/cross-repo-technical-debt-indicators/$projectId'
     | '/dashboard/$repoId'
     | '/developer-analytics/$repoId'
     | '/repository-evolution/$repoId'
     | '/risk-analytics/$repoId'
     | '/social-network-analysis/$repoId'
+    | '/technical-debt-indicators/$repoId'
   id:
     | '__root__'
     | '/'
@@ -286,6 +321,7 @@ export interface FileRouteTypes {
     | '/repository-evolution'
     | '/risk-analytics'
     | '/social-network-analysis'
+    | '/technical-debt-indicators'
     | '/bus-factor-and-ownership/$repoId'
     | '/codebase-health/$repoId'
     | '/cross-repo-analytics/$projectId'
@@ -294,11 +330,13 @@ export interface FileRouteTypes {
     | '/cross-repo-repository-evolution/$projectId'
     | '/cross-repo-risk-analytics/$projectId'
     | '/cross-repo-social-network-analysis/$projectId'
+    | '/cross-repo-technical-debt-indicators/$projectId'
     | '/dashboard/$repoId'
     | '/developer-analytics/$repoId'
     | '/repository-evolution/$repoId'
     | '/risk-analytics/$repoId'
     | '/social-network-analysis/$repoId'
+    | '/technical-debt-indicators/$repoId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -311,16 +349,25 @@ export interface RootRouteChildren {
   RepositoryEvolutionRoute: typeof RepositoryEvolutionRouteWithChildren
   RiskAnalyticsRoute: typeof RiskAnalyticsRouteWithChildren
   SocialNetworkAnalysisRoute: typeof SocialNetworkAnalysisRouteWithChildren
+  TechnicalDebtIndicatorsRoute: typeof TechnicalDebtIndicatorsRouteWithChildren
   CrossRepoAnalyticsProjectIdRoute: typeof CrossRepoAnalyticsProjectIdRoute
   CrossRepoBusFactorAndOwnershipProjectIdRoute: typeof CrossRepoBusFactorAndOwnershipProjectIdRoute
   CrossRepoCodebaseHealthProjectIdRoute: typeof CrossRepoCodebaseHealthProjectIdRoute
   CrossRepoRepositoryEvolutionProjectIdRoute: typeof CrossRepoRepositoryEvolutionProjectIdRoute
   CrossRepoRiskAnalyticsProjectIdRoute: typeof CrossRepoRiskAnalyticsProjectIdRoute
   CrossRepoSocialNetworkAnalysisProjectIdRoute: typeof CrossRepoSocialNetworkAnalysisProjectIdRoute
+  CrossRepoTechnicalDebtIndicatorsProjectIdRoute: typeof CrossRepoTechnicalDebtIndicatorsProjectIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/technical-debt-indicators': {
+      id: '/technical-debt-indicators'
+      path: '/technical-debt-indicators'
+      fullPath: '/technical-debt-indicators'
+      preLoaderRoute: typeof TechnicalDebtIndicatorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/social-network-analysis': {
       id: '/social-network-analysis'
       path: '/social-network-analysis'
@@ -384,6 +431,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/technical-debt-indicators/$repoId': {
+      id: '/technical-debt-indicators/$repoId'
+      path: '/$repoId'
+      fullPath: '/technical-debt-indicators/$repoId'
+      preLoaderRoute: typeof TechnicalDebtIndicatorsRepoIdRouteImport
+      parentRoute: typeof TechnicalDebtIndicatorsRoute
+    }
     '/social-network-analysis/$repoId': {
       id: '/social-network-analysis/$repoId'
       path: '/$repoId'
@@ -418,6 +472,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/$repoId'
       preLoaderRoute: typeof DashboardRepoIdRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/cross-repo-technical-debt-indicators/$projectId': {
+      id: '/cross-repo-technical-debt-indicators/$projectId'
+      path: '/cross-repo-technical-debt-indicators/$projectId'
+      fullPath: '/cross-repo-technical-debt-indicators/$projectId'
+      preLoaderRoute: typeof CrossRepoTechnicalDebtIndicatorsProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/cross-repo-social-network-analysis/$projectId': {
       id: '/cross-repo-social-network-analysis/$projectId'
@@ -562,6 +623,20 @@ const SocialNetworkAnalysisRouteWithChildren =
     SocialNetworkAnalysisRouteChildren,
   )
 
+interface TechnicalDebtIndicatorsRouteChildren {
+  TechnicalDebtIndicatorsRepoIdRoute: typeof TechnicalDebtIndicatorsRepoIdRoute
+}
+
+const TechnicalDebtIndicatorsRouteChildren: TechnicalDebtIndicatorsRouteChildren =
+  {
+    TechnicalDebtIndicatorsRepoIdRoute: TechnicalDebtIndicatorsRepoIdRoute,
+  }
+
+const TechnicalDebtIndicatorsRouteWithChildren =
+  TechnicalDebtIndicatorsRoute._addFileChildren(
+    TechnicalDebtIndicatorsRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BusFactorAndOwnershipRoute: BusFactorAndOwnershipRouteWithChildren,
@@ -572,6 +647,7 @@ const rootRouteChildren: RootRouteChildren = {
   RepositoryEvolutionRoute: RepositoryEvolutionRouteWithChildren,
   RiskAnalyticsRoute: RiskAnalyticsRouteWithChildren,
   SocialNetworkAnalysisRoute: SocialNetworkAnalysisRouteWithChildren,
+  TechnicalDebtIndicatorsRoute: TechnicalDebtIndicatorsRouteWithChildren,
   CrossRepoAnalyticsProjectIdRoute: CrossRepoAnalyticsProjectIdRoute,
   CrossRepoBusFactorAndOwnershipProjectIdRoute:
     CrossRepoBusFactorAndOwnershipProjectIdRoute,
@@ -581,6 +657,8 @@ const rootRouteChildren: RootRouteChildren = {
   CrossRepoRiskAnalyticsProjectIdRoute: CrossRepoRiskAnalyticsProjectIdRoute,
   CrossRepoSocialNetworkAnalysisProjectIdRoute:
     CrossRepoSocialNetworkAnalysisProjectIdRoute,
+  CrossRepoTechnicalDebtIndicatorsProjectIdRoute:
+    CrossRepoTechnicalDebtIndicatorsProjectIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

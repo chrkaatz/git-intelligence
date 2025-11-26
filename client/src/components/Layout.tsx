@@ -17,6 +17,7 @@ import {
   ExclamationTriangleIcon,
   UserGroupIcon,
   ShieldExclamationIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
@@ -50,6 +51,12 @@ const navigation = [
     to: '/risk-analytics',
     icon: ShieldExclamationIcon,
     id: 'risk-analytics',
+  },
+  {
+    name: 'Technical Debt Indicators',
+    to: '/technical-debt-indicators',
+    icon: WrenchScrewdriverIcon,
+    id: 'technical-debt-indicators',
   },
   {
     name: 'Developer Analytics',
@@ -113,7 +120,9 @@ export default function Layout({ children, sidebar }: LayoutProps) {
             ? '/social-network-analysis'
             : currentPath.startsWith('/cross-repo-risk-analytics')
               ? '/risk-analytics'
-              : currentPath;
+              : currentPath.startsWith('/cross-repo-technical-debt-indicators')
+                ? '/technical-debt-indicators'
+                : currentPath;
   const currentView =
     navigation.find((item) => normalizedPath.startsWith(item.to))?.id || 'dashboard';
 

@@ -28,4 +28,6 @@ export {
   clearCache,
   getCachedCodebaseHealth,
   setCachedCodebaseHealth,
+  getCachedTechnicalDebtIndicators,
+  setCachedTechnicalDebtIndicators,
 } from './db/cache.js';

@@ -13,6 +13,7 @@ export const defaultData: DatabaseSchema = {
   repositories: [],
   analysisCache: {},
   codebaseHealthCache: {},
+  technicalDebtCache: {},
   schemaVersion: 2, // Current schema version
 };
 
@@ -52,6 +53,7 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
           repositories,
           analysisCache: {},
           codebaseHealthCache: {},
+          technicalDebtCache: {},
           schemaVersion: 2,
         };
         fs.writeFileSync(DB_FILE, JSON.stringify(migratedData, null, 2));
@@ -94,6 +96,10 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
 
   if (!db.data.codebaseHealthCache) {
     db.data.codebaseHealthCache = {};
+  }
+
+  if (!db.data.technicalDebtCache) {
+    db.data.technicalDebtCache = {};
   }
 
   return db;

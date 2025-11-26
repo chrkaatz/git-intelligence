@@ -734,3 +734,210 @@ export const getCrossRepoRiskAnalytics = async (
   });
   return response.data;
 };
+
+// Technical Debt Indicators Types
+export interface CommentedOutCode {
+  file: string;
+  commitHash: string;
+  commitDate: string;
+  linesCommented: number;
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface HugeCommit {
+  commitHash: string;
+  commitDate: string;
+  author: string;
+  authorEmail: string;
+  message: string;
+  filesChanged: number;
+  linesAdded: number;
+  linesRemoved: number;
+  totalChanges: number;
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface WipCommit {
+  commitHash: string;
+  commitDate: string;
+  author: string;
+  authorEmail: string;
+  message: string;
+  wipKeywords: string[];
+}
+
+export interface QuickFixCommit {
+  commitHash: string;
+  commitDate: string;
+  author: string;
+  authorEmail: string;
+  message: string;
+  quickFixKeywords: string[];
+}
+
+export interface LargeBinaryFile {
+  file: string;
+  commitHash: string;
+  commitDate: string;
+  sizeBytes: number;
+  sizeMB: number;
+  fileType: string;
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface VendoredCodeGrowth {
+  directory: string;
+  initialSize: number;
+  currentSize: number;
+  growthPercentage: number;
+  filesAdded: number;
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface LongLivedBranch {
+  branchName: string;
+  createdAt: string;
+  lastCommitDate: string;
+  daysSinceCreation: number;
+  daysSinceLastCommit: number;
+  commitCount: number;
+  isMerged: boolean;
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface DependencyBump {
+  lockfile: string;
+  commitHash: string;
+  commitDate: string;
+  dependenciesAdded: number;
+  dependenciesRemoved: number;
+  dependenciesUpdated: number;
+  totalChanges: number;
+}
+
+export interface StaleDependency {
+  lockfile: string;
+  lastUpdated: string;
+  daysSinceUpdate: number;
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface TechnicalDebtIndicators {
+  commentedOutCode: CommentedOutCode[];
+  hugeCommits: HugeCommit[];
+  wipCommits: WipCommit[];
+  quickFixCommits: QuickFixCommit[];
+  largeBinaryFiles: LargeBinaryFile[];
+  vendoredCodeGrowth: VendoredCodeGrowth[];
+  longLivedBranches: LongLivedBranch[];
+  branchProliferation: {
+    totalBranches: number;
+    activeBranches: number;
+    mergedBranches: number;
+    unmergedBranches: number;
+    riskLevel: 'low' | 'medium' | 'high';
+  };
+  dependencyDrift: {
+    lockfiles: string[];
+    dependencyBumps: DependencyBump[];
+    staleDependencies: StaleDependency[];
+  };
+  missingAutomation: {
+    hasDependencyAutomation: boolean;
+    hasCicdAutomation: boolean;
+    dependencyAutomationFiles: string[];
+    cicdAutomationFiles: string[];
+    riskLevel: 'low' | 'medium' | 'high';
+  };
+}
+
+export interface CrossRepoTechnicalDebtIndicators {
+  repositories: {
+    repoName: string;
+    repoPath: string;
+    indicators: TechnicalDebtIndicators;
+  }[];
+  aggregated: {
+    totalCommentedOutCode: number;
+    totalHugeCommits: number;
+    totalWipCommits: number;
+    totalQuickFixCommits: number;
+    totalLargeBinaryFiles: number;
+    totalVendoredCodeGrowth: number;
+    totalLongLivedBranches: number;
+    averageBranchProliferation: number;
+    reposWithStaleDependencies: number;
+    reposWithoutDependencyAutomation: number;
+    reposWithoutCicdAutomation: number;
+  };
+  totalRepos: number;
+  repoNames: string[];
+}
+
+export interface JobStatus {
+  jobId: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  progress: number;
+  currentStep?: string;
+  error?: string;
+  result?: TechnicalDebtIndicators;
+}
+
+export const getTechnicalDebtIndicators = async (
+  repoId: string,
+  refresh?: boolean
+): Promise<TechnicalDebtIndicators> => {
+  // Start the job
+  const jobResponse = await api.get('/technical-debt-indicators', {
+    params: { repoId, refresh: refresh ? 'true' : undefined },
+  });
+
+  const { jobId } = jobResponse.data;
+
+  // Poll for job completion
+  return new Promise((resolve, reject) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const statusResponse = await api.get('/technical-debt-indicators', {
+          params: { jobId },
+        });
+        const status: JobStatus = statusResponse.data;
+
+        if (status.status === 'completed' && status.result) {
+          clearInterval(pollInterval);
+          resolve(status.result);
+        } else if (status.status === 'failed') {
+          clearInterval(pollInterval);
+          reject(new Error(status.error || 'Analysis failed'));
+        }
+        // Continue polling if pending or running
+      } catch (error) {
+        clearInterval(pollInterval);
+        reject(error);
+      }
+    }, 1000); // Poll every second
+
+    // Timeout after 5 minutes
+    setTimeout(() => {
+      clearInterval(pollInterval);
+      reject(new Error('Analysis timeout'));
+    }, 300000);
+  });
+};
+
+export const getTechnicalDebtIndicatorsStatus = async (jobId: string): Promise<JobStatus> => {
+  const response = await api.get('/technical-debt-indicators', {
+    params: { jobId },
+  });
+  return response.data;
+};
+
+export const getCrossRepoTechnicalDebtIndicators = async (
+  projectId: string,
+  refresh?: boolean
+): Promise<CrossRepoTechnicalDebtIndicators> => {
+  const response = await api.get('/cross-repo-technical-debt-indicators', {
+    params: { projectId, refresh: refresh ? 'true' : undefined },
+  });
+  return response.data;
+};

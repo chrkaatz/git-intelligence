@@ -13,8 +13,11 @@ import {
   getCrossRepoSocialNetworkAnalysis,
   getRiskAnalytics,
   getCrossRepoRiskAnalytics,
+  getTechnicalDebtIndicators,
+  getCrossRepoTechnicalDebtIndicators,
 } from '../git/index.js';
-import { getRepository } from '../db.js';
+import { getRepository, getCachedTechnicalDebtIndicators } from '../db.js';
+import { jobQueue } from '../queue/jobQueue.js';
 
 const router = Router();
 
@@ -258,6 +261,104 @@ router.get('/cross-repo-risk-analytics', async (req: Request, res: Response) => 
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to get cross-repo risk analytics' });
+  }
+});
+
+// Technical debt indicators - queue-based with progress
+router.get('/technical-debt-indicators', async (req: Request, res: Response) => {
+  const { repoId, refresh, jobId } = req.query;
+
+  // If jobId is provided, return job status
+  if (jobId && typeof jobId === 'string') {
+    const job = jobQueue.getJob(jobId);
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    return res.json(job);
+  }
+
+  // Otherwise, create a new job
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
+  }
+
+  try {
+    const repoPath = await resolveRepositoryPath(repoId);
+    const useCache = refresh !== 'true';
+
+    // Check cache first if not refreshing
+    if (useCache) {
+      const cached = await getCachedTechnicalDebtIndicators(repoPath, 3600000); // 1 hour
+      if (cached) {
+        console.log(`[Technical Debt] Returning cached indicators for ${repoPath}`);
+        return res.json(cached);
+      }
+    }
+
+    // Create job and return job ID
+    const jobId = jobQueue.createJob('technical-debt-indicators');
+    console.log(`[Technical Debt] Starting analysis for ${repoPath} (jobId: ${jobId})`);
+
+    // Start the analysis in the background (queue will handle concurrency)
+    (async () => {
+      // Wait for job to be ready (queue will start it when capacity is available)
+      const waitForJob = () => {
+        return new Promise<void>((resolve) => {
+          const checkJob = () => {
+            const job = jobQueue.getJob(jobId);
+            if (job && job.status === 'running') {
+              console.log(`[Technical Debt] Job ${jobId} is now running`);
+              resolve();
+            } else {
+              setTimeout(checkJob, 100);
+            }
+          };
+          checkJob();
+        });
+      };
+
+      await waitForJob();
+
+      try {
+        const indicators = await getTechnicalDebtIndicators(
+          repoPath,
+          useCache,
+          (progress, step) => {
+            jobQueue.updateProgress(jobId, progress, step);
+          }
+        );
+        console.log(`[Technical Debt] Analysis completed for ${repoPath} (jobId: ${jobId})`);
+        jobQueue.completeJob(jobId, indicators);
+        jobQueue.jobFinished(); // Process next job in queue
+      } catch (error: any) {
+        console.error(`[Technical Debt] Analysis failed for ${repoPath} (jobId: ${jobId}):`, error);
+        jobQueue.failJob(jobId, error.message || 'Analysis failed');
+        jobQueue.jobFinished(); // Process next job in queue
+      }
+    })();
+
+    res.json({ jobId, status: 'pending' });
+  } catch (error: any) {
+    console.error(error);
+    if (error.message === 'Repository not found') {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
+    res.status(500).json({ error: 'Failed to start technical debt analysis' });
+  }
+});
+
+router.get('/cross-repo-technical-debt-indicators', async (req: Request, res: Response) => {
+  const { projectId, refresh } = req.query;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+  try {
+    const useCache = refresh !== 'true';
+    const indicators = await getCrossRepoTechnicalDebtIndicators(projectId, useCache);
+    res.json(indicators);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get cross-repo technical debt indicators' });
   }
 });
 

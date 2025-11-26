@@ -12,6 +12,7 @@ import {
   TrendingUp,
   ChevronLeft,
   Shield,
+  Wrench,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -48,7 +49,7 @@ export function ProjectsSidebar({
       }
       // Fallback: try to extract from pathname
       const pathMatch = location.pathname.match(
-        /\/(dashboard|developer-analytics|codebase-health|repository-evolution|bus-factor-and-ownership|social-network-analysis|risk-analytics)\/([^/]+)$/
+        /\/(dashboard|developer-analytics|codebase-health|repository-evolution|bus-factor-and-ownership|social-network-analysis|risk-analytics|technical-debt-indicators)\/([^/]+)$/
       );
       if (pathMatch && pathMatch[2]) {
         return pathMatch[2];
@@ -111,6 +112,11 @@ export function ProjectsSidebar({
     } else if (currentPath.startsWith('/risk-analytics')) {
       navigate({
         to: '/risk-analytics/$repoId',
+        params: { repoId: repo.id },
+      });
+    } else if (currentPath.startsWith('/technical-debt-indicators')) {
+      navigate({
+        to: '/technical-debt-indicators/$repoId',
         params: { repoId: repo.id },
       });
     } else {
@@ -317,6 +323,19 @@ export function ProjectsSidebar({
                       title="View Cross-Repo Risk Analytics"
                     >
                       <Shield className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate({
+                          to: '/cross-repo-technical-debt-indicators/$projectId',
+                          params: { projectId: project.id },
+                        });
+                      }}
+                      className="p-1 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 text-gray-400 hover:text-yellow-500 rounded transition-all"
+                      title="View Cross-Repo Technical Debt Indicators"
+                    >
+                      <Wrench className="w-3 h-3" />
                     </button>
                   </div>
                 )}

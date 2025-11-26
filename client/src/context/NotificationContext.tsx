@@ -13,6 +13,12 @@ export interface Notification {
 interface NotificationContextType {
   showNotification: (type: NotificationType, message: string, duration?: number) => string;
   removeNotification: (id: string) => void;
+  updateNotification: (
+    id: string,
+    type: NotificationType,
+    message: string,
+    duration?: number
+  ) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -54,8 +60,28 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     [removeNotification]
   );
 
+  const updateNotification = useCallback(
+    (id: string, type: NotificationType, message: string, duration: number = 0) => {
+      setNotifications((prev) => {
+        const existing = prev.find((n) => n.id === id);
+        if (!existing) {
+          return prev; // Notification doesn't exist
+        }
+
+        return prev.map((n) =>
+          n.id === id
+            ? { ...n, type, message, duration: duration !== undefined ? duration : n.duration }
+            : n
+        );
+      });
+    },
+    []
+  );
+
   return (
-    <NotificationContext.Provider value={{ showNotification, removeNotification }}>
+    <NotificationContext.Provider
+      value={{ showNotification, removeNotification, updateNotification }}
+    >
       {children}
       <NotificationContainer notifications={notifications} onRemove={removeNotification} />
     </NotificationContext.Provider>
