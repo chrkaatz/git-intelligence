@@ -219,9 +219,12 @@ export const getDeveloperAnalytics = async (
 };
 
 export const getCrossRepoDeveloperAnalytics = async (
-  projectId: string
+  projectId: string,
+  refresh?: boolean
 ): Promise<CrossRepoDeveloperAnalytics> => {
-  const response = await api.get('/cross-repo-developer-analytics', { params: { projectId } });
+  const response = await api.get('/cross-repo-developer-analytics', {
+    params: { projectId, refresh: refresh ? 'true' : undefined },
+  });
   return response.data;
 };
 
@@ -939,5 +942,10 @@ export const getCrossRepoTechnicalDebtIndicators = async (
   const response = await api.get('/cross-repo-technical-debt-indicators', {
     params: { projectId, refresh: refresh ? 'true' : undefined },
   });
+  return response.data;
+};
+
+export const clearCache = async (repoId?: string): Promise<{ message: string }> => {
+  const response = await api.post('/cache/clear', { repoId });
   return response.data;
 };

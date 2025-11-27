@@ -228,14 +228,11 @@ export async function getCodebaseHealth(
 ): Promise<CodebaseHealth> {
   // Check cache first (default: 1 hour cache)
   if (useCache) {
-    const cached = await getCachedCodebaseHealth(repoPath, 3600000); // 1 hour
+    const cached = await getCachedCodebaseHealth(repoPath); // Uses default 30-day TTL as fallback
     if (cached) {
-      console.log(`Returning cached codebase health for ${repoPath}`);
       return cached;
     }
   }
-
-  console.log(`Calculating fresh codebase health for ${repoPath}`);
   const git = simpleGit(repoPath);
 
   try {

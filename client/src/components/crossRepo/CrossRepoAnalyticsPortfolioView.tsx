@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useParams } from '@tanstack/react-router';
 import {
   getCrossRepoDeveloperAnalytics,
@@ -6,6 +6,8 @@ import {
   getCrossRepoCodebaseHealth,
   getCrossRepoBusFactorAndOwnership,
   getCrossRepoSocialNetworkAnalysis,
+  getRepositories,
+  getStats,
   type CrossRepoDeveloperAnalytics,
   type CrossRepoRepositoryEvolution,
   type CrossRepoCodebaseHealth,
@@ -36,6 +38,7 @@ import {
   Legend,
 } from 'recharts';
 import { useNotifications } from '../../context/NotificationContext';
+import { RecalculateButton } from '../common/RecalculateButton';
 
 type LoadedData = {
   devAnalytics: CrossRepoDeveloperAnalytics | null;
@@ -43,6 +46,7 @@ type LoadedData = {
   health: CrossRepoCodebaseHealth | null;
   busFactor: CrossRepoBusFactorAndOwnership | null;
   social: CrossRepoSocialNetworkAnalysis | null;
+  statsLOCMap?: Map<string, number>; // Map of repo path -> latest LOC from stats
 };
 
 export function CrossRepoAnalyticsPortfolioView() {
@@ -61,42 +65,60 @@ export function CrossRepoAnalyticsPortfolioView() {
   const { showNotification, removeNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!projectId) {
-      setData({
-        devAnalytics: null,
-        evolution: null,
-        health: null,
-        busFactor: null,
-        social: null,
-      });
-      setError(null);
-      return;
-    }
+  const fetchAll = useCallback(
+    async (refresh: boolean = false) => {
+      if (!projectId) {
+        setData({
+          devAnalytics: null,
+          evolution: null,
+          health: null,
+          busFactor: null,
+          social: null,
+        });
+        setError(null);
+        return;
+      }
 
-    let cancelled = false;
-
-    const fetchAll = async () => {
       setLoading(true);
       setError(null);
 
-      const loadingId = showNotification(
-        'loading',
-        'Calculating cross-repository portfolio analytics... This may take a moment.',
-        0
-      );
+      const message = refresh
+        ? 'Recalculating cross-repository portfolio analytics... This may take a moment.'
+        : 'Calculating cross-repository portfolio analytics... This may take a moment.';
+      const loadingId = showNotification('loading', message, 0);
       loadingNotificationIdRef.current = loadingId;
 
       try {
-        const [devAnalytics, evolution, health, busFactor, social] = await Promise.all([
-          getCrossRepoDeveloperAnalytics(projectId),
-          getCrossRepoRepositoryEvolution(projectId),
-          getCrossRepoCodebaseHealth(projectId),
-          getCrossRepoBusFactorAndOwnership(projectId),
-          getCrossRepoSocialNetworkAnalysis(projectId),
-        ]);
+        // Fetch cross-repo analytics
+        const [devAnalytics, evolution, health, busFactor, social, repositories] =
+          await Promise.all([
+            getCrossRepoDeveloperAnalytics(projectId, refresh),
+            getCrossRepoRepositoryEvolution(projectId, refresh),
+            getCrossRepoCodebaseHealth(projectId, refresh),
+            getCrossRepoBusFactorAndOwnership(projectId, refresh),
+            getCrossRepoSocialNetworkAnalysis(projectId, refresh),
+            getRepositories(projectId),
+          ]);
 
-        if (cancelled) return;
+        // Fetch stats for each repository to get accurate LOC
+        // Stats LOC is more accurate than growthCurve LOC
+        // Use cache unless explicitly refreshing
+        const statsPromises = repositories.map((repo) => getStats(repo.id, refresh));
+        const allStats = await Promise.all(statsPromises);
+
+        // Store stats LOC for use in totalLOC calculation
+        const statsLOCMap = new Map<string, number>();
+        repositories.forEach((repo, index) => {
+          const stats = allStats[index];
+          if (stats?.locHistory && stats.locHistory.length > 0) {
+            // Sort by date to ensure we get the latest entry
+            const sortedHistory = [...stats.locHistory].sort(
+              (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+            );
+            const latestLOC = sortedHistory[sortedHistory.length - 1]?.loc || 0;
+            statsLOCMap.set(repo.path, latestLOC);
+          }
+        });
 
         setData({
           devAnalytics,
@@ -104,19 +126,18 @@ export function CrossRepoAnalyticsPortfolioView() {
           health,
           busFactor,
           social,
+          statsLOCMap, // Store the stats LOC map
         });
 
         if (loadingNotificationIdRef.current) {
           removeNotification(loadingNotificationIdRef.current);
           loadingNotificationIdRef.current = null;
         }
-        showNotification(
-          'success',
-          `Cross-repository portfolio analytics calculated for ${devAnalytics.totalRepos} repositories.`,
-          3000
-        );
+        const successMessage = refresh
+          ? `Cross-repository portfolio analytics recalculated for ${devAnalytics.totalRepos} repositories.`
+          : `Cross-repository portfolio analytics calculated for ${devAnalytics.totalRepos} repositories.`;
+        showNotification('success', successMessage, 3000);
       } catch (err: unknown) {
-        if (cancelled) return;
         const errorMessage =
           (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
             ?.error ||
@@ -130,18 +151,15 @@ export function CrossRepoAnalyticsPortfolioView() {
         }
         showNotification('error', errorMessage, 5000);
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
-    };
+    },
+    [projectId, showNotification, removeNotification]
+  );
 
-    fetchAll();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [projectId, showNotification, removeNotification]);
+  useEffect(() => {
+    fetchAll(false);
+  }, [fetchAll]);
 
   const overallActivityData = useMemo(() => {
     if (!data.evolution) return { series: [], recentTotal: 0, previousTotal: 0, trend: 0 };
@@ -185,6 +203,29 @@ export function CrossRepoAnalyticsPortfolioView() {
 
     return { series, recentTotal, previousTotal, trend };
   }, [data.evolution]);
+
+  const totalLOC = useMemo(() => {
+    // Prefer stats LOC (more accurate) over growthCurve LOC
+    if (data.statsLOCMap && data.statsLOCMap.size > 0) {
+      return Array.from(data.statsLOCMap.values()).reduce((total, loc) => total + loc, 0);
+    }
+
+    // Fallback to growthCurve LOC if stats not available
+    if (!data.evolution) return 0;
+
+    return data.evolution.repositories.reduce((total, repo) => {
+      const growthCurve = repo.evolution.growthCurve;
+      if (growthCurve.length > 0) {
+        // Sort by date to ensure we get the latest entry (in case cache had unsorted data)
+        const sortedCurve = [...growthCurve].sort(
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+        const latestLOC = sortedCurve[sortedCurve.length - 1]?.loc || 0;
+        return total + latestLOC;
+      }
+      return total;
+    }, 0);
+  }, [data.evolution, data.statsLOCMap]);
 
   const portfolioInsights = useMemo(() => {
     const repos =
@@ -335,14 +376,17 @@ export function CrossRepoAnalyticsPortfolioView() {
 
   return (
     <div className="space-y-8">
-      <div className="mb-2">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Cross-Repository Portfolio Analytics
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Aggregated view of engineering activity, organizational patterns, and architecture signals
-          across all repositories in this project.
-        </p>
+      <div className="mb-2 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Cross-Repository Portfolio Analytics
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            Aggregated view of engineering activity, organizational patterns, and architecture
+            signals across all repositories in this project.
+          </p>
+        </div>
+        {projectId && <RecalculateButton loading={loading} onClick={() => fetchAll(true)} />}
       </div>
 
       {error && (
@@ -358,7 +402,7 @@ export function CrossRepoAnalyticsPortfolioView() {
             <GitBranch className="w-5 h-5 text-indigo-500" />
             Portfolio-Level View
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Repositories
@@ -381,6 +425,14 @@ export function CrossRepoAnalyticsPortfolioView() {
               </p>
               <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
                 {data.devAnalytics.authors.reduce((sum, a) => sum + a.commits, 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Total LOC
+              </p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
+                {totalLOC.toLocaleString()}
               </p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">

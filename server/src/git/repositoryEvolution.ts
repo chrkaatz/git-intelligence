@@ -1,5 +1,9 @@
 import simpleGit from 'simple-git';
-import { getRepositories } from '../db.js';
+import {
+  getRepositories,
+  getCachedRepositoryEvolution,
+  setCachedRepositoryEvolution,
+} from '../db.js';
 import type {
   RepositoryEvolution,
   CommitFrequency,
@@ -14,7 +18,13 @@ export async function getRepositoryEvolution(
   repoPath: string,
   useCache: boolean = true
 ): Promise<RepositoryEvolution> {
-  console.log(`Calculating repository evolution for ${repoPath}`);
+  // Check cache first
+  if (useCache) {
+    const cached = await getCachedRepositoryEvolution(repoPath); // Uses default 30-day TTL as fallback
+    if (cached) {
+      return cached;
+    }
+  }
   const git = simpleGit(repoPath);
 
   try {
@@ -236,7 +246,7 @@ export async function getRepositoryEvolution(
         : 0;
     const refactorCount = changeBursts.filter((b) => b.isRefactor).length;
 
-    return {
+    const result: RepositoryEvolution = {
       commitFrequency,
       releases: releases.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
       growthCurve,
@@ -250,6 +260,13 @@ export async function getRepositoryEvolution(
       averageChurnRatio,
       refactorCount,
     };
+
+    // Cache the result
+    if (useCache) {
+      await setCachedRepositoryEvolution(repoPath, result);
+    }
+
+    return result;
   } catch (error) {
     console.error('Repository evolution error:', error);
     throw error;

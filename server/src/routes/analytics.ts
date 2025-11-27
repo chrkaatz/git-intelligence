@@ -288,9 +288,8 @@ router.get('/technical-debt-indicators', async (req: Request, res: Response) => 
 
     // Check cache first if not refreshing
     if (useCache) {
-      const cached = await getCachedTechnicalDebtIndicators(repoPath, 3600000); // 1 hour
+      const cached = await getCachedTechnicalDebtIndicators(repoPath); // Uses default 30-day TTL as fallback
       if (cached) {
-        console.log(`[Technical Debt] Returning cached indicators for ${repoPath}`);
         return res.json(cached);
       }
     }

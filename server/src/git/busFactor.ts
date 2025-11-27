@@ -1,5 +1,9 @@
 import simpleGit from 'simple-git';
-import { getRepositories } from '../db.js';
+import {
+  getRepositories,
+  getCachedBusFactorAndOwnership,
+  setCachedBusFactorAndOwnership,
+} from '../db.js';
 import { normalizeEmail } from './utils.js';
 import type {
   BusFactorAndOwnership,
@@ -14,7 +18,13 @@ export async function getBusFactorAndOwnership(
   repoPath: string,
   useCache: boolean = true
 ): Promise<BusFactorAndOwnership> {
-  console.log(`Calculating bus factor and ownership for ${repoPath}`);
+  // Check cache first
+  if (useCache) {
+    const cached = await getCachedBusFactorAndOwnership(repoPath); // Uses default 30-day TTL as fallback
+    if (cached) {
+      return cached;
+    }
+  }
   const git = simpleGit(repoPath);
 
   try {
@@ -278,7 +288,7 @@ export async function getBusFactorAndOwnership(
     fragmentedFiles.sort((a, b) => b.authorCount - a.authorCount);
     ownerChurnFiles.sort((a, b) => b.daysSinceTransition - a.daysSinceTransition);
 
-    return {
+    const result: BusFactorAndOwnership = {
       singleMaintainerRisk: {
         files: singleMaintainerFiles,
         repoRisk: {
@@ -297,6 +307,13 @@ export async function getBusFactorAndOwnership(
         files: ownerChurnFiles,
       },
     };
+
+    // Cache the result
+    if (useCache) {
+      await setCachedBusFactorAndOwnership(repoPath, result);
+    }
+
+    return result;
   } catch (error) {
     console.error('Bus factor and ownership error:', error);
     throw error;

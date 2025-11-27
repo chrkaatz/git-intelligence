@@ -5,14 +5,11 @@ import type { AuthorStats, ActivityStats } from './types.js';
 export async function getStats(repoPath: string, useCache: boolean = true) {
   // Check cache first (default: 1 hour cache)
   if (useCache) {
-    const cached = await getCachedStats(repoPath, 3600000); // 1 hour
+    const cached = await getCachedStats(repoPath); // Uses default 30-day TTL as fallback
     if (cached) {
-      console.log(`Returning cached stats for ${repoPath}`);
       return cached;
     }
   }
-
-  console.log(`Calculating fresh stats for ${repoPath}`);
   const git = simpleGit(repoPath);
 
   try {
@@ -85,16 +82,12 @@ export async function getStats(repoPath: string, useCache: boolean = true) {
     });
 
     // LOC History
-    // This is an approximation using numstat
-    const locLog = await git.log(['--all', '--numstat', '--date=iso']);
-    // The previous `locLog` variable was not used for its `all` property,
-    // but rather for its `total` property, which is already captured by `totalCommits`.
-    // The actual LOC history is derived from `rawLog` below.
-
-    // Alternative efficient approach for LOC history:
+    // Calculate cumulative LOC over time using numstat
+    // Process commits in reverse chronological order (oldest first) to build cumulative LOC
     const rawLog = await git.raw([
       'log',
       '--all',
+      '--reverse', // Process from oldest to newest for cumulative calculation
       '--pretty=tformat:%ad',
       '--date=iso',
       '--numstat',
@@ -104,27 +97,83 @@ export async function getStats(repoPath: string, useCache: boolean = true) {
 
     let currentLoc = 0;
     let currentDate = '';
+    let inCommit = false;
 
-    lines.forEach((line) => {
-      if (!line) return;
+    for (const line of lines) {
+      const trimmed = line.trim();
 
-      // Date line
-      if (line.match(/^\d{4}-\d{2}-\d{2}/)) {
-        currentDate = line.split('T')[0];
-        return;
+      // Empty line separates commits
+      if (!trimmed) {
+        inCommit = false;
+        continue;
       }
 
-      // Numstat line: added deleted file
-      const parts = line.split('\t');
-      if (parts.length === 3) {
-        const added = parseInt(parts[0]) || 0;
-        const deleted = parseInt(parts[1]) || 0;
-        currentLoc += added - deleted;
-
-        // Keep the last value for the day
-        historyMap.set(currentDate, currentLoc);
+      // Date line - marks the start of a new commit
+      const dateMatch = trimmed.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (dateMatch) {
+        currentDate = dateMatch[1];
+        inCommit = true;
+        continue;
       }
-    });
+
+      // Numstat line: added\tdeleted\tfile
+      // Only process if we're in a commit (have a date)
+      if (inCommit && currentDate && trimmed.includes('\t')) {
+        const parts = trimmed.split('\t');
+        if (parts.length >= 3) {
+          const added = parseInt(parts[0], 10) || 0;
+          const deleted = parseInt(parts[1], 10) || 0;
+          const netChange = added - deleted;
+          currentLoc += netChange;
+
+          // Update the LOC for this date (keep the latest value for the day)
+          // This handles multiple commits/files on the same day
+          historyMap.set(currentDate, Math.max(0, currentLoc));
+        }
+      }
+    }
+
+    // If we have no history or the value seems too low, try to get current LOC directly
+    const latestLoc =
+      historyMap.size > 0 ? Array.from(historyMap.values())[historyMap.size - 1] : 0;
+
+    // If latest LOC is suspiciously low (< 100) but we have significant commits, recalculate
+    if (latestLoc < 100 && totalCommits > 10) {
+      try {
+        // Get actual current LOC by counting lines in tracked files
+        const files = await git.raw(['ls-files']);
+        const fileList = files.split('\n').filter((f) => f.trim() && !f.includes('=>'));
+
+        if (fileList.length > 0) {
+          let totalLoc = 0;
+          const sampleSize = Math.min(1000, fileList.length);
+
+          // Count lines in a sample of files
+          for (const file of fileList.slice(0, sampleSize)) {
+            try {
+              const content = await git.raw(['show', `HEAD:${file}`]);
+              const lineCount = content.split('\n').length;
+              totalLoc += lineCount;
+            } catch {
+              // Skip files that can't be read (binary, deleted, etc.)
+            }
+          }
+
+          // Extrapolate if we sampled
+          if (sampleSize < fileList.length && totalLoc > 0) {
+            totalLoc = Math.round((totalLoc / sampleSize) * fileList.length);
+          }
+
+          if (totalLoc > latestLoc) {
+            // Use the actual count and update the latest date
+            const today = new Date().toISOString().split('T')[0];
+            historyMap.set(today, totalLoc);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to calculate actual LOC, using cumulative estimate:', error);
+      }
+    }
 
     const sortedHistory = Array.from(historyMap.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))

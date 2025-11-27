@@ -178,7 +178,7 @@ describe('technicalDebt', () => {
       const result = await getTechnicalDebtIndicators('/test/repo', true);
 
       expect(result).toEqual(cachedIndicators);
-      expect(mockGetCachedTechnicalDebtIndicators).toHaveBeenCalledWith('/test/repo', 3600000);
+      expect(mockGetCachedTechnicalDebtIndicators).toHaveBeenCalledWith('/test/repo');
       expect(mockSimpleGit).not.toHaveBeenCalled();
     });
 

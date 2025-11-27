@@ -26,12 +26,14 @@ interface DeveloperAnalyticsProps {
   authors: DeveloperAuthorStats[];
   longitudinalPatterns?: LongitudinalPatterns;
   loading?: boolean;
+  totalLOC?: number | null;
 }
 
 export function DeveloperAnalytics({
   authors,
   longitudinalPatterns,
   loading,
+  totalLOC,
 }: DeveloperAnalyticsProps) {
   const [selectedAuthor, setSelectedAuthor] = useState<DeveloperAuthorStats | null>(null);
   const [selectedAuthorForLongitudinal, setSelectedAuthorForLongitudinal] = useState<string | null>(
@@ -82,7 +84,7 @@ export function DeveloperAnalytics({
   return (
     <div className="space-y-5">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -107,6 +109,19 @@ export function DeveloperAnalytics({
               </p>
             </div>
             <GitCommit className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Total LOC
+              </p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
+                {totalLOC != null ? totalLOC.toLocaleString() : '—'}
+              </p>
+            </div>
+            <Code className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">

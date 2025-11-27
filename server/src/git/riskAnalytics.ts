@@ -1,5 +1,5 @@
 import simpleGit from 'simple-git';
-import { getRepositories } from '../db.js';
+import { getRepositories, getCachedRiskAnalytics, setCachedRiskAnalytics } from '../db.js';
 import { normalizeEmail } from './utils.js';
 import { getCodebaseHealth } from './codebaseHealth.js';
 import { getBusFactorAndOwnership } from './busFactor.js';
@@ -15,7 +15,13 @@ export async function getRiskAnalytics(
   repoPath: string,
   useCache: boolean = true
 ): Promise<RiskAnalytics> {
-  console.log(`Calculating risk analytics for ${repoPath}`);
+  // Check cache first
+  if (useCache) {
+    const cached = await getCachedRiskAnalytics(repoPath); // Uses default 30-day TTL as fallback
+    if (cached) {
+      return cached;
+    }
+  }
   const git = simpleGit(repoPath);
 
   try {
@@ -316,11 +322,18 @@ export async function getRiskAnalytics(
 
     riskyFileTrends.sort((a, b) => b.currentRiskScore - a.currentRiskScore);
 
-    return {
+    const result: RiskAnalytics = {
       highRiskHotspots: highRiskHotspots.slice(0, 50), // Top 50
       temporalCouplingHotspots: temporalCouplingHotspots.slice(0, 30), // Top 30
       riskyFileTrends: riskyFileTrends.slice(0, 20), // Top 20
     };
+
+    // Cache the result
+    if (useCache) {
+      await setCachedRiskAnalytics(repoPath, result);
+    }
+
+    return result;
   } catch (error) {
     console.error('Risk analytics error:', error);
     throw error;

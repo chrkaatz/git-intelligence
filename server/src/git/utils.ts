@@ -1,3 +1,4 @@
+import simpleGit from 'simple-git';
 import type {
   AuthorData,
   LongitudinalPatterns,
@@ -377,4 +378,25 @@ export function calculateLongitudinalPatterns(
     onboardingCurve,
     dormancyDetection,
   };
+}
+
+/**
+ * Get the latest commit hash from a repository
+ * Returns null if the repository is invalid or has no commits
+ */
+export async function getLatestCommitHash(repoPath: string): Promise<string | null> {
+  try {
+    const git = simpleGit(repoPath);
+    const isRepo = await git.checkIsRepo();
+    if (!isRepo) {
+      return null;
+    }
+
+    // Get the latest commit hash (all branches)
+    const latestCommit = await git.raw(['log', '--all', '-1', '--format=%H']);
+    return latestCommit.trim() || null;
+  } catch (error) {
+    console.error(`Error getting latest commit hash for ${repoPath}:`, error);
+    return null;
+  }
 }

@@ -31,7 +31,7 @@ describe('stats', () => {
       const result = await getStats('/test/repo', true);
 
       expect(result).toEqual(cachedStats);
-      expect(mockGetCachedStats).toHaveBeenCalledWith('/test/repo', 3600000);
+      expect(mockGetCachedStats).toHaveBeenCalledWith('/test/repo');
       expect(mockSimpleGit).not.toHaveBeenCalled();
     });
 

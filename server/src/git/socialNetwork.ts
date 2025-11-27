@@ -1,5 +1,9 @@
 import simpleGit from 'simple-git';
-import { getRepositories } from '../db.js';
+import {
+  getRepositories,
+  getCachedSocialNetworkAnalysis,
+  setCachedSocialNetworkAnalysis,
+} from '../db.js';
 import { normalizeEmail } from './utils.js';
 import type {
   SocialNetworkAnalysis,
@@ -17,7 +21,13 @@ export async function getSocialNetworkAnalysis(
   repoPath: string,
   useCache: boolean = true
 ): Promise<SocialNetworkAnalysis> {
-  console.log(`Calculating social network analysis for ${repoPath}`);
+  // Check cache first
+  if (useCache) {
+    const cached = await getCachedSocialNetworkAnalysis(repoPath); // Uses default 30-day TTL as fallback
+    if (cached) {
+      return cached;
+    }
+  }
   const git = simpleGit(repoPath);
 
   try {
@@ -357,7 +367,7 @@ export async function getSocialNetworkAnalysis(
     edges.sort((a, b) => b.sharedFiles - a.sharedFiles);
     nodes.sort((a, b) => b.degree - a.degree);
 
-    return {
+    const result: SocialNetworkAnalysis = {
       collaborationGraph: {
         nodes,
         edges,
@@ -366,6 +376,13 @@ export async function getSocialNetworkAnalysis(
       knowledgeSilos: knowledgeSilos.slice(0, 100), // Limit to top 100
       orphanedCode: orphanedCode.slice(0, 100), // Limit to top 100
     };
+
+    // Cache the result
+    if (useCache) {
+      await setCachedSocialNetworkAnalysis(repoPath, result);
+    }
+
+    return result;
   } catch (error) {
     console.error('Social network analysis error:', error);
     throw error;

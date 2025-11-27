@@ -1030,9 +1030,8 @@ export async function getTechnicalDebtIndicators(
 ): Promise<TechnicalDebtIndicators> {
   // Check cache first (default: 1 hour cache)
   if (useCache) {
-    const cached = await getCachedTechnicalDebtIndicators(repoPath, 3600000); // 1 hour
+    const cached = await getCachedTechnicalDebtIndicators(repoPath); // Uses default 30-day TTL as fallback
     if (cached) {
-      console.log(`[Technical Debt] Returning cached indicators for ${repoPath}`);
       if (onProgress) {
         onProgress(100, 'Returned from cache');
       }
@@ -1040,7 +1039,6 @@ export async function getTechnicalDebtIndicators(
     }
   }
 
-  console.log(`[Technical Debt] Calculating fresh indicators for ${repoPath}`);
   const git = simpleGit(repoPath);
 
   const updateProgress = (progress: number, step?: string) => {
@@ -1211,7 +1209,6 @@ export async function getTechnicalDebtIndicators(
     // Cache the result
     if (useCache) {
       await setCachedTechnicalDebtIndicators(repoPath, result);
-      console.log(`[Technical Debt] Cached indicators for ${repoPath}`);
     }
 
     return result;

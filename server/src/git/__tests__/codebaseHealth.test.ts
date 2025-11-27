@@ -31,7 +31,7 @@ describe('codebaseHealth', () => {
       const result = await getCodebaseHealth('/test/repo', true);
 
       expect(result).toEqual(cachedHealth);
-      expect(mockGetCachedCodebaseHealth).toHaveBeenCalledWith('/test/repo', 3600000);
+      expect(mockGetCachedCodebaseHealth).toHaveBeenCalledWith('/test/repo');
     });
 
     it('should calculate fresh health when cache is disabled', async () => {

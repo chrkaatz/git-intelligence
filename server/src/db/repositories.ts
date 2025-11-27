@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { getDb } from './database.js';
+import { clearCache } from './cache.js';
 import type { Repository } from './types.js';
 
 export async function getRepositories(projectId?: string): Promise<Repository[]> {
@@ -31,6 +32,8 @@ export async function addRepository(
   const existingByPath = repositories.find((r) => r.path === repoPath);
   if (existingByPath) {
     if (replace) {
+      // Clear cache when repository is replaced (new upload)
+      await clearCache(repoPath);
       // Update the existing repository
       const updatedRepo: Repository = {
         ...existingByPath,
@@ -47,6 +50,9 @@ export async function addRepository(
       return existingByPath;
     }
   }
+
+  // New repository added - clear any existing cache for this path (shouldn't exist, but be safe)
+  await clearCache(repoPath);
 
   const newRepository: Repository = {
     id: uuidv4(),
@@ -71,8 +77,7 @@ export async function removeRepository(id: string): Promise<void> {
     // Remove from repositories
     database.data.repositories = database.data.repositories.filter((r) => r.id !== id);
     // Clear cache for this repository
-    delete database.data.analysisCache[repository.path];
-    delete database.data.codebaseHealthCache[repository.path];
+    await clearCache(repository.path);
     await database.write();
   }
 }

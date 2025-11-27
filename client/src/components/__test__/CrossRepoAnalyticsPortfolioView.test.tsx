@@ -16,6 +16,8 @@ describe('CrossRepoAnalyticsPortfolioView', () => {
   const getCrossRepoCodebaseHealthSpy = vi.spyOn(api, 'getCrossRepoCodebaseHealth');
   const getCrossRepoBusFactorAndOwnershipSpy = vi.spyOn(api, 'getCrossRepoBusFactorAndOwnership');
   const getCrossRepoSocialNetworkAnalysisSpy = vi.spyOn(api, 'getCrossRepoSocialNetworkAnalysis');
+  const getRepositoriesSpy = vi.spyOn(api, 'getRepositories');
+  const getStatsSpy = vi.spyOn(api, 'getStats');
 
   const mockDevAnalytics: api.CrossRepoDeveloperAnalytics = {
     totalRepos: 2,
@@ -143,12 +145,49 @@ describe('CrossRepoAnalyticsPortfolioView', () => {
     repoNames: ['repo-a', 'repo-b'],
   };
 
+  const mockRepositories: api.Repository[] = [
+    {
+      id: 'repo-1',
+      projectId: 'test-project-id',
+      path: '/path/to/repo-a',
+      name: 'repo-a',
+    },
+    {
+      id: 'repo-2',
+      projectId: 'test-project-id',
+      path: '/path/to/repo-b',
+      name: 'repo-b',
+    },
+  ];
+
+  const mockStats: api.GitStats = {
+    summary: {
+      totalCommits: 15,
+      totalAuthors: 1,
+      totalFiles: 10,
+    },
+    authors: [],
+    activity: {
+      hourOfDay: {},
+      dayOfWeek: {},
+      monthOfYear: {},
+      year: {},
+    },
+    extensions: {},
+    locHistory: [
+      { date: '2024-01-01', loc: 1000 },
+      { date: '2024-01-02', loc: 1200 },
+    ],
+  };
+
   beforeEach(() => {
     getCrossRepoDeveloperAnalyticsSpy.mockResolvedValue(mockDevAnalytics);
     getCrossRepoRepositoryEvolutionSpy.mockResolvedValue(mockEvolution);
     getCrossRepoCodebaseHealthSpy.mockResolvedValue(mockHealth);
     getCrossRepoBusFactorAndOwnershipSpy.mockResolvedValue(mockBusFactor);
     getCrossRepoSocialNetworkAnalysisSpy.mockResolvedValue(mockSocial);
+    getRepositoriesSpy.mockResolvedValue(mockRepositories);
+    getStatsSpy.mockResolvedValue(mockStats);
   });
 
   afterEach(() => {
@@ -158,18 +197,18 @@ describe('CrossRepoAnalyticsPortfolioView', () => {
   it('renders portfolio-level view heading and summary cards after loading', async () => {
     (useParams as unknown as vi.Mock).mockReturnValue({ projectId: 'test-project-id' });
 
+    render(
+      <NotificationProvider>
+        <CrossRepoAnalyticsPortfolioView />
+      </NotificationProvider>
+    );
+
+    // Wait for async data to be loaded and heading to appear
     await waitFor(() => {
-      render(
-        <NotificationProvider>
-          <CrossRepoAnalyticsPortfolioView />
-        </NotificationProvider>
-      );
+      expect(screen.getByText('Cross-Repository Portfolio Analytics')).toBeInTheDocument();
     });
 
-    // Title
-    expect(screen.getByText('Cross-Repository Portfolio Analytics')).toBeInTheDocument();
-
-    // Wait for async data to be rendered
+    // Wait for portfolio-level view section to appear
     await waitFor(() => {
       expect(screen.getByText('Portfolio-Level View')).toBeInTheDocument();
     });
@@ -199,23 +238,19 @@ describe('CrossRepoAnalyticsPortfolioView', () => {
 
   it('handles API errors gracefully', async () => {
     (useParams as unknown as vi.Mock).mockReturnValue({ projectId: 'test-project-id' });
-    const errorSpy = getCrossRepoDeveloperAnalyticsSpy.mockRejectedValueOnce(
-      new Error('Failed to load')
-    );
+    getCrossRepoDeveloperAnalyticsSpy.mockRejectedValueOnce(new Error('Failed to load'));
 
-    await waitFor(() => {
-      render(
-        <NotificationProvider>
-          <CrossRepoAnalyticsPortfolioView />
-        </NotificationProvider>
-      );
-    });
+    render(
+      <NotificationProvider>
+        <CrossRepoAnalyticsPortfolioView />
+      </NotificationProvider>
+    );
 
     await waitFor(() => {
       const errors = screen.getAllByText(/Failed to load/i);
       expect(errors.length).toBeGreaterThan(0);
     });
 
-    expect(errorSpy).toHaveBeenCalled();
+    expect(getCrossRepoDeveloperAnalyticsSpy).toHaveBeenCalled();
   });
 });

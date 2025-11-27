@@ -14,6 +14,11 @@ export const defaultData: DatabaseSchema = {
   analysisCache: {},
   codebaseHealthCache: {},
   technicalDebtCache: {},
+  developerAnalyticsCache: {},
+  riskAnalyticsCache: {},
+  busFactorCache: {},
+  repositoryEvolutionCache: {},
+  socialNetworkAnalysisCache: {},
   schemaVersion: 2, // Current schema version
 };
 
@@ -54,6 +59,11 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
           analysisCache: {},
           codebaseHealthCache: {},
           technicalDebtCache: {},
+          developerAnalyticsCache: {},
+          riskAnalyticsCache: {},
+          busFactorCache: {},
+          repositoryEvolutionCache: {},
+          socialNetworkAnalysisCache: {},
           schemaVersion: 2,
         };
         fs.writeFileSync(DB_FILE, JSON.stringify(migratedData, null, 2));
@@ -100,6 +110,26 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
 
   if (!db.data.technicalDebtCache) {
     db.data.technicalDebtCache = {};
+  }
+
+  if (!db.data.developerAnalyticsCache) {
+    db.data.developerAnalyticsCache = {};
+  }
+
+  if (!db.data.riskAnalyticsCache) {
+    db.data.riskAnalyticsCache = {};
+  }
+
+  if (!db.data.busFactorCache) {
+    db.data.busFactorCache = {};
+  }
+
+  if (!db.data.repositoryEvolutionCache) {
+    db.data.repositoryEvolutionCache = {};
+  }
+
+  if (!db.data.socialNetworkAnalysisCache) {
+    db.data.socialNetworkAnalysisCache = {};
   }
 
   return db;

@@ -1,5 +1,9 @@
 import simpleGit from 'simple-git';
-import { getRepositories } from '../db.js';
+import {
+  getRepositories,
+  getCachedDeveloperAnalytics,
+  setCachedDeveloperAnalytics,
+} from '../db.js';
 import type {
   DeveloperAnalytics,
   DeveloperAuthorStats,
@@ -17,7 +21,13 @@ export async function getDeveloperAnalytics(
   repoPath: string,
   useCache: boolean = true
 ): Promise<DeveloperAnalytics> {
-  console.log(`Calculating developer analytics for ${repoPath}`);
+  // Check cache first
+  if (useCache) {
+    const cached = await getCachedDeveloperAnalytics(repoPath); // Uses default 30-day TTL as fallback
+    if (cached) {
+      return cached;
+    }
+  }
   const git = simpleGit(repoPath);
 
   try {
@@ -267,10 +277,17 @@ export async function getDeveloperAnalytics(
     // Calculate longitudinal patterns (use merged authors)
     const longitudinalPatterns = calculateLongitudinalPatterns(mergedAuthors, allCommits);
 
-    return {
+    const result: DeveloperAnalytics = {
       authors: authorList,
       longitudinalPatterns,
     };
+
+    // Cache the result
+    if (useCache) {
+      await setCachedDeveloperAnalytics(repoPath, result);
+    }
+
+    return result;
   } catch (error) {
     console.error('Git analytics error:', error);
     throw error;
