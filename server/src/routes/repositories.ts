@@ -1,5 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { getRepositories, getRepository, addRepository, removeRepository } from '../db.js';
+import {
+  getRepositories,
+  getRepository,
+  addRepository,
+  removeRepository,
+  reorderRepositories,
+} from '../db.js';
 
 const router = Router();
 
@@ -47,6 +53,22 @@ router.delete('/:id', async (req: Request, res: Response) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to remove repository' });
+  }
+});
+
+router.post('/reorder', async (req: Request, res: Response) => {
+  const { projectId, repositoryIds } = req.body;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'projectId is required' });
+  }
+  if (!Array.isArray(repositoryIds) || repositoryIds.length === 0) {
+    return res.status(400).json({ error: 'repositoryIds array is required' });
+  }
+  try {
+    await reorderRepositories(projectId, repositoryIds);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reorder repositories' });
   }
 });
 

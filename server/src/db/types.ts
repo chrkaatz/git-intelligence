@@ -3,6 +3,7 @@ export interface Repository {
   projectId: string;
   path: string;
   name: string;
+  order?: number; // Order for sorting repositories within a project (lower numbers appear first)
   createdAt?: string;
   updatedAt?: string;
 }
@@ -11,6 +12,7 @@ export interface Project {
   id: string;
   name: string;
   description?: string;
+  order?: number; // Order for sorting projects (lower numbers appear first)
   createdAt?: string;
   updatedAt?: string;
 }

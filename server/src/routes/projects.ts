@@ -1,5 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { getProjects, getProject, addProject, updateProject, removeProject } from '../db.js';
+import {
+  getProjects,
+  getProject,
+  addProject,
+  updateProject,
+  removeProject,
+  reorderProjects,
+} from '../db.js';
 
 const router = Router();
 
@@ -56,6 +63,19 @@ router.delete('/:id', async (req: Request, res: Response) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to remove project' });
+  }
+});
+
+router.post('/reorder', async (req: Request, res: Response) => {
+  const { projectIds } = req.body;
+  if (!Array.isArray(projectIds) || projectIds.length === 0) {
+    return res.status(400).json({ error: 'projectIds array is required' });
+  }
+  try {
+    await reorderProjects(projectIds);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reorder projects' });
   }
 });
 

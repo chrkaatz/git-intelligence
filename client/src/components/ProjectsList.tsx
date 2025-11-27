@@ -9,8 +9,10 @@ import {
   ChevronRight,
   FolderOpen,
   BarChart3,
+  ChevronUp,
+  ChevronDown as ChevronDownIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 
 interface ProjectsListProps {
@@ -22,6 +24,8 @@ interface ProjectsListProps {
   onDeleteRepository: (id: string, e: React.MouseEvent) => void;
   onAddProject: () => void;
   onAddRepository: (projectId: string) => void;
+  onReorderProjects: (projectIds: string[]) => void;
+  onReorderRepositories: (projectId: string, repositoryIds: string[]) => void;
 }
 
 export function ProjectsList({
@@ -33,20 +37,35 @@ export function ProjectsList({
   onDeleteRepository,
   onAddProject,
   onAddRepository,
+  onReorderProjects,
+  onReorderRepositories,
 }: ProjectsListProps) {
   const navigate = useNavigate();
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
     new Set(projects.map((p) => p.id))
   );
-  const [projectRepoMap] = useState(() => {
+  const projectRepoMap = useMemo(() => {
     const map = new Map<string, Repository[]>();
     repositories.forEach((repo) => {
       const repos = map.get(repo.projectId) || [];
       repos.push(repo);
       map.set(repo.projectId, repos);
     });
+    // Sort repositories by order within each project
+    map.forEach((repos) => {
+      repos.sort((a, b) => {
+        const orderA = a.order ?? Infinity;
+        const orderB = b.order ?? Infinity;
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateA - dateB;
+      });
+    });
     return map;
-  });
+  }, [repositories]);
 
   const toggleProject = (projectId: string) => {
     const newExpanded = new Set(expandedProjects);
@@ -56,6 +75,41 @@ export function ProjectsList({
       newExpanded.add(projectId);
     }
     setExpandedProjects(newExpanded);
+  };
+
+  const handleMoveProject = (projectId: string, direction: 'up' | 'down') => {
+    const currentIndex = projects.findIndex((p) => p.id === projectId);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= projects.length) return;
+
+    const newProjects = [...projects];
+    [newProjects[currentIndex], newProjects[newIndex]] = [
+      newProjects[newIndex],
+      newProjects[currentIndex],
+    ];
+    onReorderProjects(newProjects.map((p) => p.id));
+  };
+
+  const handleMoveRepository = (
+    projectId: string,
+    repositoryId: string,
+    direction: 'up' | 'down'
+  ) => {
+    const projectRepos = projectRepoMap.get(projectId) || [];
+    const currentIndex = projectRepos.findIndex((r) => r.id === repositoryId);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= projectRepos.length) return;
+
+    const newRepos = [...projectRepos];
+    [newRepos[currentIndex], newRepos[newIndex]] = [newRepos[newIndex], newRepos[currentIndex]];
+    onReorderRepositories(
+      projectId,
+      newRepos.map((r) => r.id)
+    );
   };
 
   const totalRepos = repositories.length;
@@ -138,6 +192,32 @@ export function ProjectsList({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-0.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveProject(project.id, 'up');
+                          }}
+                          disabled={projects.findIndex((p) => p.id === project.id) === 0}
+                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Move Up"
+                        >
+                          <ChevronUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveProject(project.id, 'down');
+                          }}
+                          disabled={
+                            projects.findIndex((p) => p.id === project.id) === projects.length - 1
+                          }
+                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Move Down"
+                        >
+                          <ChevronDownIcon className="w-3 h-3" />
+                        </button>
+                      </div>
                       {projectRepos.length > 1 && (
                         <button
                           onClick={() =>
@@ -214,6 +294,33 @@ export function ProjectsList({
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
+                                <div className="flex flex-col gap-0.5">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMoveRepository(project.id, repo.id, 'up');
+                                    }}
+                                    disabled={projectRepos.findIndex((r) => r.id === repo.id) === 0}
+                                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title="Move Up"
+                                  >
+                                    <ChevronUp className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMoveRepository(project.id, repo.id, 'down');
+                                    }}
+                                    disabled={
+                                      projectRepos.findIndex((r) => r.id === repo.id) ===
+                                      projectRepos.length - 1
+                                    }
+                                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title="Move Down"
+                                  >
+                                    <ChevronDownIcon className="w-3 h-3" />
+                                  </button>
+                                </div>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();

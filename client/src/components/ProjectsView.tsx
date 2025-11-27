@@ -13,6 +13,8 @@ export function ProjectsView() {
     handleAddProject,
     handleDeleteProject,
     handleDeleteRepository,
+    handleReorderProjects,
+    handleReorderRepositories,
     refreshData,
   } = useApp();
   const [isAddingProject, setIsAddingProject] = useState(false);
@@ -150,6 +152,8 @@ export function ProjectsView() {
           setSelectedProjectId(projectId);
           setIsAddingRepository(true);
         }}
+        onReorderProjects={handleReorderProjects}
+        onReorderRepositories={handleReorderRepositories}
       />
     </>
   );

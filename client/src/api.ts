@@ -107,6 +107,7 @@ export interface Project {
   id: string;
   name: string;
   description?: string;
+  order?: number; // Order for sorting projects (lower numbers appear first)
   createdAt?: string;
   updatedAt?: string;
 }
@@ -116,6 +117,7 @@ export interface Repository {
   projectId: string;
   path: string;
   name: string;
+  order?: number; // Order for sorting repositories within a project (lower numbers appear first)
   createdAt?: string;
   updatedAt?: string;
 }
@@ -152,6 +154,10 @@ export const removeProject = async (id: string): Promise<void> => {
   await api.delete(`/projects/${id}`);
 };
 
+export const reorderProjects = async (projectIds: string[]): Promise<void> => {
+  await api.post('/projects/reorder', { projectIds });
+};
+
 // Repositories API
 export const getRepositories = async (projectId?: string): Promise<Repository[]> => {
   const params = projectId ? { projectId } : {};
@@ -176,6 +182,13 @@ export const addRepository = async (
 
 export const removeRepository = async (id: string): Promise<void> => {
   await api.delete(`/repositories/${id}`);
+};
+
+export const reorderRepositories = async (
+  projectId: string,
+  repositoryIds: string[]
+): Promise<void> => {
+  await api.post('/repositories/reorder', { projectId, repositoryIds });
 };
 
 export const uploadRepository = async (

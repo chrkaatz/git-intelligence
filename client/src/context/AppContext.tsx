@@ -5,6 +5,8 @@ import {
   addProject,
   removeProject,
   removeRepository,
+  reorderProjects,
+  reorderRepositories,
   type Project,
   type Repository,
 } from '../api';
@@ -18,6 +20,8 @@ interface AppContextType {
   handleAddProject: (name: string, description?: string) => Promise<void>;
   handleDeleteProject: (id: string) => Promise<void>;
   handleDeleteRepository: (id: string) => Promise<void>;
+  handleReorderProjects: (projectIds: string[]) => Promise<void>;
+  handleReorderRepositories: (projectId: string, repositoryIds: string[]) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -74,6 +78,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const handleReorderProjects = async (projectIds: string[]) => {
+    try {
+      await reorderProjects(projectIds);
+      await refreshData();
+    } catch {
+      throw new Error('Failed to reorder projects');
+    }
+  };
+
+  const handleReorderRepositories = async (projectId: string, repositoryIds: string[]) => {
+    try {
+      await reorderRepositories(projectId, repositoryIds);
+      await refreshData();
+    } catch {
+      throw new Error('Failed to reorder repositories');
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -85,6 +107,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         handleAddProject,
         handleDeleteProject,
         handleDeleteRepository,
+        handleReorderProjects,
+        handleReorderRepositories,
       }}
     >
       {children}

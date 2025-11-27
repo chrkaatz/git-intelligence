@@ -19,7 +19,7 @@ export const defaultData: DatabaseSchema = {
   busFactorCache: {},
   repositoryEvolutionCache: {},
   socialNetworkAnalysisCache: {},
-  schemaVersion: 2, // Current schema version
+  schemaVersion: 4, // Current schema version
 };
 
 // Initialize database
@@ -90,6 +90,16 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
   // Migrate existing data if schema version is old
   if (!db.data.schemaVersion || db.data.schemaVersion < 2) {
     await migrateToSchemaV2(db);
+  }
+
+  // Migrate to schema version 3 (add order field to projects)
+  if (!db.data.schemaVersion || db.data.schemaVersion < 3) {
+    await migrateToSchemaV3(db);
+  }
+
+  // Migrate to schema version 4 (add order field to repositories)
+  if (!db.data.schemaVersion || db.data.schemaVersion < 4) {
+    await migrateToSchemaV4(db);
   }
 
   if (!db.data.projects) {
@@ -179,6 +189,55 @@ export async function migrateToSchemaV2(db: Low<DatabaseSchema>): Promise<void> 
   // Ensure schema version is set
   if (!db.data.schemaVersion) {
     db.data.schemaVersion = 2;
+    await db.write();
+  }
+}
+
+// Migration function to add order field to projects
+export async function migrateToSchemaV3(db: Low<DatabaseSchema>): Promise<void> {
+  console.log('Migrating database to schema version 3 (adding project order)...');
+
+  if (db.data.projects && db.data.projects.length > 0) {
+    // Set order for existing projects based on their current index
+    db.data.projects = db.data.projects.map((project, index) => ({
+      ...project,
+      order: project.order ?? index,
+    }));
+
+    db.data.schemaVersion = 3;
+    await db.write();
+    console.log(`Set order for ${db.data.projects.length} projects`);
+  } else {
+    db.data.schemaVersion = 3;
+    await db.write();
+  }
+}
+
+// Migration function to add order field to repositories
+export async function migrateToSchemaV4(db: Low<DatabaseSchema>): Promise<void> {
+  console.log('Migrating database to schema version 4 (adding repository order)...');
+
+  if (db.data.repositories && db.data.repositories.length > 0) {
+    // Group repositories by projectId and set order within each project
+    const projectGroups = new Map<string, Repository[]>();
+    db.data.repositories.forEach((repo) => {
+      const repos = projectGroups.get(repo.projectId) || [];
+      repos.push(repo);
+      projectGroups.set(repo.projectId, repos);
+    });
+
+    // Set order for repositories within each project
+    projectGroups.forEach((repos, projectId) => {
+      repos.forEach((repo, index) => {
+        repo.order = repo.order ?? index;
+      });
+    });
+
+    db.data.schemaVersion = 4;
+    await db.write();
+    console.log(`Set order for ${db.data.repositories.length} repositories`);
+  } else {
+    db.data.schemaVersion = 4;
     await db.write();
   }
 }

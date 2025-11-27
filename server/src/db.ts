@@ -13,6 +13,7 @@ export {
   addProject,
   updateProject,
   removeProject,
+  reorderProjects,
 } from './db/projects.js';
 
 export {
@@ -20,6 +21,7 @@ export {
   getRepository,
   addRepository,
   removeRepository,
+  reorderRepositories,
 } from './db/repositories.js';
 
 export {
