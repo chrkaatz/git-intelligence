@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ProjectsList } from './ProjectsList';
 import { AddRepoModal } from './AddRepoModal';
+import { ConfirmationDialog } from './common/ConfirmationDialog';
 import { useApp } from '../context/AppContext';
+import { useNotifications } from '../context/NotificationContext';
 import { getRepositories } from '../api';
 
 export function ProjectsView() {
@@ -17,9 +19,20 @@ export function ProjectsView() {
     handleReorderRepositories,
     refreshData,
   } = useApp();
+  const { showNotification } = useNotifications();
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [isAddingRepository, setIsAddingRepository] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+
+  // Confirmation dialog state
+  const [deleteProjectDialog, setDeleteProjectDialog] = useState<{
+    open: boolean;
+    projectId: string | null;
+  }>({ open: false, projectId: null });
+  const [deleteRepositoryDialog, setDeleteRepositoryDialog] = useState<{
+    open: boolean;
+    repositoryId: string | null;
+  }>({ open: false, repositoryId: null });
 
   const handleUploadSuccess = async () => {
     await refreshData();
@@ -36,27 +49,39 @@ export function ProjectsView() {
       await handleAddProject(name, description);
       setIsAddingProject(false);
     } catch {
-      alert('Failed to add project');
+      showNotification('error', 'Failed to add project', 5000);
     }
   };
 
-  const handleDeleteProjectClick = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteProjectClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to remove this project and all its repositories?')) return;
+    setDeleteProjectDialog({ open: true, projectId: id });
+  };
+
+  const handleConfirmDeleteProject = async () => {
+    if (!deleteProjectDialog.projectId) return;
     try {
-      await handleDeleteProject(id);
+      await handleDeleteProject(deleteProjectDialog.projectId);
+      setDeleteProjectDialog({ open: false, projectId: null });
     } catch {
-      alert('Failed to remove project');
+      showNotification('error', 'Failed to remove project', 5000);
+      setDeleteProjectDialog({ open: false, projectId: null });
     }
   };
 
-  const handleDeleteRepositoryClick = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteRepositoryClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to remove this repository?')) return;
+    setDeleteRepositoryDialog({ open: true, repositoryId: id });
+  };
+
+  const handleConfirmDeleteRepository = async () => {
+    if (!deleteRepositoryDialog.repositoryId) return;
     try {
-      await handleDeleteRepository(id);
+      await handleDeleteRepository(deleteRepositoryDialog.repositoryId);
+      setDeleteRepositoryDialog({ open: false, repositoryId: null });
     } catch {
-      alert('Failed to remove repository');
+      showNotification('error', 'Failed to remove repository', 5000);
+      setDeleteRepositoryDialog({ open: false, repositoryId: null });
     }
   };
 
@@ -81,6 +106,28 @@ export function ProjectsView() {
         }}
         onSuccess={handleUploadSuccess}
         projectId={selectedProjectId || undefined}
+      />
+
+      <ConfirmationDialog
+        open={deleteProjectDialog.open}
+        onClose={() => setDeleteProjectDialog({ open: false, projectId: null })}
+        onConfirm={handleConfirmDeleteProject}
+        title="Remove Project"
+        message="Are you sure you want to remove this project and all its repositories?"
+        confirmLabel="Remove"
+        cancelLabel="Cancel"
+        variant="danger"
+      />
+
+      <ConfirmationDialog
+        open={deleteRepositoryDialog.open}
+        onClose={() => setDeleteRepositoryDialog({ open: false, repositoryId: null })}
+        onConfirm={handleConfirmDeleteRepository}
+        title="Remove Repository"
+        message="Are you sure you want to remove this repository?"
+        confirmLabel="Remove"
+        cancelLabel="Cancel"
+        variant="danger"
       />
       {isAddingProject && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

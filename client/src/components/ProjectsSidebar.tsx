@@ -15,6 +15,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { ConfirmationDialog } from './common/ConfirmationDialog';
 
 function classNames(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(' ');
@@ -37,6 +38,10 @@ export function ProjectsSidebar({
   const navigate = useNavigate();
   const router = useRouterState();
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [deleteRepositoryDialog, setDeleteRepositoryDialog] = useState<{
+    open: boolean;
+    repositoryId: string | null;
+  }>({ open: false, repositoryId: null });
 
   // Get current repo ID from URL
   const currentRepoId = (() => {
@@ -371,9 +376,7 @@ export function ProjectsSidebar({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (confirm('Are you sure you want to remove this repository?')) {
-                              handleDeleteRepository(repo.id);
-                            }
+                            setDeleteRepositoryDialog({ open: true, repositoryId: repo.id });
                           }}
                           className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded transition-all"
                           title="Remove Repository"
@@ -399,6 +402,22 @@ export function ProjectsSidebar({
           </div>
         )}
       </div>
+
+      <ConfirmationDialog
+        open={deleteRepositoryDialog.open}
+        onClose={() => setDeleteRepositoryDialog({ open: false, repositoryId: null })}
+        onConfirm={async () => {
+          if (deleteRepositoryDialog.repositoryId) {
+            await handleDeleteRepository(deleteRepositoryDialog.repositoryId);
+            setDeleteRepositoryDialog({ open: false, repositoryId: null });
+          }
+        }}
+        title="Remove Repository"
+        message="Are you sure you want to remove this repository?"
+        confirmLabel="Remove"
+        cancelLabel="Cancel"
+        variant="danger"
+      />
     </div>
   );
 }
