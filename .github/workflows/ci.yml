@@ -2,10 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
+permissions: write-all
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -30,11 +31,45 @@ jobs:
       - name: Check code formatting
         run: npm run format:check
 
-      # - name: Run linter
-      #   run: npm run lint
+      - name: Run linter
+        run: npm run lint
 
       - name: Run tests
         run: npm run test
 
       - name: Build project
         run: npm run build
+      - name: Generate Backend Test Coverage
+        working-directory: server
+        run: npm run test:coverage
+
+      - name: Generate Frontend Test Coverage
+        working-directory: client
+        run: npm run test:coverage
+
+      - name: Upload Backend Test Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: server/coverage/
+          retention-days: 7
+
+      - name: Upload Frontend Test Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: client/coverage/
+          retention-days: 7
+
+      # Report code coverage as a comment on pull requests
+      - name: Report Backend Test Coverage
+        if: github.event_name == 'pull_request'
+        uses: romeovs/lcov-reporter-action@v0.4.0
+        with:
+          lcov-file: ./server/coverage/lcov.info
+
+      - name: Report Frontend Test Coverage
+        if: github.event_name == 'pull_request'
+        uses: romeovs/lcov-reporter-action@v0.4.0
+        with:
+          lcov-file: ./client/coverage/lcov.info
