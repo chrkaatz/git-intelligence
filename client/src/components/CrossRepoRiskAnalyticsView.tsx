@@ -8,16 +8,22 @@ import {
 import { Loader2, AlertCircle } from 'lucide-react';
 import { RecalculateButton } from './common/RecalculateButton';
 import { useNotifications } from '../context/NotificationContext';
+import { useApp } from '../context/AppContext';
 
 export function CrossRepoRiskAnalyticsView() {
   const params = useParams({ strict: false }) as { projectId?: string };
   const projectId = params?.projectId;
+  const { projects } = useApp();
   const [analytics, setAnalytics] = useState<CrossRepoRiskAnalyticsType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showNotification, removeNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
+
+  // Get project name from ID
+  const project = projectId ? projects.find((p) => p.id === projectId) : null;
+  const projectName = project?.name || '';
 
   const fetchAnalytics = useCallback(
     async (refresh: boolean = false) => {
@@ -86,11 +92,14 @@ export function CrossRepoRiskAnalyticsView() {
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
             Cross-Repository Risk Analytics
           </h1>
-          {projectId && analytics && (
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">
-              Analyzing {analytics.totalRepos} repositories
-            </p>
+          {projectId && projectName && (
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{projectName}</p>
           )}
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            {projectId
+              ? `Identifying high-risk files, temporal coupling patterns, and risky trends across all repositories in this project`
+              : 'Select a project to view cross-repository risk analytics'}
+          </p>
         </div>
         {projectId && <RecalculateButton loading={loading} onClick={() => fetchAnalytics(true)} />}
       </div>

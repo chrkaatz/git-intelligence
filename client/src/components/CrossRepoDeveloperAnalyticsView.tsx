@@ -7,16 +7,22 @@ import {
 } from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
+import { useApp } from '../context/AppContext';
 
 export function CrossRepoDeveloperAnalyticsView() {
   const params = useParams({ strict: false }) as { projectId?: string };
   const projectId = params?.projectId;
+  const { projects } = useApp();
   const [analytics, setAnalytics] = useState<CrossRepoDeveloperAnalyticsType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showNotification, removeNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
+
+  // Get project name from ID
+  const project = projectId ? projects.find((p) => p.id === projectId) : null;
+  const projectName = project?.name || '';
 
   useEffect(() => {
     if (!projectId) {
@@ -83,6 +89,9 @@ export function CrossRepoDeveloperAnalyticsView() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Cross-Repo Developer Analytics
         </h1>
+        {projectId && projectName && (
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{projectName}</p>
+        )}
         <p className="text-gray-500 dark:text-gray-400 mt-1">
           {projectId
             ? `Analyzing developer contributions across all repositories in this project`

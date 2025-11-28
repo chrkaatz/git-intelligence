@@ -92,9 +92,14 @@ export function CrossRepoTechnicalDebtIndicatorsView() {
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
             Cross-Repository Technical Debt Indicators
           </h1>
-          {projectId && indicators && projectName && (
+          {projectId && projectName && (
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{projectName}</p>
           )}
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            {projectId
+              ? `Identifying technical debt indicators such as huge commits, WIP commits, quick fixes, long-lived branches, and stale dependencies across all repositories in this project`
+              : 'Select a project to view cross-repository technical debt indicators'}
+          </p>
         </div>
         {projectId && <RecalculateButton loading={loading} onClick={() => fetchIndicators(true)} />}
       </div>

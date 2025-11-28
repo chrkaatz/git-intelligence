@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import * as api from '../../api';
 import { NotificationProvider } from '../../context/NotificationContext';
+import { AppProvider } from '../../context/AppContext';
 
 vi.mock('@tanstack/react-router', () => ({
   useParams: vi.fn(),
@@ -18,6 +19,7 @@ describe('CrossRepoAnalyticsPortfolioView', () => {
   const getCrossRepoSocialNetworkAnalysisSpy = vi.spyOn(api, 'getCrossRepoSocialNetworkAnalysis');
   const getRepositoriesSpy = vi.spyOn(api, 'getRepositories');
   const getStatsSpy = vi.spyOn(api, 'getStats');
+  const getProjectsSpy = vi.spyOn(api, 'getProjects');
 
   const mockDevAnalytics: api.CrossRepoDeveloperAnalytics = {
     totalRepos: 2,
@@ -186,8 +188,23 @@ describe('CrossRepoAnalyticsPortfolioView', () => {
     getCrossRepoCodebaseHealthSpy.mockResolvedValue(mockHealth);
     getCrossRepoBusFactorAndOwnershipSpy.mockResolvedValue(mockBusFactor);
     getCrossRepoSocialNetworkAnalysisSpy.mockResolvedValue(mockSocial);
-    getRepositoriesSpy.mockResolvedValue(mockRepositories);
+    // Mock getRepositories to return filtered repos when projectId is provided, all repos otherwise
+    getRepositoriesSpy.mockImplementation((projectId?: string) => {
+      if (projectId) {
+        return Promise.resolve(mockRepositories.filter((r) => r.projectId === projectId));
+      }
+      return Promise.resolve(mockRepositories);
+    });
     getStatsSpy.mockResolvedValue(mockStats);
+    getProjectsSpy.mockResolvedValue([
+      {
+        id: 'test-project-id',
+        name: 'Test Project',
+        description: 'Test Description',
+        createdAt: '2024-01-01',
+        updatedAt: '2024-01-01',
+      },
+    ]);
   });
 
   afterEach(() => {
@@ -198,9 +215,11 @@ describe('CrossRepoAnalyticsPortfolioView', () => {
     (useParams as unknown as vi.Mock).mockReturnValue({ projectId: 'test-project-id' });
 
     render(
-      <NotificationProvider>
-        <CrossRepoAnalyticsPortfolioView />
-      </NotificationProvider>
+      <AppProvider>
+        <NotificationProvider>
+          <CrossRepoAnalyticsPortfolioView />
+        </NotificationProvider>
+      </AppProvider>
     );
 
     // Wait for async data to be loaded and heading to appear
@@ -226,9 +245,11 @@ describe('CrossRepoAnalyticsPortfolioView', () => {
     (useParams as unknown as vi.Mock).mockReturnValue({});
 
     render(
-      <NotificationProvider>
-        <CrossRepoAnalyticsPortfolioView />
-      </NotificationProvider>
+      <AppProvider>
+        <NotificationProvider>
+          <CrossRepoAnalyticsPortfolioView />
+        </NotificationProvider>
+      </AppProvider>
     );
 
     expect(
@@ -241,9 +262,11 @@ describe('CrossRepoAnalyticsPortfolioView', () => {
     getCrossRepoDeveloperAnalyticsSpy.mockRejectedValueOnce(new Error('Failed to load'));
 
     render(
-      <NotificationProvider>
-        <CrossRepoAnalyticsPortfolioView />
-      </NotificationProvider>
+      <AppProvider>
+        <NotificationProvider>
+          <CrossRepoAnalyticsPortfolioView />
+        </NotificationProvider>
+      </AppProvider>
     );
 
     await waitFor(() => {

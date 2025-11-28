@@ -8,16 +8,22 @@ import {
 import { Loader2, AlertCircle } from 'lucide-react';
 import { RecalculateButton } from './common/RecalculateButton';
 import { useNotifications } from '../context/NotificationContext';
+import { useApp } from '../context/AppContext';
 
 export function CrossRepoCodebaseHealthView() {
   const params = useParams({ strict: false }) as { projectId?: string };
   const projectId = params?.projectId;
+  const { projects } = useApp();
   const [health, setHealth] = useState<CrossRepoCodebaseHealthType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showNotification, removeNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
+
+  // Get project name from ID
+  const project = projectId ? projects.find((p) => p.id === projectId) : null;
+  const projectName = project?.name || '';
 
   const fetchHealth = useCallback(
     async (refresh: boolean = false) => {
@@ -86,6 +92,9 @@ export function CrossRepoCodebaseHealthView() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Cross-Repo Codebase Health
           </h1>
+          {projectId && projectName && (
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{projectName}</p>
+          )}
           <p className="text-gray-500 dark:text-gray-400 mt-1">
             {projectId
               ? `Analyzing codebase health and hotspots across all repositories in this project`

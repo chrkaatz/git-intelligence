@@ -39,6 +39,7 @@ import {
 } from 'recharts';
 import { useNotifications } from '../../context/NotificationContext';
 import { RecalculateButton } from '../common/RecalculateButton';
+import { useApp } from '../../context/AppContext';
 
 type LoadedData = {
   devAnalytics: CrossRepoDeveloperAnalytics | null;
@@ -52,6 +53,7 @@ type LoadedData = {
 export function CrossRepoAnalyticsPortfolioView() {
   const params = useParams({ strict: false }) as { projectId?: string };
   const projectId = params?.projectId;
+  const { projects } = useApp();
 
   const [data, setData] = useState<LoadedData>({
     devAnalytics: null,
@@ -64,6 +66,10 @@ export function CrossRepoAnalyticsPortfolioView() {
   const [error, setError] = useState<string | null>(null);
   const { showNotification, removeNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
+
+  // Get project name from ID
+  const project = projectId ? projects.find((p) => p.id === projectId) : null;
+  const projectName = project?.name || '';
 
   const fetchAll = useCallback(
     async (refresh: boolean = false) => {
@@ -381,6 +387,9 @@ export function CrossRepoAnalyticsPortfolioView() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Cross-Repository Portfolio Analytics
           </h1>
+          {projectId && projectName && (
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5">{projectName}</p>
+          )}
           <p className="text-gray-500 dark:text-gray-400 mt-1">
             Aggregated view of engineering activity, organizational patterns, and architecture
             signals across all repositories in this project.
