@@ -1,5 +1,63 @@
 # Release Notes - Git Intelligence
 
+## v0.1.0
+
+**Release Date:** November 28, 2025  
+**Tag:** `v0.1.0`  
+**Commit:** `2fdcd61dad6a263a2a2b10fd4977b97d1d426c9a`
+
+---
+
+### 🔍 Overview
+
+Git Intelligence v0.1.0 is a significant enhancement release focused on **improved user experience**, **better project management**, and **enhanced UI consistency**. This release introduces dark mode support, project/repository ordering, improved repository management, and comprehensive cache control features.
+
+### ✨ Highlights
+
+- **Repository Management Improvements**
+  - Refactored `UploadRepoModal` into a more flexible `AddRepoModal` component
+  - Support for both ZIP file uploads and local folder paths in a unified interface
+  - Enhanced form handling, file validation, and error management
+  - Improved integration with the API for repository operations
+
+- **Project & Repository Organization**
+  - Added project and repository ordering functionality with drag-and-drop support
+  - Introduced `order` fields in Project and Repository interfaces
+  - New `reorderProjects` and `reorderRepositories` API endpoints
+  - Enhanced `ProjectsList` component with UI controls for reordering
+  - Database schema updated to support ordering with automatic migrations
+
+- **Developer Analytics Enhancements**
+  - Added total Lines of Code (LOC) display in Developer Analytics views
+  - Enhanced cross-repository analytics with improved cache management
+  - New `clearCache` function for manual cache clearing
+  - Optional `refresh` parameter support in `getCrossRepoDeveloperAnalytics` API
+  - Improved loading states and error handling across analytics components
+
+- **User Experience Improvements**
+  - **Dark Mode Support**: Full dark mode styling across all charts and components
+    - Updated ActivityChart, AuthorList, DashboardView, ExtensionChart, LocChart, and SummaryCards
+    - Improved tooltip styling for better visibility in both light and dark modes
+    - Consistent text color adjustments throughout the application
+  - **Confirmation Dialogs**: New `ConfirmationDialog` component for consistent user confirmations
+    - Integrated into ProjectsSidebar, ProjectsView, and SettingsDialog
+    - Replaced native browser confirm prompts with styled dialogs
+    - Enhanced notification handling for deletion actions
+
+- **Cross-Repository Analytics Enhancements**
+  - Project name display in all cross-repository analytics views
+  - Improved context and clarity for analytics across multiple repositories
+  - Enhanced `CrossRepoAnalyticsPortfolioView` with project name and descriptions
+  - Better user experience when analyzing project-wide metrics
+
+- **Infrastructure & Quality**
+  - New `fileUtils` module for folder management
+  - Automatic cleanup of uploaded folders when projects/repositories are deleted
+  - Comprehensive unit tests for new components and features
+  - Improved error handling and validation throughout the application
+
+---
+
 ## v0.0.2
 
 **Release Date:** November 26, 2025  
