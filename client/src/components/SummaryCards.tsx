@@ -34,13 +34,18 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       {cards.map((card) => (
-        <div key={card.label} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div
+          key={card.label}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700"
+        >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">{card.label}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{card.value.toLocaleString()}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.label}</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                {card.value.toLocaleString()}
+              </p>
             </div>
-            <div className={`p-3 rounded-lg ${card.bg}`}>
+            <div className={`p-3 rounded-lg ${card.bg} dark:bg-opacity-20`}>
               <card.icon className={`w-6 h-6 ${card.color}`} />
             </div>
           </div>

@@ -14,8 +14,8 @@ export const ExtensionChart: React.FC<ExtensionChartProps> = ({ extensions }) =>
     .slice(0, 7);
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">File Types</h3>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 h-full">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">File Types</h3>
       <div className="min-h-64 h-64">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -37,9 +37,23 @@ export const ExtensionChart: React.FC<ExtensionChartProps> = ({ extensions }) =>
                 borderRadius: '8px',
                 border: 'none',
                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                backgroundColor: '#ffffff',
+              }}
+              wrapperStyle={{
+                backgroundColor: 'transparent',
+              }}
+              labelStyle={{
+                color: '#111827',
+              }}
+              itemStyle={{
+                color: '#111827',
               }}
             />
-            <Legend />
+            <Legend
+              wrapperStyle={{
+                color: '#6b7280',
+              }}
+            />
           </PieChart>
         </ResponsiveContainer>
       </div>
