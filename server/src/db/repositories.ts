@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { getDb } from './database.js';
 import { clearCache } from './cache.js';
+import { deleteUploadedFolder } from './fileUtils.js';
 import type { Repository } from './types.js';
 
 export async function getRepositories(projectId?: string): Promise<Repository[]> {
@@ -113,6 +114,9 @@ export async function removeRepository(id: string): Promise<void> {
   const repository = database.data.repositories.find((r) => r.id === id);
 
   if (repository) {
+    // Delete uploaded folder if this is an uploaded repository
+    deleteUploadedFolder(repository.path);
+
     // Remove from repositories
     database.data.repositories = database.data.repositories.filter((r) => r.id !== id);
     // Clear cache for this repository

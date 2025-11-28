@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { getProjects, getProject, addProject, updateProject, removeProject } from '../projects';
 import { getDb, resetDb } from '../database';
+import { deleteUploadedFolder } from '../fileUtils';
 import { createTestDb } from './helpers';
 import type { DatabaseSchema } from '../types';
 
@@ -13,16 +14,24 @@ vi.mock('../database', async () => {
   };
 });
 
+// Mock fileUtils module
+vi.mock('../fileUtils', () => ({
+  deleteUploadedFolder: vi.fn(),
+}));
+
 const mockGetDb = vi.mocked(getDb);
+const mockDeleteUploadedFolder = vi.mocked(deleteUploadedFolder);
 
 describe('projects', () => {
   let testDb: ReturnType<typeof createTestDb>;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.resetAllMocks();
     resetDb();
     testDb = createTestDb();
     mockGetDb.mockResolvedValue(testDb as any);
+    mockDeleteUploadedFolder.mockImplementation(() => {});
   });
 
   describe('getProjects', () => {
@@ -240,6 +249,87 @@ describe('projects', () => {
 
       expect(testDb.data.analysisCache['/test/repo']).toBeUndefined();
       expect(testDb.data.codebaseHealthCache['/test/repo']).toBeUndefined();
+    });
+
+    it('should delete uploaded folders for all repositories in project', async () => {
+      mockDeleteUploadedFolder.mockReset();
+      const project = await addProject('Test Project');
+
+      // Add repositories with different paths
+      const uploadedRepo = {
+        id: 'repo-1',
+        projectId: project.id,
+        path: '/test/server/uploads/abc123_extracted',
+        name: 'Uploaded Repo',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const localRepo = {
+        id: 'repo-2',
+        projectId: project.id,
+        path: '/home/user/local-repo',
+        name: 'Local Repo',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      testDb.data.repositories.push(uploadedRepo, localRepo);
+      await testDb.write();
+
+      await removeProject(project.id);
+
+      // Should call deleteUploadedFolder for both repositories
+      expect(mockDeleteUploadedFolder).toHaveBeenCalledWith(uploadedRepo.path);
+      expect(mockDeleteUploadedFolder).toHaveBeenCalledWith(localRepo.path);
+      // Verify it was called at least for both repos (may be called more times from other tests)
+      const calls = mockDeleteUploadedFolder.mock.calls.map((call) => call[0]);
+      expect(calls).toContain(uploadedRepo.path);
+      expect(calls).toContain(localRepo.path);
+    });
+
+    it('should handle multiple repositories with uploaded folders', async () => {
+      mockDeleteUploadedFolder.mockReset();
+      const project = await addProject('Test Project');
+
+      const repos = [
+        {
+          id: 'repo-1',
+          projectId: project.id,
+          path: '/test/server/uploads/repo1_extracted',
+          name: 'Repo 1',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: 'repo-2',
+          projectId: project.id,
+          path: '/test/server/uploads/repo2_extracted',
+          name: 'Repo 2',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: 'repo-3',
+          projectId: project.id,
+          path: '/test/server/uploads/repo3_extracted/repo',
+          name: 'Repo 3',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ];
+      testDb.data.repositories.push(...repos);
+      await testDb.write();
+
+      await removeProject(project.id);
+
+      // Verify deleteUploadedFolder was called for each repository
+      repos.forEach((repo) => {
+        expect(mockDeleteUploadedFolder).toHaveBeenCalledWith(repo.path);
+      });
+      // Verify all repo paths were called (may be called more times from other tests)
+      const calls = mockDeleteUploadedFolder.mock.calls.map((call) => call[0]);
+      repos.forEach((repo) => {
+        expect(calls).toContain(repo.path);
+      });
     });
 
     it('should not throw when removing non-existent project', async () => {

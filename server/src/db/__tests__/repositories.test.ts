@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { getRepositories, getRepository, addRepository, removeRepository } from '../repositories';
 import { getDb, resetDb } from '../database';
+import { deleteUploadedFolder } from '../fileUtils';
 import { createTestDb } from './helpers';
 import type { DatabaseSchema } from '../types';
 
@@ -13,7 +14,13 @@ vi.mock('../database', async () => {
   };
 });
 
+// Mock fileUtils module
+vi.mock('../fileUtils', () => ({
+  deleteUploadedFolder: vi.fn(),
+}));
+
 const mockGetDb = vi.mocked(getDb);
+const mockDeleteUploadedFolder = vi.mocked(deleteUploadedFolder);
 
 describe('repositories', () => {
   let testDb: ReturnType<typeof createTestDb>;
@@ -23,6 +30,7 @@ describe('repositories', () => {
     resetDb();
     testDb = createTestDb();
     mockGetDb.mockResolvedValue(testDb as any);
+    mockDeleteUploadedFolder.mockImplementation(() => {});
   });
 
   describe('getRepositories', () => {
@@ -296,6 +304,49 @@ describe('repositories', () => {
       const repos = await getRepositories();
       expect(repos).toHaveLength(1);
       expect(repos[0].id).toBe(repo2.id);
+    });
+
+    it('should delete uploaded folder when removing repository', async () => {
+      // Add project directly to testDb
+      const project = {
+        id: 'project-1',
+        name: 'Test Project',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      testDb.data.projects = [project];
+      testDb.data.repositories = [];
+      await testDb.write();
+
+      const uploadedRepoPath = '/test/server/uploads/abc123_extracted';
+      const repo = await addRepository(project.id, uploadedRepoPath, 'Uploaded Repo');
+
+      await removeRepository(repo.id);
+
+      expect(mockDeleteUploadedFolder).toHaveBeenCalledTimes(1);
+      expect(mockDeleteUploadedFolder).toHaveBeenCalledWith(uploadedRepoPath);
+    });
+
+    it('should call deleteUploadedFolder even for local repositories (function handles check)', async () => {
+      // Add project directly to testDb
+      const project = {
+        id: 'project-1',
+        name: 'Test Project',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      testDb.data.projects = [project];
+      testDb.data.repositories = [];
+      await testDb.write();
+
+      const localRepoPath = '/home/user/local-repo';
+      const repo = await addRepository(project.id, localRepoPath, 'Local Repo');
+
+      await removeRepository(repo.id);
+
+      // Should still call deleteUploadedFolder (it will check internally and not delete)
+      expect(mockDeleteUploadedFolder).toHaveBeenCalledTimes(1);
+      expect(mockDeleteUploadedFolder).toHaveBeenCalledWith(localRepoPath);
     });
   });
 });

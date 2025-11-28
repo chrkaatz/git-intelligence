@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getDb } from './database.js';
+import { deleteUploadedFolder } from './fileUtils.js';
 import type { Project } from './types.js';
 
 export async function getProjects(): Promise<Project[]> {
@@ -97,6 +98,9 @@ export async function removeProject(id: string): Promise<void> {
   // Remove all repositories in this project
   const reposToRemove = database.data.repositories.filter((r) => r.projectId === id);
   reposToRemove.forEach((repo) => {
+    // Delete uploaded folder if this is an uploaded repository
+    deleteUploadedFolder(repo.path);
+
     delete database.data.analysisCache[repo.path];
     delete database.data.codebaseHealthCache[repo.path];
   });
