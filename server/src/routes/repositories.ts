@@ -136,8 +136,8 @@ router.post('/:id/fetch', async (req: Request, res: Response) => {
     // Get commit hash after fetch/pull
     const afterHash = await git.revparse(['HEAD']);
 
-    // Check if there were any changes
-    const hasChanges = beforeHash !== afterHash;
+    // Check if there were any changes (trim hashes to handle trailing newlines from simple-git)
+    const hasChanges = beforeHash.trim() !== afterHash.trim();
 
     // Clear cache for this repository to ensure fresh analytics
     if (hasChanges) {
