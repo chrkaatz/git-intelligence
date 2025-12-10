@@ -191,6 +191,30 @@ export const reorderRepositories = async (
   await api.post('/repositories/reorder', { projectId, repositoryIds });
 };
 
+export interface FetchRepositoryResult {
+  success: boolean;
+  repository: {
+    id: string;
+    name: string;
+    path: string;
+  };
+  changes: {
+    fetched: boolean;
+    pulled: boolean;
+    hasChanges: boolean;
+    branch: string;
+    beforeHash: string;
+    afterHash: string;
+  };
+  pullError?: string | null;
+  message: string;
+}
+
+export const fetchRepositoryChanges = async (id: string): Promise<FetchRepositoryResult> => {
+  const response = await api.post(`/repositories/${id}/fetch`);
+  return response.data;
+};
+
 export const uploadRepository = async (
   file: File,
   projectId: string,

@@ -8,7 +8,7 @@ import { LocChart } from './LocChart';
 import { getStats, type GitStats } from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 
 export function DashboardView() {
   const params = useParams({ strict: false }) as { repoId?: string };

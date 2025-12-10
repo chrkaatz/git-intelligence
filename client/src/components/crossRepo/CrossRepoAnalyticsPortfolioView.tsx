@@ -39,7 +39,7 @@ import {
 } from 'recharts';
 import { useNotifications } from '../../context/NotificationContext';
 import { RecalculateButton } from '../common/RecalculateButton';
-import { useApp } from '../../context/AppContext';
+import { useApp } from '../../hooks/useApp';
 
 type LoadedData = {
   devAnalytics: CrossRepoDeveloperAnalytics | null;

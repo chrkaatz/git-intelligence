@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   getProjects,
   getRepositories,
@@ -10,21 +10,7 @@ import {
   type Project,
   type Repository,
 } from '../api';
-
-interface AppContextType {
-  projects: Project[];
-  repositories: Repository[];
-  loading: boolean;
-  error: string | null;
-  refreshData: () => Promise<void>;
-  handleAddProject: (name: string, description?: string) => Promise<void>;
-  handleDeleteProject: (id: string) => Promise<void>;
-  handleDeleteRepository: (id: string) => Promise<void>;
-  handleReorderProjects: (projectIds: string[]) => Promise<void>;
-  handleReorderRepositories: (projectId: string, repositoryIds: string[]) => Promise<void>;
-}
-
-const AppContext = createContext<AppContextType | undefined>(undefined);
+import { AppContext } from './context';
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -114,13 +100,4 @@ export function AppProvider({ children }: { children: ReactNode }) {
       {children}
     </AppContext.Provider>
   );
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useApp() {
-  const context = useContext(AppContext);
-  if (context === undefined) {
-    throw new Error('useApp must be used within an AppProvider');
-  }
-  return context;
 }

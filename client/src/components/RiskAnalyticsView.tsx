@@ -5,7 +5,7 @@ import { getRiskAnalytics, type RiskAnalytics as RiskAnalyticsType } from '../ap
 import { Loader2, AlertCircle } from 'lucide-react';
 import { RecalculateButton } from './common/RecalculateButton';
 import { useNotifications } from '../context/NotificationContext';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 
 export function RiskAnalyticsView() {
   const params = useParams({ strict: false }) as { repoId?: string };

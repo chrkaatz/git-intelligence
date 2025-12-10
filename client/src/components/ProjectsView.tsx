@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { ProjectsList } from './ProjectsList';
 import { AddRepoModal } from './AddRepoModal';
 import { ConfirmationDialog } from './common/ConfirmationDialog';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 import { useNotifications } from '../context/NotificationContext';
 import { getRepositories } from '../api';
 

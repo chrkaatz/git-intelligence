@@ -13,8 +13,11 @@ import {
   ChevronLeft,
   Shield,
   Wrench,
+  RefreshCw,
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
+import { useNotifications } from '../context/NotificationContext';
+import { fetchRepositoryChanges } from '../api';
 import { ConfirmationDialog } from './common/ConfirmationDialog';
 
 function classNames(...classes: (string | boolean | undefined | null)[]) {
@@ -35,9 +38,11 @@ export function ProjectsSidebar({
   onExpand,
 }: ProjectsSidebarProps) {
   const { projects, repositories, handleDeleteRepository } = useApp();
+  const { showNotification } = useNotifications();
   const navigate = useNavigate();
   const router = useRouterState();
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [fetchingRepos, setFetchingRepos] = useState<Set<string>>(new Set());
   const [deleteRepositoryDialog, setDeleteRepositoryDialog] = useState<{
     open: boolean;
     repositoryId: string | null;
@@ -133,6 +138,128 @@ export function ProjectsSidebar({
         to: '/dashboard/$repoId',
         params: { repoId: repo.id },
       });
+    }
+  };
+
+  const handleFetchRepositoryChanges = async (
+    e: React.MouseEvent,
+    repoId: string,
+    repoName: string
+  ) => {
+    e.stopPropagation();
+
+    // Check if already fetching
+    if (fetchingRepos.has(repoId)) {
+      return;
+    }
+
+    setFetchingRepos((prev) => new Set(prev).add(repoId));
+
+    try {
+      const result = await fetchRepositoryChanges(repoId);
+
+      if (result.success) {
+        if (result.changes.hasChanges) {
+          showNotification(
+            'success',
+            `Successfully fetched changes for ${repoName}. Cache cleared - refresh analytics to see updates.`
+          );
+        } else {
+          showNotification('info', result.message);
+        }
+
+        if (result.pullError) {
+          showNotification('info', `Note: ${result.pullError}`);
+        }
+      }
+    } catch (error: unknown) {
+      console.error('Error fetching repository changes:', error);
+      const errorMessage =
+        (error && typeof error === 'object' && 'response' in error
+          ? (error.response as { data?: { error?: string } })?.data?.error
+          : null) ||
+        (error instanceof Error ? error.message : null) ||
+        'Failed to fetch repository changes';
+      showNotification('error', `Error: ${errorMessage}`);
+    } finally {
+      setFetchingRepos((prev) => {
+        const next = new Set(prev);
+        next.delete(repoId);
+        return next;
+      });
+    }
+  };
+
+  const handleFetchAllRepositories = async (
+    e: React.MouseEvent,
+    projectId: string,
+    projectName: string
+  ) => {
+    e.stopPropagation();
+
+    const projectRepos = projectRepoMap.get(projectId) || [];
+    if (projectRepos.length === 0) {
+      showNotification('info', 'No repositories to fetch in this project');
+      return;
+    }
+
+    // Check if any repository is already being fetched
+    const alreadyFetching = projectRepos.some((repo) => fetchingRepos.has(repo.id));
+    if (alreadyFetching) {
+      return;
+    }
+
+    // Mark all repos as fetching
+    setFetchingRepos((prev) => {
+      const next = new Set(prev);
+      projectRepos.forEach((repo) => next.add(repo.id));
+      return next;
+    });
+
+    showNotification('info', `Fetching changes for ${projectRepos.length} repositories...`);
+
+    let successCount = 0;
+    let errorCount = 0;
+    let updatedCount = 0;
+
+    // Fetch all repositories sequentially to avoid overwhelming the system
+    for (const repo of projectRepos) {
+      try {
+        const result = await fetchRepositoryChanges(repo.id);
+        if (result.success) {
+          successCount++;
+          if (result.changes.hasChanges) {
+            updatedCount++;
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching ${repo.name}:`, error);
+        errorCount++;
+      }
+    }
+
+    // Clear all fetching states
+    setFetchingRepos((prev) => {
+      const next = new Set(prev);
+      projectRepos.forEach((repo) => next.delete(repo.id));
+      return next;
+    });
+
+    // Show summary notification
+    if (errorCount === 0) {
+      if (updatedCount > 0) {
+        showNotification(
+          'success',
+          `Successfully fetched all repositories. ${updatedCount} had new changes. Cache cleared for updated repositories.`
+        );
+      } else {
+        showNotification('success', `All repositories in ${projectName} are up to date.`);
+      }
+    } else {
+      showNotification(
+        errorCount > successCount ? 'error' : 'info',
+        `Fetch completed: ${successCount} succeeded, ${errorCount} failed. ${updatedCount} had new changes.`
+      );
     }
   };
 
@@ -279,73 +406,87 @@ export function ProjectsSidebar({
                     ({projectRepos.length})
                   </span>
                 </div>
-                {projectRepos.length > 1 && (
+                {projectRepos.length > 0 && (
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate({
-                          to: '/cross-repo-analytics/$projectId',
-                          params: { projectId: project.id },
-                        });
-                      }}
-                      className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 rounded transition-all"
-                      title="View Cross-Repo Portfolio Analytics"
+                      onClick={(e) => handleFetchAllRepositories(e, project.id, project.name)}
+                      disabled={projectRepos.some((repo) => fetchingRepos.has(repo.id))}
+                      className="p-1 hover:bg-green-50 dark:hover:bg-green-900/20 text-gray-400 hover:text-green-500 rounded transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Fetch Changes for All Repositories"
                     >
-                      <BarChart3 className="w-3 h-3" />
+                      <RefreshCw
+                        className={`w-3 h-3 ${projectRepos.some((repo) => fetchingRepos.has(repo.id)) ? 'animate-spin' : ''}`}
+                      />
                     </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate({
-                          to: '/cross-repo-codebase-health/$projectId',
-                          params: { projectId: project.id },
-                        });
-                      }}
-                      className="p-1 hover:bg-orange-50 dark:hover:bg-orange-900/20 text-gray-400 hover:text-orange-500 rounded transition-all"
-                      title="View Cross-Repo Codebase Health"
-                    >
-                      <Heart className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate({
-                          to: '/cross-repo-repository-evolution/$projectId',
-                          params: { projectId: project.id },
-                        });
-                      }}
-                      className="p-1 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-400 hover:text-purple-500 rounded transition-all"
-                      title="View Cross-Repo Repository Evolution"
-                    >
-                      <TrendingUp className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate({
-                          to: '/cross-repo-risk-analytics/$projectId',
-                          params: { projectId: project.id },
-                        });
-                      }}
-                      className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 rounded transition-all"
-                      title="View Cross-Repo Risk Analytics"
-                    >
-                      <Shield className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate({
-                          to: '/cross-repo-technical-debt-indicators/$projectId',
-                          params: { projectId: project.id },
-                        });
-                      }}
-                      className="p-1 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 text-gray-400 hover:text-yellow-500 rounded transition-all"
-                      title="View Cross-Repo Technical Debt Indicators"
-                    >
-                      <Wrench className="w-3 h-3" />
-                    </button>
+                    {projectRepos.length > 1 && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate({
+                              to: '/cross-repo-analytics/$projectId',
+                              params: { projectId: project.id },
+                            });
+                          }}
+                          className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 rounded transition-all"
+                          title="View Cross-Repo Portfolio Analytics"
+                        >
+                          <BarChart3 className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate({
+                              to: '/cross-repo-codebase-health/$projectId',
+                              params: { projectId: project.id },
+                            });
+                          }}
+                          className="p-1 hover:bg-orange-50 dark:hover:bg-orange-900/20 text-gray-400 hover:text-orange-500 rounded transition-all"
+                          title="View Cross-Repo Codebase Health"
+                        >
+                          <Heart className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate({
+                              to: '/cross-repo-repository-evolution/$projectId',
+                              params: { projectId: project.id },
+                            });
+                          }}
+                          className="p-1 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-400 hover:text-purple-500 rounded transition-all"
+                          title="View Cross-Repo Repository Evolution"
+                        >
+                          <TrendingUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate({
+                              to: '/cross-repo-risk-analytics/$projectId',
+                              params: { projectId: project.id },
+                            });
+                          }}
+                          className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 rounded transition-all"
+                          title="View Cross-Repo Risk Analytics"
+                        >
+                          <Shield className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate({
+                              to: '/cross-repo-technical-debt-indicators/$projectId',
+                              params: { projectId: project.id },
+                            });
+                          }}
+                          className="p-1 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 text-gray-400 hover:text-yellow-500 rounded transition-all"
+                          title="View Cross-Repo Technical Debt Indicators"
+                        >
+                          <Wrench className="w-3 h-3" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -355,6 +496,7 @@ export function ProjectsSidebar({
                 <div className="ml-6 mt-1 space-y-1">
                   {projectRepos.map((repo) => {
                     const isSelected = currentRepoId === repo.id;
+                    const isFetching = fetchingRepos.has(repo.id);
                     return (
                       <div
                         key={repo.id}
@@ -373,16 +515,26 @@ export function ProjectsSidebar({
                           />
                           <span className="text-sm font-medium truncate">{repo.name}</span>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteRepositoryDialog({ open: true, repositoryId: repo.id });
-                          }}
-                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded transition-all"
-                          title="Remove Repository"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => handleFetchRepositoryChanges(e, repo.id, repo.name)}
+                            disabled={isFetching}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 rounded transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Fetch Latest Changes"
+                          >
+                            <RefreshCw className={`w-3 h-3 ${isFetching ? 'animate-spin' : ''}`} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteRepositoryDialog({ open: true, repositoryId: repo.id });
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 rounded transition-all"
+                            title="Remove Repository"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}

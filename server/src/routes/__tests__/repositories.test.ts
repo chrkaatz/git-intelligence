@@ -6,6 +6,8 @@ import * as repositoriesDb from '../../db/repositories';
 import * as projectsDb from '../../db/projects';
 import { createTestDb } from '../../db/__tests__/helpers';
 import { getDb, resetDb } from '../../db/database';
+import fs from 'fs';
+import simpleGit from 'simple-git';
 
 // Mock the database module
 vi.mock('../../db/database', async () => {
@@ -16,7 +18,27 @@ vi.mock('../../db/database', async () => {
   };
 });
 
+// Mock fs module
+vi.mock('fs', () => ({
+  default: {
+    existsSync: vi.fn(),
+    statSync: vi.fn(),
+  },
+}));
+
+// Mock simple-git
+vi.mock('simple-git', () => ({
+  default: vi.fn(),
+}));
+
+// Mock cache module
+vi.mock('../../db/cache', () => ({
+  clearCache: vi.fn(),
+}));
+
 const mockGetDb = vi.mocked(getDb);
+const mockFs = vi.mocked(fs);
+const mockSimpleGit = vi.mocked(simpleGit);
 
 const app = express();
 app.use(express.json());
@@ -184,6 +206,170 @@ describe('Repositories Routes', () => {
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({ error: 'Failed to remove repository' });
+    });
+  });
+
+  describe('POST /repositories/:id/fetch', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('should return 404 when repository not found', async () => {
+      const response = await request(app).post('/repositories/non-existent/fetch');
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ error: 'Repository not found' });
+    });
+
+    it('should return 400 when repository path does not exist', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      mockFs.existsSync.mockReturnValue(false);
+
+      const response = await request(app).post(`/repositories/${repo.id}/fetch`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Repository path does not exist');
+      expect(response.body.path).toBe('/path/to/repo');
+    });
+
+    it('should return 400 when repository path is not a directory', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.statSync.mockReturnValue({ isDirectory: () => false } as any);
+
+      const response = await request(app).post(`/repositories/${repo.id}/fetch`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Repository path is not a directory');
+    });
+
+    it('should return 400 when path is not a valid Git repository', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.statSync.mockReturnValue({ isDirectory: () => true } as any);
+
+      const mockGit = {
+        checkIsRepo: vi.fn().mockResolvedValue(false),
+      };
+      mockSimpleGit.mockReturnValue(mockGit as any);
+
+      const response = await request(app).post(`/repositories/${repo.id}/fetch`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Path is not a valid Git repository');
+    });
+
+    it('should successfully fetch repository with changes', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.statSync.mockReturnValue({ isDirectory: () => true } as any);
+
+      const mockGit = {
+        checkIsRepo: vi.fn().mockResolvedValue(true),
+        revparse: vi
+          .fn()
+          .mockResolvedValueOnce('abc123')
+          .mockResolvedValueOnce('main')
+          .mockResolvedValueOnce('def456'),
+        fetch: vi.fn().mockResolvedValue(undefined),
+        pull: vi.fn().mockResolvedValue({
+          summary: { changes: 5, insertions: 10, deletions: 3 },
+        }),
+      };
+      mockSimpleGit.mockReturnValue(mockGit as any);
+
+      const response = await request(app).post(`/repositories/${repo.id}/fetch`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.changes.hasChanges).toBe(true);
+      expect(response.body.changes.fetched).toBe(true);
+      expect(response.body.changes.pulled).toBe(true);
+      expect(response.body.changes.beforeHash).toBe('abc123');
+      expect(response.body.changes.afterHash).toBe('def456');
+    });
+
+    it('should successfully fetch repository without changes', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.statSync.mockReturnValue({ isDirectory: () => true } as any);
+
+      const mockGit = {
+        checkIsRepo: vi.fn().mockResolvedValue(true),
+        revparse: vi
+          .fn()
+          .mockResolvedValueOnce('abc123')
+          .mockResolvedValueOnce('main')
+          .mockResolvedValueOnce('abc123'),
+        fetch: vi.fn().mockResolvedValue(undefined),
+        pull: vi.fn().mockResolvedValue({
+          summary: { changes: 0, insertions: 0, deletions: 0 },
+        }),
+      };
+      mockSimpleGit.mockReturnValue(mockGit as any);
+
+      const response = await request(app).post(`/repositories/${repo.id}/fetch`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.changes.hasChanges).toBe(false);
+      expect(response.body.message).toContain('up to date');
+    });
+
+    it('should handle pull errors gracefully', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.statSync.mockReturnValue({ isDirectory: () => true } as any);
+
+      const mockGit = {
+        checkIsRepo: vi.fn().mockResolvedValue(true),
+        revparse: vi
+          .fn()
+          .mockResolvedValueOnce('abc123')
+          .mockResolvedValueOnce('main')
+          .mockResolvedValueOnce('abc123'),
+        fetch: vi.fn().mockResolvedValue(undefined),
+        pull: vi.fn().mockRejectedValue(new Error('No upstream branch configured')),
+      };
+      mockSimpleGit.mockReturnValue(mockGit as any);
+
+      const response = await request(app).post(`/repositories/${repo.id}/fetch`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.pullError).toContain('No upstream branch configured');
+    });
+
+    it('should handle git errors', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.statSync.mockReturnValue({ isDirectory: () => true } as any);
+
+      const mockGit = {
+        checkIsRepo: vi.fn().mockResolvedValue(true),
+        revparse: vi.fn().mockRejectedValue(new Error('Git command failed')),
+      };
+      mockSimpleGit.mockReturnValue(mockGit as any);
+
+      const response = await request(app).post(`/repositories/${repo.id}/fetch`);
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Failed to fetch repository changes');
+      expect(response.body.details).toContain('Git command failed');
     });
   });
 });

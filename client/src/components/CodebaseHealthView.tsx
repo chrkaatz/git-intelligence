@@ -5,7 +5,7 @@ import { getCodebaseHealth, type CodebaseHealth as CodebaseHealthType } from '..
 import { Loader2, AlertCircle } from 'lucide-react';
 import { RecalculateButton } from './common/RecalculateButton';
 import { useNotifications } from '../context/NotificationContext';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 
 export function CodebaseHealthView() {
   const params = useParams({ strict: false }) as { repoId?: string };

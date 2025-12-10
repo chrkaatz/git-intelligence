@@ -15,6 +15,7 @@ This document provides essential context and guidelines for AI assistants workin
 - **Growth Tracking**: Lines of Code (LOC) history over time
 - **Multi-Project Support**: Manage projects containing multiple Git repositories
 - **Repository Upload**: Upload ZIP archives of Git repositories for analysis
+- **Repository Sync**: Fetch latest changes from local Git repositories with automatic cache invalidation
 - **Developer Analytics**: Detailed contributor metrics including activity patterns, churn, fix/revert ratios, and longitudinal patterns
 - **Codebase Health**: Hotspots, change coupling, stability, and complexity analysis
 - **Repository Evolution**: Commit frequency, releases, growth curves, change bursts, and churn metrics
@@ -196,28 +197,24 @@ src/
 ### Frontend Patterns
 
 1. **Component Structure**
-
    - Functional components with TypeScript
    - Props interfaces defined inline or imported from `api.ts`
    - React.FC type annotation for components
    - Icons from `lucide-react` library
 
 2. **Styling Approach**
-
    - Tailwind CSS utility classes
    - Dark mode support via `dark:` prefix
    - Responsive design with `md:`, `lg:`, `xl:` breakpoints
    - Consistent color scheme: blue (primary), gray (neutral), indigo (brand)
 
 3. **API Communication**
-
    - Centralized API client in `api.ts` using Axios
    - Base URL: `http://localhost:3001`
    - All API functions return typed Promises
    - Error handling in components via try/catch
 
 4. **State Management**
-
    - **Global State**: React Context API
      - `AppContext`: Manages projects and repositories list, loading states, and CRUD operations
      - `NotificationContext`: Manages toast notifications (info, success, error, loading)
@@ -246,7 +243,6 @@ src/
 ### Backend Patterns
 
 1. **API Routes** (`server/src/index.ts`)
-
    - **Projects**:
      - `GET /projects` - List all projects
      - `GET /projects/:id` - Get project by ID
@@ -257,6 +253,7 @@ src/
      - `GET /repositories` - List repositories (optional `?projectId=<id>` filter)
      - `GET /repositories/:id` - Get repository by ID
      - `POST /repositories` - Add repository (requires projectId, path, optional name, replace flag)
+     - `POST /repositories/:id/fetch` - Fetch latest changes from remote (local repos only)
      - `DELETE /repositories/:id` - Remove repository
    - **Upload**:
      - `POST /upload` - Upload ZIP archive (multipart/form-data, requires projectId)
@@ -276,7 +273,6 @@ src/
      - `POST /cache/clear` - Clear analysis cache (optional `path` in body)
 
 2. **Git Analysis** (`server/src/git/`)
-
    - Modular structure with separate files for each analysis type
    - Uses `simple-git` for Git operations
    - **stats.ts**: Basic statistics (commits, authors, activity, extensions, LOC)
@@ -290,7 +286,6 @@ src/
    - Returns normalized data structures matching TypeScript interfaces
 
 3. **Data Persistence** (`server/src/db/`)
-
    - **LowDB** (JSON file-based database) with schema versioning
    - **database.ts**: Database initialization, migrations, schema management
    - **projects.ts**: Project CRUD operations (UUID-based IDs)
@@ -315,7 +310,6 @@ src/
 ### Routing Patterns
 
 1. **TanStack Router File-Based Routing**
-
    - Routes defined as files in `client/src/routes/`
    - Route parameters use `$` prefix (e.g., `$repoPath`, `$projectId`)
    - Root route (`__root.tsx`) provides layout and context providers
@@ -323,7 +317,6 @@ src/
    - Navigation via `Link` component or `useNavigate()` hook
 
 2. **Route Structure**
-
    - **Index routes**: `/` (home/landing)
    - **Projects**: `/projects` (project management)
    - **Repository routes**: Use `$repoPath` parameter (URL-encoded repository path)
@@ -344,14 +337,12 @@ src/
 The application provides comprehensive Git repository analytics:
 
 1. **Basic Statistics** (`/stats`)
-
    - Total commits, authors, files
    - Activity patterns (hour, day, month, year)
    - File extension distribution
    - Lines of Code (LOC) history
 
 2. **Developer Analytics** (`/developer-analytics`)
-
    - Extended contributor metrics (lines added/removed, net lines)
    - Activity time windows (hour of day, day of week)
    - Signed commits percentage
@@ -363,14 +354,12 @@ The application provides comprehensive Git repository analytics:
      - Dormancy detection (inactive contributors)
 
 3. **Codebase Health** (`/codebase-health`)
-
    - **Hotspots**: Most frequently changed files and directories
    - **Change Coupling**: Files that change together
    - **Stability**: File age and change frequency analysis
    - **Complexity**: Average diff sizes, largest diffs, most rewritten files
 
 4. **Repository Evolution** (`/repository-evolution`)
-
    - Commit frequency over time
    - Release information (tags, dates)
    - Growth curve (LOC and files over time)
@@ -378,13 +367,11 @@ The application provides comprehensive Git repository analytics:
    - Churn metrics (additions, deletions, net change)
 
 5. **Bus Factor & Ownership** (`/bus-factor-and-ownership`)
-
    - **Single Maintainer Risk**: Files/repos with one primary contributor
    - **Fragmentation**: Files with too many contributors
    - **Owner Churn**: Files that changed primary maintainer
 
 6. **Social Network Analysis** (`/social-network-analysis`)
-
    - **Collaboration Graph**: Network of contributors and their collaborations
    - **Knowledge Silos**: Files with limited contributor access
    - **Orphaned Code**: Files with no recent activity
@@ -418,14 +405,12 @@ The application provides comprehensive Git repository analytics:
 ### Project Management Flow
 
 1. **Creating Project**:
-
    - User navigates to `/projects` route
    - User creates project via form (name, optional description)
    - `POST /projects` creates project in database
    - `AppContext` refreshes projects list
 
 2. **Adding Repository (Upload)**:
-
    - User selects project and ZIP file
    - FormData sent to `/upload` endpoint with `projectId`
    - Backend extracts ZIP, finds Git repo root
@@ -433,20 +418,31 @@ The application provides comprehensive Git repository analytics:
    - `AppContext` refreshes repositories list
 
 3. **Adding Repository (Path)**:
-
    - User provides repository path
    - `POST /repositories` with `projectId` and `path`
    - Repository added to database
    - `AppContext` refreshes repositories list
 
-4. **Removing Project**:
+4. **Fetching Repository Changes**:
+   - User clicks refresh button on individual repository or "Fetch All" on project
+   - `POST /repositories/:id/fetch` fetches and pulls latest changes
+   - Backend performs:
+     - Validates repository path exists and is a valid Git repository
+     - Runs `git fetch --all --prune` to fetch from all remotes
+     - Attempts `git pull` for current branch (if upstream is configured)
+     - Compares commit hashes before and after to detect changes
+     - Clears analysis cache if changes were detected
+   - Frontend displays success/info notification with fetch results
+   - For "Fetch All": Sequentially fetches all repositories in project and shows summary
+   - Cache is automatically cleared for repositories with changes, ensuring fresh analytics
 
+5. **Removing Project**:
    - User clicks delete button
    - `DELETE /projects/:id` removes project
    - All associated repositories are also removed (cascade delete)
    - `AppContext` refreshes data
 
-5. **Removing Repository**:
+6. **Removing Repository**:
    - User clicks delete button
    - `DELETE /repositories/:id` removes repository
    - `AppContext` refreshes repositories list

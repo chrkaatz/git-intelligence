@@ -8,7 +8,7 @@ import {
 } from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 import { RecalculateButton } from './common/RecalculateButton';
 
 export function DeveloperAnalyticsView() {
