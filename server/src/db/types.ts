@@ -73,6 +73,14 @@ export interface CachedSocialNetworkAnalysis {
   latestCommitHash?: string; // Latest commit hash when cached
 }
 
+export interface OllamaSettings {
+  enabled: boolean; // Whether Ollama integration is enabled
+  host: string; // Ollama host (default: 'localhost')
+  port: number; // Ollama port (default: 11434)
+  model: string; // Model name (e.g., 'llama3', 'mistral', 'codellama')
+  timeout?: number; // Request timeout in ms (default: 30000)
+}
+
 export interface DatabaseSchema {
   projects: Project[];
   repositories: Repository[];
@@ -84,5 +92,6 @@ export interface DatabaseSchema {
   busFactorCache?: Record<string, CachedBusFactorAndOwnership>; // keyed by repository path
   repositoryEvolutionCache?: Record<string, CachedRepositoryEvolution>; // keyed by repository path
   socialNetworkAnalysisCache?: Record<string, CachedSocialNetworkAnalysis>; // keyed by repository path
+  ollamaSettings?: OllamaSettings; // Ollama configuration settings
   schemaVersion?: number; // Track schema version for migrations
 }

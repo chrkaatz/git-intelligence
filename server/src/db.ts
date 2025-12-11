@@ -5,6 +5,7 @@ export type {
   CachedStats,
   CachedCodebaseHealth,
   DatabaseSchema,
+  OllamaSettings,
 } from './db/types.js';
 
 export {
@@ -43,3 +44,5 @@ export {
   getCachedSocialNetworkAnalysis,
   setCachedSocialNetworkAnalysis,
 } from './db/cache.js';
+
+export { getOllamaSettings, updateOllamaSettings } from './db/settings.js';

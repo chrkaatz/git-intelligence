@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { Low } from 'lowdb';
 import { Memory } from 'lowdb';
-import { getDb, resetDb, migrateToSchemaV2, defaultData } from '../database';
+import { getDb, resetDb, migrateToSchemaV2, migrateToSchemaV5, defaultData } from '../database';
 import type { DatabaseSchema } from '../types';
 
 // Mock fs module
@@ -208,6 +208,57 @@ describe('database', () => {
       await migrateToSchemaV2(db);
 
       expect(db.data.schemaVersion).toBe(2);
+    });
+  });
+
+  describe('migrateToSchemaV5', () => {
+    it('should add Ollama settings to database', async () => {
+      const MemoryAdapter = Memory;
+      const adapter = new MemoryAdapter<DatabaseSchema>();
+      const db = new Low(adapter, {
+        projects: [],
+        repositories: [],
+        analysisCache: {},
+        codebaseHealthCache: {},
+        schemaVersion: 4,
+      });
+
+      await migrateToSchemaV5(db);
+
+      expect(db.data.schemaVersion).toBe(5);
+      expect(db.data.ollamaSettings).toBeDefined();
+      expect(db.data.ollamaSettings).toEqual({
+        enabled: false,
+        host: 'localhost',
+        port: 11434,
+        model: 'llama3',
+        timeout: 30000,
+      });
+    });
+
+    it('should preserve existing Ollama settings if they exist', async () => {
+      const MemoryAdapter = Memory;
+      const adapter = new MemoryAdapter<DatabaseSchema>();
+      const existingSettings = {
+        enabled: true,
+        host: '192.168.1.100',
+        port: 11435,
+        model: 'mistral',
+        timeout: 60000,
+      };
+      const db = new Low(adapter, {
+        projects: [],
+        repositories: [],
+        analysisCache: {},
+        codebaseHealthCache: {},
+        ollamaSettings: existingSettings,
+        schemaVersion: 4,
+      });
+
+      await migrateToSchemaV5(db);
+
+      expect(db.data.schemaVersion).toBe(5);
+      expect(db.data.ollamaSettings).toEqual(existingSettings);
     });
   });
 

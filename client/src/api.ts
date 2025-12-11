@@ -986,3 +986,36 @@ export const clearCache = async (repoId?: string): Promise<{ message: string }> 
   const response = await api.post('/cache/clear', { repoId });
   return response.data;
 };
+
+// Ollama Settings API
+export interface OllamaSettings {
+  enabled: boolean;
+  host: string;
+  port: number;
+  model: string;
+  timeout?: number;
+}
+
+export interface OllamaTestResult {
+  success: boolean;
+  message?: string;
+}
+
+export const getOllamaSettings = async (): Promise<OllamaSettings> => {
+  const response = await api.get('/settings/ollama');
+  return response.data;
+};
+
+export const updateOllamaSettings = async (
+  settings: Partial<OllamaSettings>
+): Promise<OllamaSettings> => {
+  const response = await api.put('/settings/ollama', settings);
+  return response.data;
+};
+
+export const testOllamaConnection = async (
+  settings?: Partial<OllamaSettings>
+): Promise<OllamaTestResult> => {
+  const response = await api.post('/settings/ollama/test', settings || {});
+  return response.data;
+};

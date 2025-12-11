@@ -5,6 +5,7 @@ import repositoriesRouter from './routes/repositories.js';
 import uploadRouter from './routes/upload.js';
 import analyticsRouter from './routes/analytics.js';
 import cacheRouter from './routes/cache.js';
+import settingsRouter from './routes/settings.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -19,6 +20,7 @@ app.use('/projects', projectsRouter);
 app.use('/repositories', repositoriesRouter);
 app.use('/upload', uploadRouter);
 app.use('/cache', cacheRouter);
+app.use('/settings', settingsRouter);
 app.use('/', analyticsRouter);
 
 // Error handling middleware

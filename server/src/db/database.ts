@@ -3,9 +3,18 @@ import { JSONFile } from 'lowdb/node';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
-import type { DatabaseSchema, Project, Repository } from './types.js';
+import type { DatabaseSchema, Project, Repository, OllamaSettings } from './types.js';
 
 const DB_FILE = path.join(process.cwd(), 'db.json');
+
+// Default Ollama settings
+const defaultOllamaSettings: OllamaSettings = {
+  enabled: false,
+  host: 'localhost',
+  port: 11434,
+  model: 'llama3',
+  timeout: 30000,
+};
 
 // Default data structure
 export const defaultData: DatabaseSchema = {
@@ -19,7 +28,8 @@ export const defaultData: DatabaseSchema = {
   busFactorCache: {},
   repositoryEvolutionCache: {},
   socialNetworkAnalysisCache: {},
-  schemaVersion: 4, // Current schema version
+  ollamaSettings: defaultOllamaSettings,
+  schemaVersion: 5, // Current schema version
 };
 
 // Initialize database
@@ -64,6 +74,7 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
           busFactorCache: {},
           repositoryEvolutionCache: {},
           socialNetworkAnalysisCache: {},
+          ollamaSettings: defaultOllamaSettings,
           schemaVersion: 2,
         };
         fs.writeFileSync(DB_FILE, JSON.stringify(migratedData, null, 2));
@@ -100,6 +111,11 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
   // Migrate to schema version 4 (add order field to repositories)
   if (!db.data.schemaVersion || db.data.schemaVersion < 4) {
     await migrateToSchemaV4(db);
+  }
+
+  // Migrate to schema version 5 (add Ollama settings)
+  if (!db.data.schemaVersion || db.data.schemaVersion < 5) {
+    await migrateToSchemaV5(db);
   }
 
   if (!db.data.projects) {
@@ -140,6 +156,11 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
 
   if (!db.data.socialNetworkAnalysisCache) {
     db.data.socialNetworkAnalysisCache = {};
+  }
+
+  if (!db.data.ollamaSettings) {
+    db.data.ollamaSettings = defaultOllamaSettings;
+    await db.write();
   }
 
   return db;
@@ -240,6 +261,20 @@ export async function migrateToSchemaV4(db: Low<DatabaseSchema>): Promise<void> 
     db.data.schemaVersion = 4;
     await db.write();
   }
+}
+
+// Migration function to add Ollama settings
+export async function migrateToSchemaV5(db: Low<DatabaseSchema>): Promise<void> {
+  console.log('Migrating database to schema version 5 (adding Ollama settings)...');
+
+  // Initialize Ollama settings with defaults if they don't exist
+  if (!db.data.ollamaSettings) {
+    db.data.ollamaSettings = defaultOllamaSettings;
+  }
+
+  db.data.schemaVersion = 5;
+  await db.write();
+  console.log('Added Ollama settings to database');
 }
 
 // Reset database instance (useful for testing)
