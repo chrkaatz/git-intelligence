@@ -786,3 +786,20 @@ export async function setCachedAIInsights(
   };
   await database.write();
 }
+
+/**
+ * Clear cached AI insights for a repository and analysis type
+ * @param repoPath Repository path
+ * @param analysisType Analysis type (e.g., 'codebase-health', 'developer-analytics')
+ */
+export async function clearCachedAIInsights(repoPath: string, analysisType: string): Promise<void> {
+  const database = await getDb();
+  if (!database.data.aiInsightsCache) {
+    return;
+  }
+  const cacheKey = `${repoPath}:${analysisType}`;
+  if (database.data.aiInsightsCache[cacheKey]) {
+    delete database.data.aiInsightsCache[cacheKey];
+    await database.write();
+  }
+}

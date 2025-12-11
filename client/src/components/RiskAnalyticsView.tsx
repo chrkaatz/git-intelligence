@@ -1,11 +1,16 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { RiskAnalytics as RiskAnalyticsComponent } from './RiskAnalytics';
-import { getRiskAnalytics, type RiskAnalytics as RiskAnalyticsType } from '../api';
+import {
+  getRiskAnalytics,
+  getOllamaSettings,
+  type RiskAnalytics as RiskAnalyticsType,
+} from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { RecalculateButton } from './common/RecalculateButton';
 import { useNotifications } from '../context/NotificationContext';
 import { useApp } from '../hooks/useApp';
+import { AIInsightsPanel } from './AIInsightsPanel';
 
 export function RiskAnalyticsView() {
   const params = useParams({ strict: false }) as { repoId?: string };
@@ -14,9 +19,13 @@ export function RiskAnalyticsView() {
   const [riskAnalytics, setRiskAnalytics] = useState<RiskAnalyticsType | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
+  const [ollamaEnabled, setOllamaEnabled] = useState(false);
   const { showNotification, removeNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
+  const isFetchingAIInsightsRef = useRef(false);
 
   // Get repository name from ID
   const repository = repoId ? repositories.find((r) => r.id === repoId) : null;
@@ -78,9 +87,72 @@ export function RiskAnalyticsView() {
     [repoId, showNotification, removeNotification]
   );
 
+  const fetchAIInsights = useCallback(async () => {
+    if (!repoId || !riskAnalytics) {
+      return;
+    }
+
+    // Check if Ollama is enabled first
+    try {
+      const settings = await getOllamaSettings();
+      if (!settings.enabled) {
+        setOllamaEnabled(false);
+        return;
+      }
+      setOllamaEnabled(true);
+    } catch {
+      // If we can't get settings, assume disabled
+      setOllamaEnabled(false);
+      return;
+    }
+
+    // Prevent duplicate fetches
+    if (isFetchingAIInsightsRef.current) {
+      return;
+    }
+
+    isFetchingAIInsightsRef.current = true;
+    setAiInsightsLoading(true);
+    setAiInsightsError(null);
+
+    try {
+      const data = await getRiskAnalytics(repoId, false, true);
+      setRiskAnalytics(data);
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+          ?.error ||
+        (err as { message?: string })?.message ||
+        'Failed to generate AI insights';
+      setAiInsightsError(errorMessage);
+    } finally {
+      setAiInsightsLoading(false);
+      isFetchingAIInsightsRef.current = false;
+    }
+  }, [repoId, riskAnalytics]);
+
   useEffect(() => {
     fetchAnalytics(false);
   }, [fetchAnalytics]);
+
+  // Check Ollama settings when analytics are loaded (but don't auto-fetch insights)
+  useEffect(() => {
+    const checkOllama = async () => {
+      if (!riskAnalytics) {
+        return;
+      }
+
+      // Check if Ollama is enabled
+      try {
+        const settings = await getOllamaSettings();
+        setOllamaEnabled(settings.enabled);
+      } catch {
+        setOllamaEnabled(false);
+      }
+    };
+
+    checkOllama();
+  }, [riskAnalytics]);
 
   return (
     <>
@@ -106,11 +178,22 @@ export function RiskAnalyticsView() {
           {error}
         </div>
       ) : riskAnalytics ? (
-        <RiskAnalyticsComponent
-          highRiskHotspots={riskAnalytics.highRiskHotspots}
-          temporalCouplingHotspots={riskAnalytics.temporalCouplingHotspots}
-          riskyFileTrends={riskAnalytics.riskyFileTrends}
-        />
+        <>
+          <AIInsightsPanel
+            insights={riskAnalytics.aiInsights}
+            loading={aiInsightsLoading}
+            error={aiInsightsError}
+            onRefresh={fetchAIInsights}
+            onGenerate={fetchAIInsights}
+            title="AI Insights - Risk Analytics"
+            ollamaEnabled={ollamaEnabled}
+          />
+          <RiskAnalyticsComponent
+            highRiskHotspots={riskAnalytics.highRiskHotspots}
+            temporalCouplingHotspots={riskAnalytics.temporalCouplingHotspots}
+            riskyFileTrends={riskAnalytics.riskyFileTrends}
+          />
+        </>
       ) : (
         <div className="text-center py-12 text-gray-500">
           No repository selected. Select a repository from the list to view risk analytics.

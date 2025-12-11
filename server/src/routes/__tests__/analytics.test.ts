@@ -861,7 +861,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockSNA);
-      expect(mockGetSocialNetworkAnalysis).toHaveBeenCalledWith('/path/to/repo', true);
+      expect(mockGetSocialNetworkAnalysis).toHaveBeenCalledWith('/path/to/repo', true, undefined);
     });
 
     it('should bypass cache when refresh=true', async () => {
@@ -885,7 +885,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockSNA);
-      expect(mockGetSocialNetworkAnalysis).toHaveBeenCalledWith('/path/to/repo', false);
+      expect(mockGetSocialNetworkAnalysis).toHaveBeenCalledWith('/path/to/repo', false, undefined);
     });
 
     it('should return 400 when repoId is missing', async () => {

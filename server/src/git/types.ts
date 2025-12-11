@@ -434,6 +434,7 @@ export interface SocialNetworkAnalysis {
   collaborationGraph: CollaborationGraph;
   knowledgeSilos: KnowledgeSilo[];
   orphanedCode: OrphanedCode[];
+  aiInsights?: string;
 }
 
 export interface CrossRepoCollaboration {
@@ -493,6 +494,7 @@ export interface RiskAnalytics {
   highRiskHotspots: HighRiskHotspot[];
   temporalCouplingHotspots: TemporalCouplingHotspot[];
   riskyFileTrends: RiskyFileTrend[];
+  aiInsights?: string;
 }
 
 export interface CrossRepoRiskAnalytics {
@@ -638,6 +640,7 @@ export interface TechnicalDebtIndicators {
     cicdAutomationFiles: string[];
     riskLevel: 'low' | 'medium' | 'high';
   };
+  aiInsights?: string;
 }
 
 export interface CrossRepoTechnicalDebtIndicators {

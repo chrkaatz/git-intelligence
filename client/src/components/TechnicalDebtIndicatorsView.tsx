@@ -3,12 +3,15 @@ import { useParams } from '@tanstack/react-router';
 import { TechnicalDebtIndicators as TechnicalDebtIndicatorsComponent } from './TechnicalDebtIndicators';
 import {
   getTechnicalDebtIndicatorsStatus,
+  getTechnicalDebtIndicators,
+  getOllamaSettings,
   type TechnicalDebtIndicators as TechnicalDebtIndicatorsType,
 } from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { RecalculateButton } from './common/RecalculateButton';
 import { useNotifications } from '../context/NotificationContext';
 import { useApp } from '../hooks/useApp';
+import { AIInsightsPanel } from './AIInsightsPanel';
 
 export function TechnicalDebtIndicatorsView() {
   const params = useParams({ strict: false }) as { repoId?: string };
@@ -18,10 +21,14 @@ export function TechnicalDebtIndicatorsView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ progress: number; step?: string } | null>(null);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
+  const [ollamaEnabled, setOllamaEnabled] = useState(false);
   const { showNotification, removeNotification, updateNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isFetchingAIInsightsRef = useRef(false);
 
   // Get repository name from ID
   const repository = repoId ? repositories.find((r) => r.id === repoId) : null;
@@ -181,6 +188,50 @@ export function TechnicalDebtIndicatorsView() {
     [repoId, showNotification, removeNotification, updateNotification]
   );
 
+  const fetchAIInsights = useCallback(async () => {
+    if (!repoId || !indicators) {
+      return;
+    }
+
+    // Check if Ollama is enabled first
+    try {
+      const settings = await getOllamaSettings();
+      if (!settings.enabled) {
+        setOllamaEnabled(false);
+        return;
+      }
+      setOllamaEnabled(true);
+    } catch {
+      // If we can't get settings, assume disabled
+      setOllamaEnabled(false);
+      return;
+    }
+
+    // Prevent duplicate fetches
+    if (isFetchingAIInsightsRef.current) {
+      return;
+    }
+
+    isFetchingAIInsightsRef.current = true;
+    setAiInsightsLoading(true);
+    setAiInsightsError(null);
+
+    try {
+      const data = await getTechnicalDebtIndicators(repoId, false, true);
+      setIndicators(data);
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+          ?.error ||
+        (err as { message?: string })?.message ||
+        'Failed to generate AI insights';
+      setAiInsightsError(errorMessage);
+    } finally {
+      setAiInsightsLoading(false);
+      isFetchingAIInsightsRef.current = false;
+    }
+  }, [repoId, indicators]);
+
   // Cleanup polling on unmount
   useEffect(() => {
     return () => {
@@ -197,6 +248,25 @@ export function TechnicalDebtIndicatorsView() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [repoId]); // Only depend on repoId, not fetchIndicators to avoid re-fetching
+
+  // Check Ollama settings when indicators are loaded (but don't auto-fetch insights)
+  useEffect(() => {
+    const checkOllama = async () => {
+      if (!indicators) {
+        return;
+      }
+
+      // Check if Ollama is enabled
+      try {
+        const settings = await getOllamaSettings();
+        setOllamaEnabled(settings.enabled);
+      } catch {
+        setOllamaEnabled(false);
+      }
+    };
+
+    checkOllama();
+  }, [indicators]);
 
   return (
     <>
@@ -236,7 +306,18 @@ export function TechnicalDebtIndicatorsView() {
           {error}
         </div>
       ) : indicators ? (
-        <TechnicalDebtIndicatorsComponent indicators={indicators} />
+        <>
+          <AIInsightsPanel
+            insights={indicators.aiInsights}
+            loading={aiInsightsLoading}
+            error={aiInsightsError}
+            onRefresh={fetchAIInsights}
+            onGenerate={fetchAIInsights}
+            title="AI Insights - Technical Debt Indicators"
+            ollamaEnabled={ollamaEnabled}
+          />
+          <TechnicalDebtIndicatorsComponent indicators={indicators} />
+        </>
       ) : (
         <div className="text-center py-12 text-gray-500">
           No repository selected. Select a repository from the list to view technical debt

@@ -3,12 +3,14 @@ import { useParams } from '@tanstack/react-router';
 import { SocialNetworkAnalysis as SocialNetworkAnalysisComponent } from './SocialNetworkAnalysis';
 import {
   getSocialNetworkAnalysis,
+  getOllamaSettings,
   type SocialNetworkAnalysis as SocialNetworkAnalysisType,
 } from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { RecalculateButton } from './common/RecalculateButton';
 import { useNotifications } from '../context/NotificationContext';
 import { useApp } from '../hooks/useApp';
+import { AIInsightsPanel } from './AIInsightsPanel';
 
 export function SocialNetworkAnalysisView() {
   const params = useParams({ strict: false }) as { repoId?: string };
@@ -17,9 +19,13 @@ export function SocialNetworkAnalysisView() {
   const [analysis, setAnalysis] = useState<SocialNetworkAnalysisType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
+  const [ollamaEnabled, setOllamaEnabled] = useState(false);
   const { showNotification, removeNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
+  const isFetchingAIInsightsRef = useRef(false);
 
   // Get repository name from ID
   const repository = repoId ? repositories.find((r) => r.id === repoId) : null;
@@ -73,9 +79,72 @@ export function SocialNetworkAnalysisView() {
     [repoId, showNotification, removeNotification]
   );
 
+  const fetchAIInsights = useCallback(async () => {
+    if (!repoId || !analysis) {
+      return;
+    }
+
+    // Check if Ollama is enabled first
+    try {
+      const settings = await getOllamaSettings();
+      if (!settings.enabled) {
+        setOllamaEnabled(false);
+        return;
+      }
+      setOllamaEnabled(true);
+    } catch {
+      // If we can't get settings, assume disabled
+      setOllamaEnabled(false);
+      return;
+    }
+
+    // Prevent duplicate fetches
+    if (isFetchingAIInsightsRef.current) {
+      return;
+    }
+
+    isFetchingAIInsightsRef.current = true;
+    setAiInsightsLoading(true);
+    setAiInsightsError(null);
+
+    try {
+      const data = await getSocialNetworkAnalysis(repoId, false, true);
+      setAnalysis(data);
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+          ?.error ||
+        (err as { message?: string })?.message ||
+        'Failed to generate AI insights';
+      setAiInsightsError(errorMessage);
+    } finally {
+      setAiInsightsLoading(false);
+      isFetchingAIInsightsRef.current = false;
+    }
+  }, [repoId, analysis]);
+
   useEffect(() => {
     fetchAnalysis(false);
   }, [fetchAnalysis]);
+
+  // Check Ollama settings when analysis is loaded (but don't auto-fetch insights)
+  useEffect(() => {
+    const checkOllama = async () => {
+      if (!analysis) {
+        return;
+      }
+
+      // Check if Ollama is enabled
+      try {
+        const settings = await getOllamaSettings();
+        setOllamaEnabled(settings.enabled);
+      } catch {
+        setOllamaEnabled(false);
+      }
+    };
+
+    checkOllama();
+  }, [analysis]);
 
   return (
     <>
@@ -101,11 +170,22 @@ export function SocialNetworkAnalysisView() {
           {error}
         </div>
       ) : analysis ? (
-        <SocialNetworkAnalysisComponent
-          collaborationGraph={analysis.collaborationGraph}
-          knowledgeSilos={analysis.knowledgeSilos}
-          orphanedCode={analysis.orphanedCode}
-        />
+        <>
+          <AIInsightsPanel
+            insights={analysis.aiInsights}
+            loading={aiInsightsLoading}
+            error={aiInsightsError}
+            onRefresh={fetchAIInsights}
+            onGenerate={fetchAIInsights}
+            title="AI Insights - Social Network Analysis"
+            ollamaEnabled={ollamaEnabled}
+          />
+          <SocialNetworkAnalysisComponent
+            collaborationGraph={analysis.collaborationGraph}
+            knowledgeSilos={analysis.knowledgeSilos}
+            orphanedCode={analysis.orphanedCode}
+          />
+        </>
       ) : (
         <div className="text-center py-12 text-gray-500">
           No repository selected. Select a repository from the list to view social network analysis.

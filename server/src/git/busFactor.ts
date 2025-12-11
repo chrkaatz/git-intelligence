@@ -5,6 +5,7 @@ import {
   setCachedBusFactorAndOwnership,
   getCachedAIInsights,
   setCachedAIInsights,
+  clearCachedAIInsights,
   getOllamaSettings,
 } from '../db.js';
 import { generateInsights } from '../services/aiAnalysis.js';
@@ -23,6 +24,11 @@ export async function getBusFactorAndOwnership(
   useCache: boolean = true,
   includeAIInsights?: boolean
 ): Promise<BusFactorAndOwnership> {
+  // If recalculating (useCache=false), clear AI insights cache for this analysis type
+  if (!useCache) {
+    await clearCachedAIInsights(repoPath, 'bus-factor');
+  }
+
   // Check cache first
   if (useCache) {
     const cached = await getCachedBusFactorAndOwnership(repoPath); // Uses default 30-day TTL as fallback

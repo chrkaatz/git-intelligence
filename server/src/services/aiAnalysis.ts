@@ -7,6 +7,8 @@ import type {
   RepositoryEvolution,
   BusFactorAndOwnership,
   SocialNetworkAnalysis,
+  RiskAnalytics,
+  TechnicalDebtIndicators,
 } from '../git/types.js';
 
 export type AnalysisType =
@@ -19,7 +21,9 @@ export type AnalysisType =
   | 'commit-messages'
   | 'contributor-behavior'
   | 'technical-debt'
-  | 'risk-assessment';
+  | 'risk-assessment'
+  | 'risk-analytics'
+  | 'technical-debt-indicators';
 
 /**
  * Generate AI insights for a specific analysis type
@@ -98,6 +102,12 @@ Format your response as clear, structured text with bullet points where appropri
 
     case 'technical-debt':
       return buildTechnicalDebtPrompt(data as CodebaseHealth);
+
+    case 'risk-analytics':
+      return buildRiskAnalyticsPrompt(data as RiskAnalytics);
+
+    case 'technical-debt-indicators':
+      return buildTechnicalDebtIndicatorsPrompt(data as TechnicalDebtIndicators);
 
     default:
       return basePrompt;
@@ -445,4 +455,150 @@ Focus specifically on:
 - Specific technical debt items with estimated effort
 
 Provide a prioritized list of technical debt items with actionable refactoring recommendations.`;
+}
+
+/**
+ * Build prompt for risk analytics
+ */
+function buildRiskAnalyticsPrompt(data: RiskAnalytics): string {
+  const topHighRisk = data.highRiskHotspots.slice(0, 10);
+  const topCoupling = data.temporalCouplingHotspots.slice(0, 10);
+  const topTrends = data.riskyFileTrends
+    .filter((t) => t.trendDirection === 'increasing')
+    .slice(0, 10);
+
+  return `You are an expert software engineering analyst. Analyze the following risk analytics to identify high-risk areas and potential issues.
+
+Risk Analytics:
+
+HIGH-RISK HOTSPOTS (Files with High Risk Scores):
+${topHighRisk
+  .map(
+    (h) =>
+      `- ${h.file}: Risk score ${h.riskScore.toFixed(2)}, ${h.churn} commits, ${h.ownershipDiversity} authors, ${h.complexity.toFixed(1)} complexity`
+  )
+  .join('\n')}
+
+TEMPORAL COUPLING HOTSPOTS (Files That Change Together):
+${topCoupling
+  .map(
+    (c) =>
+      `- ${c.file}: ${c.couplingCount} coupled files, ${c.totalCoChanges} total co-changes, risk level: ${c.riskLevel}`
+  )
+  .join('\n')}
+
+RISKY FILE TRENDS (Increasing Risk):
+${topTrends
+  .map(
+    (t) =>
+      `- ${t.file}: Risk score ${t.currentRiskScore.toFixed(2)} (${t.trendPercentage > 0 ? '+' : ''}${t.trendPercentage.toFixed(1)}% trend), ${t.trendDirection}`
+  )
+  .join('\n')}
+
+Please provide:
+1. **Critical Risk Areas**: Files and patterns that pose the highest risk to the project
+2. **Risk Patterns**: Common risk factors and their implications
+3. **Mitigation Strategies**: Specific steps to reduce risk in identified areas
+4. **Priority Recommendations**: Which risks should be addressed first and why
+
+Focus on actionable steps to reduce project risk and improve code stability.`;
+}
+
+/**
+ * Build prompt for technical debt indicators
+ */
+function buildTechnicalDebtIndicatorsPrompt(data: TechnicalDebtIndicators): string {
+  const topCommented = data.commentedOutCode.slice(0, 10);
+  const topHugeCommits = data.hugeCommits.slice(0, 10);
+  const topWip = data.wipCommits.slice(0, 10);
+  const topQuickFix = data.quickFixCommits.slice(0, 10);
+  const topBinary = data.largeBinaryFiles.slice(0, 10);
+  const topVendored = data.vendoredCodeGrowth.slice(0, 10);
+  const topBranches = data.longLivedBranches.slice(0, 10);
+  const topStale = data.dependencyDrift.staleDependencies.slice(0, 10);
+
+  return `You are an expert software engineering analyst. Analyze the following technical debt indicators to identify areas of concern and provide actionable recommendations.
+
+Technical Debt Indicators:
+
+COMMENTED-OUT CODE:
+${topCommented
+  .map(
+    (c) =>
+      `- ${c.file}: ${c.linesCommented} lines commented, ${c.commitDate}, risk level: ${c.riskLevel}`
+  )
+  .join('\n')}
+
+HUGE COMMITS (Large Changes):
+${topHugeCommits
+  .map(
+    (h) =>
+      `- ${h.commitHash.substring(0, 8)}: ${h.filesChanged} files, ${h.totalChanges} total changes (${h.linesAdded} added, ${h.linesRemoved} removed), ${h.author}, risk level: ${h.riskLevel}`
+  )
+  .join('\n')}
+
+WIP COMMITS (Work in Progress):
+${topWip
+  .map(
+    (w) =>
+      `- ${w.commitHash.substring(0, 8)}: ${w.commitDate}, ${w.author}, keywords: ${w.wipKeywords.join(', ')}`
+  )
+  .join('\n')}
+
+QUICK FIX COMMITS:
+${topQuickFix
+  .map(
+    (q) =>
+      `- ${q.commitHash.substring(0, 8)}: ${q.commitDate}, ${q.author}, keywords: ${q.quickFixKeywords.join(', ')}`
+  )
+  .join('\n')}
+
+LARGE BINARY FILES:
+${topBinary
+  .map(
+    (b) =>
+      `- ${b.file}: ${b.sizeMB.toFixed(2)} MB, ${b.fileType}, ${b.commitDate}, risk level: ${b.riskLevel}`
+  )
+  .join('\n')}
+
+VENDORED CODE GROWTH:
+${topVendored
+  .map(
+    (v) =>
+      `- ${v.directory}: ${v.growthPercentage.toFixed(1)}% growth, ${v.filesAdded} files added, risk level: ${v.riskLevel}`
+  )
+  .join('\n')}
+
+LONG-LIVED BRANCHES:
+${topBranches
+  .map(
+    (b) =>
+      `- ${b.branchName}: ${b.daysSinceCreation} days old, ${b.commitCount} commits, ${b.isMerged ? 'merged' : 'unmerged'}, risk level: ${b.riskLevel}`
+  )
+  .join('\n')}
+
+STALE DEPENDENCIES:
+${topStale
+  .map((s) => `- ${s.lockfile}: ${s.daysSinceUpdate} days since update, risk level: ${s.riskLevel}`)
+  .join('\n')}
+
+BRANCH PROLIFERATION:
+- Total branches: ${data.branchProliferation.totalBranches}
+- Active branches: ${data.branchProliferation.activeBranches}
+- Unmerged branches: ${data.branchProliferation.unmergedBranches}
+- Risk level: ${data.branchProliferation.riskLevel}
+
+MISSING AUTOMATION:
+- Dependency automation: ${data.missingAutomation.hasDependencyAutomation ? 'Yes' : 'No'}
+- CI/CD automation: ${data.missingAutomation.hasCicdAutomation ? 'Yes' : 'No'}
+- Risk level: ${data.missingAutomation.riskLevel}
+
+Please provide:
+1. **Technical Debt Assessment**: Overall health and debt level of the codebase
+2. **Priority Debt Items**: Which indicators pose the highest risk and should be addressed first
+3. **Debt Patterns**: Common patterns that indicate systemic issues
+4. **Actionable Recommendations**: Specific steps to reduce technical debt
+5. **Refactoring Roadmap**: Suggested order for addressing different types of debt
+
+Focus on providing a clear, prioritized plan for reducing technical debt.`;
 }

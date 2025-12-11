@@ -5,6 +5,7 @@ import {
   setCachedRepositoryEvolution,
   getCachedAIInsights,
   setCachedAIInsights,
+  clearCachedAIInsights,
   getOllamaSettings,
 } from '../db.js';
 import { generateInsights } from '../services/aiAnalysis.js';
@@ -23,6 +24,11 @@ export async function getRepositoryEvolution(
   useCache: boolean = true,
   includeAIInsights?: boolean
 ): Promise<RepositoryEvolution> {
+  // If recalculating (useCache=false), clear AI insights cache for this analysis type
+  if (!useCache) {
+    await clearCachedAIInsights(repoPath, 'repository-evolution');
+  }
+
   // Check cache first
   if (useCache) {
     const cached = await getCachedRepositoryEvolution(repoPath); // Uses default 30-day TTL as fallback

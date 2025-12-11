@@ -3,6 +3,7 @@ import { ChevronDown, Sparkles, Loader2, AlertCircle, RefreshCw } from 'lucide-r
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useState, useEffect, useRef } from 'react';
 
 interface AIInsightsPanelProps {
   insights?: string;
@@ -23,6 +24,36 @@ export function AIInsightsPanel({
   title = 'AI Insights',
   ollamaEnabled = false,
 }: AIInsightsPanelProps) {
+  // Track if insights/errors were previously available to detect when they become available
+  // Hooks must be called unconditionally at the top level
+  const prevInsightsRef = useRef<string | undefined>(insights);
+  const prevErrorRef = useRef<string | null>(error);
+  const [autoOpenKey, setAutoOpenKey] = useState<number | null>(null);
+
+  // Update refs and auto-open key in effect
+  useEffect(() => {
+    // Check if insights/error just became available (for auto-opening)
+    const insightsJustAppeared = insights && !prevInsightsRef.current && !loading;
+    const errorJustAppeared = error && !prevErrorRef.current && !loading;
+
+    // Set key when insights/error first appear (only once per appearance)
+    // This is intentional - we need to trigger a remount when insights appear
+    if ((insightsJustAppeared || errorJustAppeared) && autoOpenKey === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAutoOpenKey(Date.now());
+    }
+
+    // Reset key when insights/error clear
+    if (!insights && !error && autoOpenKey !== null) {
+      setAutoOpenKey(null);
+    }
+
+    prevInsightsRef.current = insights;
+    prevErrorRef.current = error;
+  }, [insights, error, loading, autoOpenKey]);
+
+  const shouldAutoOpen = autoOpenKey !== null;
+
   // Don't render if Ollama is disabled and there are no insights/errors
   if (!ollamaEnabled && !insights && !loading && !error) {
     return null;
@@ -34,9 +65,12 @@ export function AIInsightsPanel({
     return null;
   }
 
+  // Use a key that changes when insights/error appear to force remount with defaultOpen
+  const disclosureKey = autoOpenKey ? `auto-open-${autoOpenKey}` : undefined;
+
   return (
     <div className="mb-6">
-      <Disclosure>
+      <Disclosure key={disclosureKey} defaultOpen={shouldAutoOpen}>
         {({ open }) => (
           <>
             <Disclosure.Button

@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, type ReactNode } from 'react';
 import { useOllamaSettings } from '../hooks/useOllamaSettings';
 import type { OllamaSettings, OllamaTestResult } from '../api';
 
@@ -14,19 +14,11 @@ export interface OllamaContextType {
   reloadSettings: () => Promise<void>;
 }
 
-const OllamaContext = createContext<OllamaContextType | undefined>(undefined);
+// eslint-disable-next-line react-refresh/only-export-components
+export const OllamaContext = createContext<OllamaContextType | undefined>(undefined);
 
 export function OllamaProvider({ children }: { children: ReactNode }) {
   const ollamaSettings = useOllamaSettings();
 
   return <OllamaContext.Provider value={ollamaSettings}>{children}</OllamaContext.Provider>;
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useOllama() {
-  const context = useContext(OllamaContext);
-  if (!context) {
-    throw new Error('useOllama must be used within an OllamaProvider');
-  }
-  return context;
 }

@@ -4,6 +4,7 @@ import {
   setCachedCodebaseHealth,
   getCachedAIInsights,
   setCachedAIInsights,
+  clearCachedAIInsights,
   getRepositories,
   getOllamaSettings,
 } from '../db.js';
@@ -236,6 +237,11 @@ export async function getCodebaseHealth(
   useCache: boolean = true,
   includeAIInsights?: boolean
 ): Promise<CodebaseHealth> {
+  // If recalculating (useCache=false), clear AI insights cache for this analysis type
+  if (!useCache) {
+    await clearCachedAIInsights(repoPath, 'codebase-health');
+  }
+
   // Check cache first (default: 1 hour cache)
   if (useCache) {
     const cached = await getCachedCodebaseHealth(repoPath); // Uses default 30-day TTL as fallback

@@ -3,7 +3,12 @@ import {
   getRepositories,
   getCachedTechnicalDebtIndicators,
   setCachedTechnicalDebtIndicators,
+  getCachedAIInsights,
+  setCachedAIInsights,
+  clearCachedAIInsights,
+  getOllamaSettings,
 } from '../db.js';
+import { generateInsights } from '../services/aiAnalysis.js';
 import fs from 'fs';
 import path from 'path';
 import type {
@@ -1026,12 +1031,52 @@ async function analyzeMissingAutomation(
 export async function getTechnicalDebtIndicators(
   repoPath: string,
   useCache: boolean = true,
-  onProgress?: (progress: number, step?: string) => void
+  onProgress?: (progress: number, step?: string) => void,
+  includeAIInsights?: boolean
 ): Promise<TechnicalDebtIndicators> {
+  // If recalculating (useCache=false), clear AI insights cache for this analysis type
+  if (!useCache) {
+    await clearCachedAIInsights(repoPath, 'technical-debt-indicators');
+  }
+
   // Check cache first (default: 1 hour cache)
   if (useCache) {
     const cached = await getCachedTechnicalDebtIndicators(repoPath); // Uses default 30-day TTL as fallback
     if (cached) {
+      // If AI insights are requested, check cache first, then generate if needed
+      if (includeAIInsights) {
+        try {
+          const ollamaSettings = await getOllamaSettings();
+          if (ollamaSettings.enabled) {
+            // Check for cached AI insights first
+            const cachedInsights = await getCachedAIInsights(repoPath, 'technical-debt-indicators');
+            if (cachedInsights) {
+              if (onProgress) {
+                onProgress(100, 'Returned from cache');
+              }
+              return { ...cached, aiInsights: cachedInsights };
+            }
+            // Generate new insights if not cached
+            if (onProgress) {
+              onProgress(95, 'Generating AI insights...');
+            }
+            const insights = await generateInsights(
+              'technical-debt-indicators',
+              cached,
+              ollamaSettings
+            );
+            // Cache the insights
+            await setCachedAIInsights(repoPath, 'technical-debt-indicators', insights);
+            if (onProgress) {
+              onProgress(100, 'Completed');
+            }
+            return { ...cached, aiInsights: insights };
+          }
+        } catch (error) {
+          // Log error but don't fail the entire request if AI insights fail
+          console.warn('Failed to generate AI insights for technical debt indicators:', error);
+        }
+      }
       if (onProgress) {
         onProgress(100, 'Returned from cache');
       }
@@ -1206,11 +1251,42 @@ export async function getTechnicalDebtIndicators(
       missingAutomation,
     };
 
-    // Cache the result
-    if (useCache) {
-      await setCachedTechnicalDebtIndicators(repoPath, result);
+    // Generate AI insights if requested
+    if (includeAIInsights) {
+      try {
+        updateProgress(95, 'Generating AI insights...');
+        const ollamaSettings = await getOllamaSettings();
+        if (ollamaSettings.enabled) {
+          // Check for cached AI insights first
+          const cachedInsights = await getCachedAIInsights(repoPath, 'technical-debt-indicators');
+          if (cachedInsights) {
+            result.aiInsights = cachedInsights;
+          } else {
+            // Generate new insights
+            const insights = await generateInsights(
+              'technical-debt-indicators',
+              result,
+              ollamaSettings
+            );
+            // Cache the insights
+            await setCachedAIInsights(repoPath, 'technical-debt-indicators', insights);
+            result.aiInsights = insights;
+          }
+        }
+      } catch (error) {
+        // Log error but don't fail the entire request if AI insights fail
+        console.warn('Failed to generate AI insights for technical debt indicators:', error);
+      }
     }
 
+    // Cache the result (without AI insights for caching)
+    if (useCache) {
+      const resultToCache = { ...result };
+      delete resultToCache.aiInsights;
+      await setCachedTechnicalDebtIndicators(repoPath, resultToCache);
+    }
+
+    updateProgress(100, 'Completed');
     return result;
   } catch (error: any) {
     console.error(

@@ -3,8 +3,13 @@ import {
   getRepositories,
   getCachedSocialNetworkAnalysis,
   setCachedSocialNetworkAnalysis,
+  getCachedAIInsights,
+  setCachedAIInsights,
+  clearCachedAIInsights,
+  getOllamaSettings,
 } from '../db.js';
 import { normalizeEmail } from './utils.js';
+import { generateInsights } from '../services/aiAnalysis.js';
 import type {
   SocialNetworkAnalysis,
   CollaborationGraph,
@@ -19,12 +24,39 @@ import type {
 
 export async function getSocialNetworkAnalysis(
   repoPath: string,
-  useCache: boolean = true
+  useCache: boolean = true,
+  includeAIInsights?: boolean
 ): Promise<SocialNetworkAnalysis> {
+  // If recalculating (useCache=false), clear AI insights cache for this analysis type
+  if (!useCache) {
+    await clearCachedAIInsights(repoPath, 'social-network');
+  }
+
   // Check cache first
   if (useCache) {
     const cached = await getCachedSocialNetworkAnalysis(repoPath); // Uses default 30-day TTL as fallback
     if (cached) {
+      // If AI insights are requested, check cache first, then generate if needed
+      if (includeAIInsights) {
+        try {
+          const ollamaSettings = await getOllamaSettings();
+          if (ollamaSettings.enabled) {
+            // Check for cached AI insights first
+            const cachedInsights = await getCachedAIInsights(repoPath, 'social-network');
+            if (cachedInsights) {
+              return { ...cached, aiInsights: cachedInsights };
+            }
+            // Generate new insights if not cached
+            const insights = await generateInsights('social-network', cached, ollamaSettings);
+            // Cache the insights
+            await setCachedAIInsights(repoPath, 'social-network', insights);
+            return { ...cached, aiInsights: insights };
+          }
+        } catch (error) {
+          // Log error but don't fail the entire request if AI insights fail
+          console.warn('Failed to generate AI insights for social network analysis:', error);
+        }
+      }
       return cached;
     }
   }
@@ -57,6 +89,8 @@ export async function getSocialNetworkAnalysis(
     const authorFiles = new Map<string, { name: string; files: Set<string> }>();
     // Map: file -> lastCommitDate
     const fileLastCommit = new Map<string, Date>();
+    // Map: file -> { authorName: string, authorEmail: string } (author of last commit)
+    const fileLastAuthor = new Map<string, { authorName: string; authorEmail: string }>();
 
     const lines = numstatRaw.split('\n');
     let currentCommit: {
@@ -101,9 +135,14 @@ export async function getSocialNetworkAnalysis(
             if (!fileAuthors.has(filePath)) {
               fileAuthors.set(filePath, new Set());
               fileAuthorDetails.set(filePath, new Map());
+              // First time seeing this file = most recent commit (git log is reverse chronological)
+              fileLastCommit.set(filePath, currentCommit.date);
+              fileLastAuthor.set(filePath, {
+                authorName: currentCommit.authorName,
+                authorEmail: normalizedEmail,
+              });
             }
             fileAuthors.get(filePath)!.add(normalizedEmail);
-            fileLastCommit.set(filePath, currentCommit.date);
 
             // Track author details per file
             const authorDetails = fileAuthorDetails.get(filePath)!;
@@ -316,9 +355,7 @@ export async function getSocialNetworkAnalysis(
       );
       if (daysSinceLastCommit >= orphanThresholdDays) {
         const authorDetails = fileAuthorDetails.get(file)!;
-        const lastAuthorDetails = Array.from(authorDetails.values()).sort(
-          (a, b) => b.lastCommit.getTime() - a.lastCommit.getTime()
-        )[0];
+        const lastAuthor = fileLastAuthor.get(file);
 
         const totalCommits = Array.from(authorDetails.values()).reduce(
           (sum, d) => sum + d.commits,
@@ -332,15 +369,32 @@ export async function getSocialNetworkAnalysis(
           riskLevel = 'medium';
         }
 
+        // Use the tracked last author, or fall back to finding the author with most recent commit
+        let lastAuthorName = '';
+        let lastAuthorEmail = '';
+        if (lastAuthor) {
+          lastAuthorName = lastAuthor.authorName;
+          lastAuthorEmail = lastAuthor.authorEmail;
+        } else {
+          // Fallback: find author with most recent commit to this file
+          const lastAuthorDetails = Array.from(authorDetails.values()).sort(
+            (a, b) => b.lastCommit.getTime() - a.lastCommit.getTime()
+          )[0];
+          if (lastAuthorDetails) {
+            lastAuthorName = lastAuthorDetails.name;
+            lastAuthorEmail =
+              Array.from(authorDetails.keys()).find(
+                (e) => authorDetails.get(e)!.name === lastAuthorDetails.name
+              ) || '';
+          }
+        }
+
         orphanedCode.push({
           file,
           lastCommitDate: lastCommit.toISOString(),
           daysSinceLastCommit,
-          lastAuthor: lastAuthorDetails.name,
-          lastAuthorEmail:
-            Array.from(authorDetails.keys()).find(
-              (e) => authorDetails.get(e)!.name === lastAuthorDetails.name
-            ) || '',
+          lastAuthor: lastAuthorName,
+          lastAuthorEmail,
           totalCommits,
           riskLevel,
         });
@@ -377,9 +431,34 @@ export async function getSocialNetworkAnalysis(
       orphanedCode: orphanedCode.slice(0, 100), // Limit to top 100
     };
 
-    // Cache the result
+    // Generate AI insights if requested
+    if (includeAIInsights) {
+      try {
+        const ollamaSettings = await getOllamaSettings();
+        if (ollamaSettings.enabled) {
+          // Check for cached AI insights first
+          const cachedInsights = await getCachedAIInsights(repoPath, 'social-network');
+          if (cachedInsights) {
+            result.aiInsights = cachedInsights;
+          } else {
+            // Generate new insights
+            const insights = await generateInsights('social-network', result, ollamaSettings);
+            // Cache the insights
+            await setCachedAIInsights(repoPath, 'social-network', insights);
+            result.aiInsights = insights;
+          }
+        }
+      } catch (error) {
+        // Log error but don't fail the entire request if AI insights fail
+        console.warn('Failed to generate AI insights for social network analysis:', error);
+      }
+    }
+
+    // Cache the result (without AI insights for caching)
     if (useCache) {
-      await setCachedSocialNetworkAnalysis(repoPath, result);
+      const resultToCache = { ...result };
+      delete resultToCache.aiInsights;
+      await setCachedSocialNetworkAnalysis(repoPath, resultToCache);
     }
 
     return result;

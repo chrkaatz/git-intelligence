@@ -5,6 +5,7 @@ import {
   setCachedDeveloperAnalytics,
   getCachedAIInsights,
   setCachedAIInsights,
+  clearCachedAIInsights,
   getOllamaSettings,
 } from '../db.js';
 import type {
@@ -26,6 +27,11 @@ export async function getDeveloperAnalytics(
   useCache: boolean = true,
   includeAIInsights?: boolean
 ): Promise<DeveloperAnalytics> {
+  // If recalculating (useCache=false), clear AI insights cache for this analysis type
+  if (!useCache) {
+    await clearCachedAIInsights(repoPath, 'developer-analytics');
+  }
+
   // Check cache first
   if (useCache) {
     const cached = await getCachedDeveloperAnalytics(repoPath); // Uses default 30-day TTL as fallback

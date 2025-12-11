@@ -46,6 +46,7 @@ export {
   setCachedSocialNetworkAnalysis,
   getCachedAIInsights,
   setCachedAIInsights,
+  clearCachedAIInsights,
 } from './db/cache.js';
 
 export { getOllamaSettings, updateOllamaSettings } from './db/settings.js';

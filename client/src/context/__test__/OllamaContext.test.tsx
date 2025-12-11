@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { OllamaProvider, useOllama } from '../OllamaContext';
+import { OllamaProvider } from '../OllamaContext';
+import { useOllama } from '../../hooks/useOllama';
 import * as useOllamaSettingsHook from '../../hooks/useOllamaSettings';
 
 // Mock the hook

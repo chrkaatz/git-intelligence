@@ -669,6 +669,7 @@ export interface SocialNetworkAnalysis {
   collaborationGraph: CollaborationGraph;
   knowledgeSilos: KnowledgeSilo[];
   orphanedCode: OrphanedCode[];
+  aiInsights?: string;
 }
 
 export interface CrossRepoCollaboration {
@@ -699,10 +700,15 @@ export interface CrossRepoSocialNetworkAnalysis {
 
 export const getSocialNetworkAnalysis = async (
   repoId: string,
-  refresh?: boolean
+  refresh?: boolean,
+  includeAIInsights?: boolean
 ): Promise<SocialNetworkAnalysis> => {
   const response = await api.get('/social-network-analysis', {
-    params: { repoId, refresh: refresh ? 'true' : undefined },
+    params: {
+      repoId,
+      refresh: refresh ? 'true' : undefined,
+      ai: includeAIInsights ? 'true' : undefined,
+    },
   });
   return response.data;
 };
@@ -748,6 +754,7 @@ export interface RiskAnalytics {
   highRiskHotspots: HighRiskHotspot[];
   temporalCouplingHotspots: TemporalCouplingHotspot[];
   riskyFileTrends: RiskyFileTrend[];
+  aiInsights?: string;
 }
 
 export interface CrossRepoRiskAnalytics {
@@ -781,10 +788,15 @@ export interface CrossRepoRiskAnalytics {
 
 export const getRiskAnalytics = async (
   repoId: string,
-  refresh?: boolean
+  refresh?: boolean,
+  includeAIInsights?: boolean
 ): Promise<RiskAnalytics> => {
   const response = await api.get('/risk-analytics', {
-    params: { repoId, refresh: refresh ? 'true' : undefined },
+    params: {
+      repoId,
+      refresh: refresh ? 'true' : undefined,
+      ai: includeAIInsights ? 'true' : undefined,
+    },
   });
   return response.data;
 };
@@ -913,6 +925,7 @@ export interface TechnicalDebtIndicators {
     cicdAutomationFiles: string[];
     riskLevel: 'low' | 'medium' | 'high';
   };
+  aiInsights?: string;
 }
 
 export interface CrossRepoTechnicalDebtIndicators {
@@ -949,14 +962,39 @@ export interface JobStatus {
 
 export const getTechnicalDebtIndicators = async (
   repoId: string,
-  refresh?: boolean
+  refresh?: boolean,
+  includeAIInsights?: boolean
 ): Promise<TechnicalDebtIndicators> => {
-  // Start the job
+  // Start the job or get cached result
   const jobResponse = await api.get('/technical-debt-indicators', {
-    params: { repoId, refresh: refresh ? 'true' : undefined },
+    params: {
+      repoId,
+      refresh: refresh ? 'true' : undefined,
+      ai: includeAIInsights ? 'true' : undefined,
+    },
   });
 
-  const { jobId } = jobResponse.data;
+  const responseData = jobResponse.data;
+
+  // If the response is the actual data (cached result), return it immediately
+  // Check if it has TechnicalDebtIndicators properties (e.g., commentedOutCode) and no jobId
+  if (
+    responseData &&
+    !responseData.jobId &&
+    !responseData.status &&
+    (responseData.commentedOutCode !== undefined ||
+      responseData.hugeCommits !== undefined ||
+      responseData.wipCommits !== undefined)
+  ) {
+    // This is the actual TechnicalDebtIndicators data, not a job
+    return responseData as TechnicalDebtIndicators;
+  }
+
+  // Otherwise, it's a job - extract jobId and poll
+  const { jobId } = responseData;
+  if (!jobId) {
+    throw new Error('Invalid response from server: expected jobId or cached data');
+  }
 
   // Poll for job completion
   return new Promise((resolve, reject) => {

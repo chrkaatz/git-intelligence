@@ -1,8 +1,17 @@
 import simpleGit from 'simple-git';
-import { getRepositories, getCachedRiskAnalytics, setCachedRiskAnalytics } from '../db.js';
+import {
+  getRepositories,
+  getCachedRiskAnalytics,
+  setCachedRiskAnalytics,
+  getCachedAIInsights,
+  setCachedAIInsights,
+  clearCachedAIInsights,
+  getOllamaSettings,
+} from '../db.js';
 import { normalizeEmail, shouldExcludeFileFromAnalysis } from './utils.js';
 import { getCodebaseHealth } from './codebaseHealth.js';
 import { getBusFactorAndOwnership } from './busFactor.js';
+import { generateInsights } from '../services/aiAnalysis.js';
 import type {
   RiskAnalytics,
   HighRiskHotspot,
@@ -13,12 +22,39 @@ import type {
 
 export async function getRiskAnalytics(
   repoPath: string,
-  useCache: boolean = true
+  useCache: boolean = true,
+  includeAIInsights?: boolean
 ): Promise<RiskAnalytics> {
+  // If recalculating (useCache=false), clear AI insights cache for this analysis type
+  if (!useCache) {
+    await clearCachedAIInsights(repoPath, 'risk-analytics');
+  }
+
   // Check cache first
   if (useCache) {
     const cached = await getCachedRiskAnalytics(repoPath); // Uses default 30-day TTL as fallback
     if (cached) {
+      // If AI insights are requested, check cache first, then generate if needed
+      if (includeAIInsights) {
+        try {
+          const ollamaSettings = await getOllamaSettings();
+          if (ollamaSettings.enabled) {
+            // Check for cached AI insights first
+            const cachedInsights = await getCachedAIInsights(repoPath, 'risk-analytics');
+            if (cachedInsights) {
+              return { ...cached, aiInsights: cachedInsights };
+            }
+            // Generate new insights if not cached
+            const insights = await generateInsights('risk-analytics', cached, ollamaSettings);
+            // Cache the insights
+            await setCachedAIInsights(repoPath, 'risk-analytics', insights);
+            return { ...cached, aiInsights: insights };
+          }
+        } catch (error) {
+          // Log error but don't fail the entire request if AI insights fail
+          console.warn('Failed to generate AI insights for risk analytics:', error);
+        }
+      }
       return cached;
     }
   }
@@ -350,9 +386,34 @@ export async function getRiskAnalytics(
       riskyFileTrends: riskyFileTrends.slice(0, 20), // Top 20
     };
 
-    // Cache the result
+    // Generate AI insights if requested
+    if (includeAIInsights) {
+      try {
+        const ollamaSettings = await getOllamaSettings();
+        if (ollamaSettings.enabled) {
+          // Check for cached AI insights first
+          const cachedInsights = await getCachedAIInsights(repoPath, 'risk-analytics');
+          if (cachedInsights) {
+            result.aiInsights = cachedInsights;
+          } else {
+            // Generate new insights
+            const insights = await generateInsights('risk-analytics', result, ollamaSettings);
+            // Cache the insights
+            await setCachedAIInsights(repoPath, 'risk-analytics', insights);
+            result.aiInsights = insights;
+          }
+        }
+      } catch (error) {
+        // Log error but don't fail the entire request if AI insights fail
+        console.warn('Failed to generate AI insights for risk analytics:', error);
+      }
+    }
+
+    // Cache the result (without AI insights for caching)
     if (useCache) {
-      await setCachedRiskAnalytics(repoPath, result);
+      const resultToCache = { ...result };
+      delete resultToCache.aiInsights;
+      await setCachedRiskAnalytics(repoPath, resultToCache);
     }
 
     return result;

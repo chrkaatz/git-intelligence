@@ -16,8 +16,15 @@ import {
   getTechnicalDebtIndicators,
   getCrossRepoTechnicalDebtIndicators,
 } from '../git/index.js';
-import { getRepository, getCachedTechnicalDebtIndicators } from '../db.js';
+import {
+  getRepository,
+  getCachedTechnicalDebtIndicators,
+  getOllamaSettings,
+  getCachedAIInsights,
+  setCachedAIInsights,
+} from '../db.js';
 import { jobQueue } from '../queue/jobQueue.js';
+import { generateInsights } from '../services/aiAnalysis.js';
 
 const router = Router();
 
@@ -198,14 +205,15 @@ router.get('/cross-repo-bus-factor-and-ownership', async (req: Request, res: Res
 
 // Social network analysis
 router.get('/social-network-analysis', async (req: Request, res: Response) => {
-  const { repoId, refresh } = req.query;
+  const { repoId, refresh, ai } = req.query;
   if (!repoId || typeof repoId !== 'string') {
     return res.status(400).json({ error: 'Repository ID is required' });
   }
   try {
     const repoPath = await resolveRepositoryPath(repoId);
     const useCache = refresh !== 'true';
-    const analysis = await getSocialNetworkAnalysis(repoPath, useCache);
+    const includeAIInsights = ai === 'true' ? true : undefined;
+    const analysis = await getSocialNetworkAnalysis(repoPath, useCache, includeAIInsights);
     res.json(analysis);
   } catch (error: any) {
     console.error(error);
@@ -235,14 +243,15 @@ router.get('/cross-repo-social-network-analysis', async (req: Request, res: Resp
 
 // Risk analytics
 router.get('/risk-analytics', async (req: Request, res: Response) => {
-  const { repoId, refresh } = req.query;
+  const { repoId, refresh, ai } = req.query;
   if (!repoId || typeof repoId !== 'string') {
     return res.status(400).json({ error: 'Repository ID is required' });
   }
   try {
     const repoPath = await resolveRepositoryPath(repoId);
     const useCache = refresh !== 'true';
-    const analytics = await getRiskAnalytics(repoPath, useCache);
+    const includeAIInsights = ai === 'true' ? true : undefined;
+    const analytics = await getRiskAnalytics(repoPath, useCache, includeAIInsights);
     res.json(analytics);
   } catch (error: any) {
     console.error(error);
@@ -270,7 +279,7 @@ router.get('/cross-repo-risk-analytics', async (req: Request, res: Response) => 
 
 // Technical debt indicators - queue-based with progress
 router.get('/technical-debt-indicators', async (req: Request, res: Response) => {
-  const { repoId, refresh, jobId } = req.query;
+  const { repoId, refresh, jobId, ai } = req.query;
 
   // If jobId is provided, return job status
   if (jobId && typeof jobId === 'string') {
@@ -289,11 +298,40 @@ router.get('/technical-debt-indicators', async (req: Request, res: Response) => 
   try {
     const repoPath = await resolveRepositoryPath(repoId);
     const useCache = refresh !== 'true';
+    const includeAIInsights = ai === 'true' ? true : undefined;
 
     // Check cache first if not refreshing
     if (useCache) {
       const cached = await getCachedTechnicalDebtIndicators(repoPath); // Uses default 30-day TTL as fallback
       if (cached) {
+        // If AI insights are requested, check cache first, then generate if needed
+        if (includeAIInsights) {
+          try {
+            const ollamaSettings = await getOllamaSettings();
+            if (ollamaSettings.enabled) {
+              // Check for cached AI insights first
+              const cachedInsights = await getCachedAIInsights(
+                repoPath,
+                'technical-debt-indicators'
+              );
+              if (cachedInsights) {
+                return res.json({ ...cached, aiInsights: cachedInsights });
+              }
+              // Generate new insights if not cached
+              const insights = await generateInsights(
+                'technical-debt-indicators',
+                cached,
+                ollamaSettings
+              );
+              // Cache the insights
+              await setCachedAIInsights(repoPath, 'technical-debt-indicators', insights);
+              return res.json({ ...cached, aiInsights: insights });
+            }
+          } catch (error) {
+            // Log error but don't fail the entire request if AI insights fail
+            console.warn('Failed to generate AI insights for technical debt indicators:', error);
+          }
+        }
         return res.json(cached);
       }
     }
@@ -328,7 +366,8 @@ router.get('/technical-debt-indicators', async (req: Request, res: Response) => 
           useCache,
           (progress, step) => {
             jobQueue.updateProgress(jobId, progress, step);
-          }
+          },
+          includeAIInsights
         );
         console.log(`[Technical Debt] Analysis completed for ${repoPath} (jobId: ${jobId})`);
         jobQueue.completeJob(jobId, indicators);
