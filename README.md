@@ -72,6 +72,14 @@ Currently it works only on local machines.
 - **Path-Based Analysis**: Analyze local Git repositories by path
 - **Caching**: Intelligent caching of analysis results for faster performance
 
+### AI-Powered Analysis (Optional)
+
+- **Ollama Integration**: Use local AI models for enhanced insights
+- **Intelligent Analysis**: Get natural language insights for codebase health, developer analytics, and repository evolution
+- **Privacy-First**: All AI processing happens locally - no data sent to external services
+- **Configurable**: Customize host, port, model, and timeout settings
+- **Connection Testing**: Built-in connection test to verify Ollama setup
+
 ## 🏗️ Architecture
 
 ### Monorepo Structure
@@ -114,6 +122,9 @@ git-intelligence/
 - Node.js (v22 or higher)
 - npm or yarn
 - Git
+- **Ollama** (optional, for AI-powered analysis features)
+  - Download and install from [https://ollama.ai](https://ollama.ai)
+  - Recommended models: `llama3`, `mistral`, or `codellama`
 
 ### Setup
 
@@ -125,10 +136,50 @@ git-intelligence/
    ```
 
 2. **Install all dependencies**
+
    ```bash
    npm run install:all
    ```
+
    This installs dependencies for the root, client, and server packages.
+
+3. **Set up Ollama (optional, for AI-powered analysis)**
+
+   If you want to use AI-powered analysis features:
+
+   a. **Install Ollama**
+   - Download from [https://ollama.ai](https://ollama.ai)
+   - Follow installation instructions for your platform
+
+   b. **Start Ollama service**
+
+   ```bash
+   ollama serve
+   ```
+
+   By default, Ollama runs on `http://localhost:11434`
+
+   c. **Install a model** (choose one based on your needs):
+
+   ```bash
+   # General purpose (recommended)
+   ollama pull llama3
+
+   # Alternative options
+   ollama pull mistral      # Fast and efficient
+   ollama pull codellama    # Code-focused model
+   ```
+
+   d. **Configure in Git Intelligence**
+   - Open the application and go to Settings (gear icon)
+   - Navigate to the "AI Analysis (Ollama)" section
+   - Enable Ollama integration
+   - Configure host (default: `localhost`), port (default: `11434`), and model name
+   - Click "Test Connection" to verify your setup
+
+   Example settings configuration:
+
+   ![Ollama Settings](docs/ollama-settings.png)
 
 ## 🚀 Usage
 
@@ -256,6 +307,15 @@ cd server && npm run test:coverage
 - Cross-repo variants available with `?projectId=<id>` parameter
 
 All analytics endpoints support `?refresh=true` to bypass cache.
+
+### Settings (Ollama Integration)
+
+- `GET /settings/ollama` - Get current Ollama settings
+- `PUT /settings/ollama` - Update Ollama settings
+  - Body: `{ enabled?: boolean, host?: string, port?: number, model?: string, timeout?: number }`
+- `POST /settings/ollama/test` - Test Ollama connection
+  - Body (optional): `{ host?: string, port?: number, model?: string, timeout?: number }`
+  - Uses current settings if body is not provided
 
 ## 🎨 Features in Detail
 

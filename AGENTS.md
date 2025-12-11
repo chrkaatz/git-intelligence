@@ -22,6 +22,7 @@ This document provides essential context and guidelines for AI assistants workin
 - **Bus Factor & Ownership**: Single maintainer risk, fragmentation, and owner churn analysis
 - **Social Network Analysis**: Collaboration graphs, knowledge silos, and orphaned code detection
 - **Cross-Repository Analytics**: Aggregated analysis across all repositories in a project
+- **AI-Powered Analysis** (Optional): Local Ollama integration for enhanced insights and natural language analysis
 
 ## Architecture
 
@@ -73,6 +74,7 @@ git-intelligence/
 - **Dev Server**: nodemon 3.1.11 with ts-node 10.9.2
 - **Testing**: Vitest 2.1.8 with coverage support
 - **UUID**: uuid 13.0.0 for generating IDs
+- **AI Integration**: Ollama service integration (optional, for AI-powered analysis)
 
 ## Project Structure
 
@@ -86,7 +88,10 @@ src/
 ├── routeTree.gen.ts          # Auto-generated route tree (TanStack Router)
 ├── context/
 │   ├── AppContext.tsx        # Global app state (projects, repositories)
-│   └── NotificationContext.tsx # Notification system
+│   ├── NotificationContext.tsx # Notification system
+│   └── OllamaContext.tsx     # Ollama settings context provider
+├── hooks/
+│   ├── useOllamaSettings.ts  # Hook for managing Ollama settings (localStorage + API sync)
 ├── routes/                    # File-based routing (TanStack Router)
 │   ├── __root.tsx            # Root route with layout
 │   ├── index.tsx             # Home/landing page
@@ -157,6 +162,11 @@ src/
 │   ├── codebaseHealth.ts    # Codebase health metrics
 │   ├── repositoryEvolution.ts # Repository evolution analysis
 │   ├── busFactor.ts         # Bus factor and ownership analysis
+├── services/                 # External service integrations
+│   ├── ollama.ts            # Ollama API client (connection, completion, analysis)
+│   └── aiAnalysis.ts        # AI-powered analysis generation
+├── routes/                   # API route handlers
+│   ├── settings.ts          # Settings management (Ollama configuration)
 │   ├── socialNetwork.ts     # Social network analysis
 │   ├── utils.ts             # Shared utility functions
 │   └── __tests__/          # Test files for git analysis
@@ -220,6 +230,10 @@ src/
      - `NotificationContext`: Manages toast notifications (info, success, error, loading)
    - **Local State**: Component-level state with `useState` and `useEffect`
    - **Routing State**: TanStack Router manages route parameters and navigation state
+   - **Ollama Settings**: Managed via `useOllamaSettings` hook with localStorage caching and backend sync
+     - Settings persisted in localStorage for immediate access
+     - Automatic sync with backend on mount and when settings change
+     - Optimistic updates with error rollback
 
 5. **Type Definitions**
    - Shared types/interfaces in `client/src/api.ts`:
@@ -239,6 +253,8 @@ src/
      - `ActivityStats` - Activity patterns
      - `Project` - Project metadata
      - `Repository` - Repository metadata
+     - `OllamaSettings` - Ollama configuration (enabled, host, port, model, timeout)
+     - `OllamaTestResult` - Connection test result (success, message)
 
 ### Backend Patterns
 
@@ -271,6 +287,10 @@ src/
      - `GET /cross-repo-social-network-analysis?projectId=<id>` - Cross-repo SNA
    - **Cache**:
      - `POST /cache/clear` - Clear analysis cache (optional `path` in body)
+   - **Settings** (Ollama Integration):
+     - `GET /settings/ollama` - Get current Ollama settings
+     - `PUT /settings/ollama` - Update Ollama settings (requires body with `enabled?`, `host?`, `port?`, `model?`, `timeout?`)
+     - `POST /settings/ollama/test` - Test Ollama connection (optional body with test settings)
 
 2. **Git Analysis** (`server/src/git/`)
    - Modular structure with separate files for each analysis type
@@ -285,18 +305,36 @@ src/
    - All analysis functions support caching via `useCache` parameter
    - Returns normalized data structures matching TypeScript interfaces
 
-3. **Data Persistence** (`server/src/db/`)
+3. **Ollama Service** (`server/src/services/`)
+   - **ollama.ts**: Ollama API client
+     - `testConnection(settings)`: Test connection to Ollama instance
+     - `generateCompletion(prompt, settings)`: Generate AI text completion
+     - `generateAnalysis(context, analysisType, settings)`: Generate analysis for specific analytics type
+     - `isModelAvailable(model, settings)`: Check if model is installed in Ollama
+     - Uses native `fetch` API with AbortController for timeouts
+     - Handles errors gracefully (connection failures, model not found, timeouts)
+   - **aiAnalysis.ts**: AI-powered analysis generation
+     - Integrates Ollama service with Git analytics
+     - Generates natural language insights for codebase health, developer analytics, etc.
+     - Context-aware prompts based on analysis type
+
+4. **Data Persistence** (`server/src/db/`)
    - **LowDB** (JSON file-based database) with schema versioning
    - **database.ts**: Database initialization, migrations, schema management
    - **projects.ts**: Project CRUD operations (UUID-based IDs)
    - **repositories.ts**: Repository CRUD operations (linked to projects)
    - **cache.ts**: Analysis result caching (stats and codebase health)
-   - **types.ts**: Database schema type definitions
+   - **settings.ts**: Ollama settings management (get/update settings with validation)
+     - `getOllamaSettings()`: Returns current settings or defaults
+     - `updateOllamaSettings(updates)`: Updates settings with validation (port range, timeout range, non-empty host/model)
+     - Default settings: `{ enabled: false, host: 'localhost', port: 11434, model: 'llama3', timeout: 120000 }`
+   - **types.ts**: Database schema type definitions (includes `OllamaSettings` interface)
    - Automatic migration from old `projects.json` format
    - Prevents duplicate repositories by path within a project
    - Cache management with TTL support (currently no expiration, manual clear only)
+   - Ollama settings stored in database with defaults: `{ enabled: false, host: 'localhost', port: 11434, model: 'llama3', timeout: 120000 }`
 
-4. **File Upload Flow**
+5. **File Upload Flow**
    - Multer saves to `uploads/` directory (100MB limit)
    - ZIP extracted to `uploads/<filename>_extracted/`
    - Automatic detection of nested repository structure
@@ -615,7 +653,14 @@ cd server && npm run build
   - Database tests: `server/src/db/__tests__/`
   - External dependencies (simple-git, db) are mocked
   - Tests use proper 40-character git commit hashes in mocks
-- **Frontend Testing**: Not currently configured (manual testing via dev server)
+- **Frontend Testing**: Vitest + React Testing Library configured
+  - Hook tests: `client/src/hooks/__test__/useOllamaSettings.test.ts`
+  - Component tests: `client/src/components/__test__/`
+  - Context tests: `client/src/context/__test__/`
+- **Ollama Integration Tests**:
+  - Service tests: `server/src/services/__tests__/ollama.test.ts`
+  - Settings route tests: `server/src/routes/__tests__/settings.test.ts`
+  - Database settings tests: `server/src/db/__tests__/settings.test.ts`
 - **See**: `server/TESTING.md` for detailed testing guidelines
 
 ## Future Enhancement Opportunities
@@ -630,14 +675,21 @@ cd server && npm run build
 - File change history
 - Performance optimizations for large repositories
 - Cache expiration/TTL for analysis results
-- Frontend component testing (Vitest + React Testing Library)
 - API rate limiting
 - Background job processing for large analyses
+- Enhanced AI analysis prompts with more context
+- Streaming AI responses for better UX
 - Repository cloning from remote URLs (GitHub, GitLab, etc.)
 
 ---
 
 **Last Updated**: December 2024 - Updated to reflect:
+
+- Ollama integration for AI-powered analysis
+- Settings management API and UI
+- Ollama service module with connection testing
+- Frontend hooks for Ollama settings management
+- Comprehensive test coverage for Ollama features
 
 - TanStack Router implementation with file-based routing
 - Project/Repository hierarchy (Projects contain Repositories)
