@@ -25,6 +25,19 @@ export async function getBusFactorAndOwnership(
   if (useCache) {
     const cached = await getCachedBusFactorAndOwnership(repoPath); // Uses default 30-day TTL as fallback
     if (cached) {
+      // If AI insights are requested, generate them even for cached data
+      if (includeAIInsights) {
+        try {
+          const ollamaSettings = await getOllamaSettings();
+          if (ollamaSettings.enabled) {
+            const insights = await generateInsights('bus-factor', cached, ollamaSettings);
+            return { ...cached, aiInsights: insights };
+          }
+        } catch (error) {
+          // Log error but don't fail the entire request if AI insights fail
+          console.warn('Failed to generate AI insights for bus factor and ownership:', error);
+        }
+      }
       return cached;
     }
   }

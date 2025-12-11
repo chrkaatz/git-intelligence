@@ -52,14 +52,15 @@ router.get('/stats', async (req: Request, res: Response) => {
 
 // Developer analytics
 router.get('/developer-analytics', async (req: Request, res: Response) => {
-  const { repoId, refresh } = req.query;
+  const { repoId, refresh, ai } = req.query;
   if (!repoId || typeof repoId !== 'string') {
     return res.status(400).json({ error: 'Repository ID is required' });
   }
   try {
     const repoPath = await resolveRepositoryPath(repoId);
     const useCache = refresh !== 'true';
-    const analytics = await getDeveloperAnalytics(repoPath, useCache);
+    const includeAIInsights = ai === 'true' ? true : undefined;
+    const analytics = await getDeveloperAnalytics(repoPath, useCache, includeAIInsights);
     res.json(analytics);
   } catch (error: any) {
     console.error(error);
@@ -87,14 +88,15 @@ router.get('/cross-repo-developer-analytics', async (req: Request, res: Response
 
 // Codebase health
 router.get('/codebase-health', async (req: Request, res: Response) => {
-  const { repoId, refresh } = req.query;
+  const { repoId, refresh, ai } = req.query;
   if (!repoId || typeof repoId !== 'string') {
     return res.status(400).json({ error: 'Repository ID is required' });
   }
   try {
     const repoPath = await resolveRepositoryPath(repoId);
     const useCache = refresh !== 'true';
-    const health = await getCodebaseHealth(repoPath, useCache);
+    const includeAIInsights = ai === 'true' ? true : undefined;
+    const health = await getCodebaseHealth(repoPath, useCache, includeAIInsights);
     res.json(health);
   } catch (error: any) {
     console.error(error);
@@ -122,14 +124,15 @@ router.get('/cross-repo-codebase-health', async (req: Request, res: Response) =>
 
 // Repository evolution
 router.get('/repository-evolution', async (req: Request, res: Response) => {
-  const { repoId, refresh } = req.query;
+  const { repoId, refresh, ai } = req.query;
   if (!repoId || typeof repoId !== 'string') {
     return res.status(400).json({ error: 'Repository ID is required' });
   }
   try {
     const repoPath = await resolveRepositoryPath(repoId);
     const useCache = refresh !== 'true';
-    const evolution = await getRepositoryEvolution(repoPath, useCache);
+    const includeAIInsights = ai === 'true' ? true : undefined;
+    const evolution = await getRepositoryEvolution(repoPath, useCache, includeAIInsights);
     res.json(evolution);
   } catch (error: any) {
     console.error(error);
@@ -157,14 +160,15 @@ router.get('/cross-repo-repository-evolution', async (req: Request, res: Respons
 
 // Bus factor and ownership
 router.get('/bus-factor-and-ownership', async (req: Request, res: Response) => {
-  const { repoId, refresh } = req.query;
+  const { repoId, refresh, ai } = req.query;
   if (!repoId || typeof repoId !== 'string') {
     return res.status(400).json({ error: 'Repository ID is required' });
   }
   try {
     const repoPath = await resolveRepositoryPath(repoId);
     const useCache = refresh !== 'true';
-    const analytics = await getBusFactorAndOwnership(repoPath, useCache);
+    const includeAIInsights = ai === 'true' ? true : undefined;
+    const analytics = await getBusFactorAndOwnership(repoPath, useCache, includeAIInsights);
     res.json(analytics);
   } catch (error: any) {
     console.error(error);

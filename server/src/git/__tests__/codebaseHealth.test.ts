@@ -238,6 +238,63 @@ describe('codebaseHealth', () => {
 
       consoleWarnSpy.mockRestore();
     });
+
+    it('should generate AI insights for cached data when includeAIInsights is true', async () => {
+      const cachedHealth = {
+        hotspots: { files: [], directories: [] },
+        changeCoupling: { pairs: [] },
+        stability: { files: [] },
+        complexity: {
+          averageDiffSizes: [],
+          largestDiffs: [],
+          mostRewritten: [],
+        },
+        hygiene: {
+          branchCount: 0,
+          unmergedBranchCount: 0,
+          oldestUnmergedBranchDays: 0,
+          unmergedBranches: [],
+          dependencyAutomation: {
+            hasDependabot: false,
+            hasRenovate: false,
+            configFiles: [],
+          },
+          cicdAutomation: {
+            hasGitHubActions: false,
+            hasGitLabCI: false,
+            hasCircleCI: false,
+            hasJenkins: false,
+            configFiles: [],
+          },
+        },
+      };
+
+      mockGetCachedCodebaseHealth.mockResolvedValue(cachedHealth as any);
+
+      mockGetOllamaSettings.mockResolvedValue({
+        enabled: true,
+        host: 'localhost',
+        port: 11434,
+        model: 'llama3',
+        timeout: 30000,
+      });
+      mockGenerateInsights.mockResolvedValue('AI-generated insights for cached codebase health');
+
+      const result = await getCodebaseHealth('/test/repo', true, true);
+
+      expect(result.aiInsights).toBe('AI-generated insights for cached codebase health');
+      expect(result.hotspots).toEqual(cachedHealth.hotspots);
+      expect(mockGetOllamaSettings).toHaveBeenCalled();
+      expect(mockGenerateInsights).toHaveBeenCalledWith(
+        'codebase-health',
+        cachedHealth,
+        expect.objectContaining({
+          enabled: true,
+        })
+      );
+      // Should not have called git operations since we used cached data
+      expect(mockSimpleGit).not.toHaveBeenCalled();
+    });
   });
 
   describe('getCrossRepoCodebaseHealth', () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { getDeveloperAnalytics, getCrossRepoDeveloperAnalytics } from '../developerAnalytics';
 import simpleGit from 'simple-git';
-import { getRepositories, getOllamaSettings } from '../../db';
+import { getRepositories, getOllamaSettings, getCachedDeveloperAnalytics } from '../../db';
 import { generateInsights } from '../../services/aiAnalysis';
 
 // Mock dependencies
@@ -13,6 +13,7 @@ const mockSimpleGit = vi.mocked(simpleGit);
 const mockGetRepositories = vi.mocked(getRepositories);
 const mockGetOllamaSettings = vi.mocked(getOllamaSettings);
 const mockGenerateInsights = vi.mocked(generateInsights);
+const mockGetCachedDeveloperAnalytics = vi.mocked(getCachedDeveloperAnalytics);
 
 describe('developerAnalytics', () => {
   beforeEach(() => {
@@ -257,6 +258,66 @@ describe('developerAnalytics', () => {
       );
 
       consoleWarnSpy.mockRestore();
+    });
+
+    it('should generate AI insights for cached data when includeAIInsights is true', async () => {
+      const cachedAnalytics = {
+        authors: [
+          {
+            name: 'John Doe',
+            email: 'john@example.com',
+            commits: 100,
+            linesAdded: 5000,
+            linesRemoved: 2000,
+            netLines: 3000,
+            firstCommit: '2024-01-01',
+            lastCommit: '2024-12-01',
+            percentage: '50%',
+            activeTimeWindows: {
+              hourOfDay: { 9: 20 },
+              dayOfWeek: { 1: 30 },
+            },
+            signedCommits: 80,
+            signedCommitsPercentage: '80%',
+            fixCommits: 10,
+            fixCommitRatio: '10%',
+            revertCommits: 2,
+            revertCommitRatio: '2%',
+            churn: 2000,
+            churnRatio: '40%',
+          },
+        ],
+        longitudinalPatterns: undefined,
+      };
+
+      // Mock the cache to return data
+      mockGetCachedDeveloperAnalytics.mockResolvedValue(cachedAnalytics as any);
+
+      mockGetOllamaSettings.mockResolvedValue({
+        enabled: true,
+        host: 'localhost',
+        port: 11434,
+        model: 'llama3',
+        timeout: 30000,
+      });
+      mockGenerateInsights.mockResolvedValue(
+        'AI-generated insights for cached developer analytics'
+      );
+
+      const result = await getDeveloperAnalytics('/test/repo', true, true);
+
+      expect(result.aiInsights).toBe('AI-generated insights for cached developer analytics');
+      expect(result.authors).toEqual(cachedAnalytics.authors);
+      expect(mockGetOllamaSettings).toHaveBeenCalled();
+      expect(mockGenerateInsights).toHaveBeenCalledWith(
+        'developer-analytics',
+        cachedAnalytics,
+        expect.objectContaining({
+          enabled: true,
+        })
+      );
+      // Should not have called git operations since we used cached data
+      expect(mockSimpleGit).not.toHaveBeenCalled();
     });
   });
 

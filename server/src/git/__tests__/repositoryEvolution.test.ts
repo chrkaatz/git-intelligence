@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { getRepositoryEvolution, getCrossRepoRepositoryEvolution } from '../repositoryEvolution';
 import simpleGit from 'simple-git';
-import { getRepositories, getOllamaSettings } from '../../db';
+import { getRepositories, getOllamaSettings, getCachedRepositoryEvolution } from '../../db';
 import { generateInsights } from '../../services/aiAnalysis';
 
 // Mock dependencies
@@ -13,6 +13,7 @@ const mockSimpleGit = vi.mocked(simpleGit);
 const mockGetRepositories = vi.mocked(getRepositories);
 const mockGetOllamaSettings = vi.mocked(getOllamaSettings);
 const mockGenerateInsights = vi.mocked(generateInsights);
+const mockGetCachedRepositoryEvolution = vi.mocked(getCachedRepositoryEvolution);
 
 describe('repositoryEvolution', () => {
   beforeEach(() => {
@@ -219,6 +220,49 @@ describe('repositoryEvolution', () => {
       );
 
       consoleWarnSpy.mockRestore();
+    });
+
+    it('should generate AI insights for cached data when includeAIInsights is true', async () => {
+      const cachedEvolution = {
+        commitFrequency: [],
+        releases: [],
+        growthCurve: [],
+        changeBursts: [],
+        churnMetrics: [],
+        totalCommits: 100,
+        totalReleases: 1,
+        averageCommitsPerDay: 2.5,
+        averageChurnRatio: 20,
+        refactorCount: 5,
+      };
+
+      mockGetCachedRepositoryEvolution.mockResolvedValue(cachedEvolution as any);
+
+      mockGetOllamaSettings.mockResolvedValue({
+        enabled: true,
+        host: 'localhost',
+        port: 11434,
+        model: 'llama3',
+        timeout: 30000,
+      });
+      mockGenerateInsights.mockResolvedValue(
+        'AI-generated insights for cached repository evolution'
+      );
+
+      const result = await getRepositoryEvolution('/test/repo', true, true);
+
+      expect(result.aiInsights).toBe('AI-generated insights for cached repository evolution');
+      expect(result.totalCommits).toBe(100);
+      expect(mockGetOllamaSettings).toHaveBeenCalled();
+      expect(mockGenerateInsights).toHaveBeenCalledWith(
+        'repository-evolution',
+        cachedEvolution,
+        expect.objectContaining({
+          enabled: true,
+        })
+      );
+      // Should not have called git operations since we used cached data
+      expect(mockSimpleGit).not.toHaveBeenCalled();
     });
   });
 

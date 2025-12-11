@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { getBusFactorAndOwnership, getCrossRepoBusFactorAndOwnership } from '../busFactor';
 import simpleGit from 'simple-git';
-import { getRepositories, getOllamaSettings } from '../../db';
+import { getRepositories, getOllamaSettings, getCachedBusFactorAndOwnership } from '../../db';
 import { generateInsights } from '../../services/aiAnalysis';
 
 // Mock dependencies
@@ -13,6 +13,7 @@ const mockSimpleGit = vi.mocked(simpleGit);
 const mockGetRepositories = vi.mocked(getRepositories);
 const mockGetOllamaSettings = vi.mocked(getOllamaSettings);
 const mockGenerateInsights = vi.mocked(generateInsights);
+const mockGetCachedBusFactorAndOwnership = vi.mocked(getCachedBusFactorAndOwnership);
 
 describe('busFactor', () => {
   beforeEach(() => {
@@ -262,6 +263,54 @@ describe('busFactor', () => {
       );
 
       consoleWarnSpy.mockRestore();
+    });
+
+    it('should generate AI insights for cached data when includeAIInsights is true', async () => {
+      const cachedBusFactor = {
+        singleMaintainerRisk: {
+          files: [],
+          repoRisk: {
+            primaryAuthor: 'John Doe',
+            primaryAuthorEmail: 'john@example.com',
+            primaryAuthorCommits: 90,
+            totalCommits: 100,
+            ownershipPercentage: 90,
+            riskLevel: 'high' as const,
+          },
+        },
+        fragmentation: {
+          files: [],
+        },
+        ownerChurn: {
+          files: [],
+        },
+      };
+
+      mockGetCachedBusFactorAndOwnership.mockResolvedValue(cachedBusFactor as any);
+
+      mockGetOllamaSettings.mockResolvedValue({
+        enabled: true,
+        host: 'localhost',
+        port: 11434,
+        model: 'llama3',
+        timeout: 30000,
+      });
+      mockGenerateInsights.mockResolvedValue('AI-generated insights for cached bus factor');
+
+      const result = await getBusFactorAndOwnership('/test/repo', true, true);
+
+      expect(result.aiInsights).toBe('AI-generated insights for cached bus factor');
+      expect(result.singleMaintainerRisk).toEqual(cachedBusFactor.singleMaintainerRisk);
+      expect(mockGetOllamaSettings).toHaveBeenCalled();
+      expect(mockGenerateInsights).toHaveBeenCalledWith(
+        'bus-factor',
+        cachedBusFactor,
+        expect.objectContaining({
+          enabled: true,
+        })
+      );
+      // Should not have called git operations since we used cached data
+      expect(mockSimpleGit).not.toHaveBeenCalled();
     });
   });
 

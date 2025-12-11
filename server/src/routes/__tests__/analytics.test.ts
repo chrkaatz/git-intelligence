@@ -195,7 +195,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockAnalytics);
-      expect(mockGetDeveloperAnalytics).toHaveBeenCalledWith('/path/to/repo', true);
+      expect(mockGetDeveloperAnalytics).toHaveBeenCalledWith('/path/to/repo', true, undefined);
     });
 
     it('should bypass cache when refresh=true', async () => {
@@ -219,7 +219,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockAnalytics);
-      expect(mockGetDeveloperAnalytics).toHaveBeenCalledWith('/path/to/repo', false);
+      expect(mockGetDeveloperAnalytics).toHaveBeenCalledWith('/path/to/repo', false, undefined);
     });
 
     it('should return 400 when repoId is missing', async () => {
@@ -246,6 +246,52 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({ error: 'Failed to get developer analytics' });
+    });
+
+    it('should include AI insights when ai=true', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      const mockAnalytics = {
+        authors: [],
+        longitudinalPatterns: {
+          authorActivity: [],
+          onboardingCurve: [],
+          dormancy: [],
+        },
+        aiInsights: 'AI-generated insights for developer analytics',
+      };
+
+      mockGetDeveloperAnalytics.mockResolvedValue(mockAnalytics as any);
+
+      const response = await request(app).get(`/developer-analytics?repoId=${repo.id}&ai=true`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockAnalytics);
+      expect(response.body.aiInsights).toBe('AI-generated insights for developer analytics');
+      expect(mockGetDeveloperAnalytics).toHaveBeenCalledWith('/path/to/repo', true, true);
+    });
+
+    it('should not include AI insights when ai parameter is not provided', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      const mockAnalytics = {
+        authors: [],
+        longitudinalPatterns: {
+          authorActivity: [],
+          onboardingCurve: [],
+          dormancy: [],
+        },
+      };
+
+      mockGetDeveloperAnalytics.mockResolvedValue(mockAnalytics as any);
+
+      const response = await request(app).get(`/developer-analytics?repoId=${repo.id}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockAnalytics);
+      expect(mockGetDeveloperAnalytics).toHaveBeenCalledWith('/path/to/repo', true, undefined);
     });
   });
 
@@ -335,7 +381,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockHealth);
-      expect(mockGetCodebaseHealth).toHaveBeenCalledWith('/path/to/repo', true);
+      expect(mockGetCodebaseHealth).toHaveBeenCalledWith('/path/to/repo', true, undefined);
     });
 
     it('should bypass cache when refresh=true', async () => {
@@ -355,7 +401,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockHealth);
-      expect(mockGetCodebaseHealth).toHaveBeenCalledWith('/path/to/repo', false);
+      expect(mockGetCodebaseHealth).toHaveBeenCalledWith('/path/to/repo', false, undefined);
     });
 
     it('should return 400 when repoId is missing', async () => {
@@ -382,6 +428,28 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({ error: 'Failed to get codebase health metrics' });
+    });
+
+    it('should include AI insights when ai=true', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      const mockHealth = {
+        hotspots: [],
+        changeCoupling: [],
+        stability: [],
+        complexity: [],
+        aiInsights: 'AI-generated insights for codebase health',
+      };
+
+      mockGetCodebaseHealth.mockResolvedValue(mockHealth as any);
+
+      const response = await request(app).get(`/codebase-health?repoId=${repo.id}&ai=true`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockHealth);
+      expect(response.body.aiInsights).toBe('AI-generated insights for codebase health');
+      expect(mockGetCodebaseHealth).toHaveBeenCalledWith('/path/to/repo', true, true);
     });
   });
 
@@ -470,7 +538,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockEvolution);
-      expect(mockGetRepositoryEvolution).toHaveBeenCalledWith('/path/to/repo', true);
+      expect(mockGetRepositoryEvolution).toHaveBeenCalledWith('/path/to/repo', true, undefined);
     });
 
     it('should bypass cache when refresh=true', async () => {
@@ -493,7 +561,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockEvolution);
-      expect(mockGetRepositoryEvolution).toHaveBeenCalledWith('/path/to/repo', false);
+      expect(mockGetRepositoryEvolution).toHaveBeenCalledWith('/path/to/repo', false, undefined);
     });
 
     it('should return 400 when repoId is missing', async () => {
@@ -522,6 +590,29 @@ describe('Analytics Routes', () => {
       expect(response.body).toEqual({
         error: 'Failed to get repository evolution metrics',
       });
+    });
+
+    it('should include AI insights when ai=true', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      const mockEvolution = {
+        commitFrequency: [],
+        releases: [],
+        growthCurve: [],
+        changeBursts: [],
+        churn: [],
+        aiInsights: 'AI-generated insights for repository evolution',
+      };
+
+      mockGetRepositoryEvolution.mockResolvedValue(mockEvolution as any);
+
+      const response = await request(app).get(`/repository-evolution?repoId=${repo.id}&ai=true`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockEvolution);
+      expect(response.body.aiInsights).toBe('AI-generated insights for repository evolution');
+      expect(mockGetRepositoryEvolution).toHaveBeenCalledWith('/path/to/repo', true, true);
     });
   });
 
@@ -610,7 +701,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockBusFactor);
-      expect(mockGetBusFactorAndOwnership).toHaveBeenCalledWith('/path/to/repo', true);
+      expect(mockGetBusFactorAndOwnership).toHaveBeenCalledWith('/path/to/repo', true, undefined);
     });
 
     it('should bypass cache when refresh=true', async () => {
@@ -631,7 +722,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockBusFactor);
-      expect(mockGetBusFactorAndOwnership).toHaveBeenCalledWith('/path/to/repo', false);
+      expect(mockGetBusFactorAndOwnership).toHaveBeenCalledWith('/path/to/repo', false, undefined);
     });
 
     it('should return 400 when repoId is missing', async () => {
@@ -660,6 +751,29 @@ describe('Analytics Routes', () => {
       expect(response.body).toEqual({
         error: 'Failed to get bus factor and ownership metrics',
       });
+    });
+
+    it('should include AI insights when ai=true', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      const mockBusFactor = {
+        singleMaintainerRisk: [],
+        fragmentation: [],
+        ownerChurn: [],
+        aiInsights: 'AI-generated insights for bus factor',
+      };
+
+      mockGetBusFactorAndOwnership.mockResolvedValue(mockBusFactor as any);
+
+      const response = await request(app).get(
+        `/bus-factor-and-ownership?repoId=${repo.id}&ai=true`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockBusFactor);
+      expect(response.body.aiInsights).toBe('AI-generated insights for bus factor');
+      expect(mockGetBusFactorAndOwnership).toHaveBeenCalledWith('/path/to/repo', true, true);
     });
   });
 

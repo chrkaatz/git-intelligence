@@ -28,6 +28,19 @@ export async function getDeveloperAnalytics(
   if (useCache) {
     const cached = await getCachedDeveloperAnalytics(repoPath); // Uses default 30-day TTL as fallback
     if (cached) {
+      // If AI insights are requested, generate them even for cached data
+      if (includeAIInsights) {
+        try {
+          const ollamaSettings = await getOllamaSettings();
+          if (ollamaSettings.enabled) {
+            const insights = await generateInsights('developer-analytics', cached, ollamaSettings);
+            return { ...cached, aiInsights: insights };
+          }
+        } catch (error) {
+          // Log error but don't fail the entire request if AI insights fail
+          console.warn('Failed to generate AI insights for developer analytics:', error);
+        }
+      }
       return cached;
     }
   }
