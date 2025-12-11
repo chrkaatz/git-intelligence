@@ -8,6 +8,7 @@ import {
   getOllamaSettings,
 } from '../db.js';
 import { generateInsights } from '../services/aiAnalysis.js';
+import { shouldExcludeFileFromAnalysis } from './utils.js';
 import type {
   CodebaseHealth,
   FileHotspot,
@@ -329,6 +330,11 @@ export async function getCodebaseHealth(
           const totalChanged = added + deleted;
 
           if (filePath && totalChanged > 0) {
+            // Skip excluded files (package-lock.json, translations, etc.)
+            if (shouldExcludeFileFromAnalysis(filePath)) {
+              continue;
+            }
+
             // Track file commits
             fileCommits.set(filePath, (fileCommits.get(filePath) || 0) + 1);
 
@@ -427,7 +433,17 @@ export async function getCodebaseHealth(
           coChangePercentage,
         };
       })
-      .filter((pair) => pair.coChanges >= 3) // Only show pairs that changed together at least 3 times
+      .filter((pair) => {
+        // Exclude pairs where either file should be excluded
+        if (
+          shouldExcludeFileFromAnalysis(pair.file1) ||
+          shouldExcludeFileFromAnalysis(pair.file2)
+        ) {
+          return false;
+        }
+        // Only show pairs that changed together at least 3 times
+        return pair.coChanges >= 3;
+      })
       .sort((a, b) => b.coChanges - a.coChanges);
 
     // 3. Stability
@@ -459,7 +475,13 @@ export async function getCodebaseHealth(
           status,
         };
       })
-      .filter((f) => f.changeFrequency > 0)
+      .filter((f) => {
+        // Exclude files that should be filtered out
+        if (shouldExcludeFileFromAnalysis(f.file)) {
+          return false;
+        }
+        return f.changeFrequency > 0;
+      })
       .sort((a, b) => b.changeFrequency - a.changeFrequency);
 
     // 4. Complexity
@@ -471,7 +493,13 @@ export async function getCodebaseHealth(
           averageDiffSize: Math.round(average),
         };
       })
-      .filter((f) => f.averageDiffSize > 0)
+      .filter((f) => {
+        // Exclude files that should be filtered out
+        if (shouldExcludeFileFromAnalysis(f.file)) {
+          return false;
+        }
+        return f.averageDiffSize > 0;
+      })
       .sort((a, b) => b.averageDiffSize - a.averageDiffSize);
 
     const largestDiffs: LargestDiff[] = Array.from(fileLargestDiff.entries())
@@ -480,6 +508,7 @@ export async function getCodebaseHealth(
         linesChanged: data.lines,
         commitHash: data.commitHash,
       }))
+      .filter((f) => !shouldExcludeFileFromAnalysis(f.file)) // Exclude filtered files
       .sort((a, b) => b.linesChanged - a.linesChanged);
 
     const mostRewritten: MostRewritten[] = Array.from(fileRewrittenLines.entries())
@@ -493,7 +522,14 @@ export async function getCodebaseHealth(
           rewrittenLines,
         };
       })
-      .filter((f) => f.rewrittenLines > 0 && f.totalLines > 100) // Only files with significant changes
+      .filter((f) => {
+        // Exclude files that should be filtered out
+        if (shouldExcludeFileFromAnalysis(f.file)) {
+          return false;
+        }
+        // Only files with significant changes
+        return f.rewrittenLines > 0 && f.totalLines > 100;
+      })
       .sort((a, b) => b.rewritePercentage - a.rewritePercentage);
 
     // 5. Repository Hygiene

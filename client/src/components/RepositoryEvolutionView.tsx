@@ -92,6 +92,20 @@ export function RepositoryEvolutionView() {
       return;
     }
 
+    // Check if Ollama is enabled first
+    try {
+      const settings = await getOllamaSettings();
+      if (!settings.enabled) {
+        setOllamaEnabled(false);
+        return;
+      }
+      setOllamaEnabled(true);
+    } catch {
+      // If we can't get settings, assume disabled
+      setOllamaEnabled(false);
+      return;
+    }
+
     // Prevent duplicate fetches
     if (isFetchingAIInsightsRef.current) {
       return;

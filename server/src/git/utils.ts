@@ -400,3 +400,77 @@ export async function getLatestCommitHash(repoPath: string): Promise<string | nu
     return null;
   }
 }
+
+/**
+ * Check if a file should be excluded from risk/hotspot analysis
+ * Filters out false positives like package-lock.json, package.json, and translation files
+ * @param filePath - The file path to check
+ * @returns true if the file should be excluded, false otherwise
+ */
+export function shouldExcludeFileFromAnalysis(filePath: string): boolean {
+  if (!filePath) return false;
+
+  const normalizedPath = filePath.toLowerCase();
+
+  // Exclude package-lock.json files (any path)
+  if (normalizedPath.endsWith('package-lock.json')) {
+    return true;
+  }
+
+  // Exclude package.json files (any path)
+  if (normalizedPath.endsWith('package.json')) {
+    return true;
+  }
+
+  // Exclude yarn.lock files
+  if (normalizedPath.endsWith('yarn.lock')) {
+    return true;
+  }
+
+  // Exclude pnpm-lock.yaml files
+  if (normalizedPath.endsWith('pnpm-lock.yaml')) {
+    return true;
+  }
+
+  // Exclude translation files in common translation directories
+  const translationPatterns = [
+    /[\/\\]translations?[\/\\]/i,
+    /[\/\\]locale[s]?[\/\\]/i,
+    /[\/\\]locales[\/\\]/i,
+    /[\/\\]i18n[\/\\]/i,
+    /[\/\\]lang[s]?[\/\\]/i,
+    /[\/\\]language[s]?[\/\\]/i,
+    /[\/\\]messages?[\/\\]/i,
+    /[\/\\]lang[\/\\]/i,
+  ];
+
+  // Check if file is in a translation directory
+  for (const pattern of translationPatterns) {
+    if (pattern.test(filePath)) {
+      // If it's a JSON file in a translation directory, exclude it
+      if (normalizedPath.endsWith('.json')) {
+        return true;
+      }
+      // Also exclude common translation file extensions
+      if (
+        normalizedPath.endsWith('.po') ||
+        normalizedPath.endsWith('.pot') ||
+        normalizedPath.endsWith('.properties') ||
+        normalizedPath.endsWith('.xliff') ||
+        normalizedPath.endsWith('.xlf')
+      ) {
+        return true;
+      }
+    }
+  }
+
+  // Exclude common translation file names (e.g., de.json, en.json, fr.json) even if not in translation directory
+  // This catches cases like src/locales/de.json, src/i18n/en.json, etc.
+  const translationFileNamePattern = /^[a-z]{2}(-[a-z]{2})?\.(json|po|pot|properties|xliff|xlf)$/i;
+  const fileName = filePath.split(/[\/\\]/).pop() || '';
+  if (translationFileNamePattern.test(fileName)) {
+    return true;
+  }
+
+  return false;
+}

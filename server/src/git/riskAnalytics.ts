@@ -1,6 +1,6 @@
 import simpleGit from 'simple-git';
 import { getRepositories, getCachedRiskAnalytics, setCachedRiskAnalytics } from '../db.js';
-import { normalizeEmail } from './utils.js';
+import { normalizeEmail, shouldExcludeFileFromAnalysis } from './utils.js';
 import { getCodebaseHealth } from './codebaseHealth.js';
 import { getBusFactorAndOwnership } from './busFactor.js';
 import type {
@@ -102,6 +102,11 @@ export async function getRiskAnalytics(
         if (parts.length >= 3) {
           const filePath = parts.slice(2).join('\t');
           if (filePath) {
+            // Skip excluded files (package-lock.json, translations, etc.)
+            if (shouldExcludeFileFromAnalysis(filePath)) {
+              continue;
+            }
+
             const normalizedEmail = normalizeEmail(currentCommit.authorEmail);
 
             if (!fileAuthors.has(filePath)) {
@@ -137,6 +142,11 @@ export async function getRiskAnalytics(
     fileOwnershipMap.forEach((_, file) => allFiles.add(file));
 
     allFiles.forEach((file) => {
+      // Skip excluded files (package-lock.json, translations, etc.)
+      if (shouldExcludeFileFromAnalysis(file)) {
+        return;
+      }
+
       const churn = fileChurnMap.get(file) || 0;
       const complexity = fileComplexityMap.get(file) || 0;
       const ownershipDiversity = fileOwnershipMap.get(file) || 0;
@@ -210,7 +220,14 @@ export async function getRiskAnalytics(
           riskLevel,
         };
       })
-      .filter((hotspot) => hotspot.couplingCount >= 3) // Only files with significant coupling
+      .filter((hotspot) => {
+        // Exclude files that should be filtered out
+        if (shouldExcludeFileFromAnalysis(hotspot.file)) {
+          return false;
+        }
+        // Only files with significant coupling
+        return hotspot.couplingCount >= 3;
+      })
       .sort((a, b) => b.couplingCount - a.couplingCount);
 
     // 3. Trend of Risky Files
@@ -258,6 +275,11 @@ export async function getRiskAnalytics(
         if (parts.length >= 3) {
           const filePath = parts.slice(2).join('\t');
           if (filePath) {
+            // Skip excluded files (package-lock.json, translations, etc.)
+            if (shouldExcludeFileFromAnalysis(filePath)) {
+              continue;
+            }
+
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             if (!fileCommitsByMonth.has(filePath)) {
               fileCommitsByMonth.set(filePath, new Map());

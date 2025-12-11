@@ -1,4 +1,5 @@
 import { generateCompletion } from './ollama.js';
+import { shouldExcludeFileFromAnalysis } from '../git/utils.js';
 import type { OllamaSettings } from '../db/types.js';
 import type {
   CodebaseHealth,
@@ -107,11 +108,22 @@ Format your response as clear, structured text with bullet points where appropri
  * Build prompt for codebase health analysis
  */
 function buildCodebaseHealthPrompt(data: CodebaseHealth): string {
-  const topHotspots = data.hotspots.files.slice(0, 10);
+  // Filter out excluded files before sending to AI
+  const topHotspots = data.hotspots.files
+    .filter((f) => !shouldExcludeFileFromAnalysis(f.file))
+    .slice(0, 10);
   const topDirectories = data.hotspots.directories.slice(0, 10);
-  const topCoupling = data.changeCoupling.pairs.slice(0, 10);
-  const unstableFiles = data.stability.files.filter((f) => f.status === 'unstable').slice(0, 10);
-  const complexFiles = data.complexity.averageDiffSizes.slice(0, 10);
+  const topCoupling = data.changeCoupling.pairs
+    .filter(
+      (p) => !shouldExcludeFileFromAnalysis(p.file1) && !shouldExcludeFileFromAnalysis(p.file2)
+    )
+    .slice(0, 10);
+  const unstableFiles = data.stability.files
+    .filter((f) => f.status === 'unstable' && !shouldExcludeFileFromAnalysis(f.file))
+    .slice(0, 10);
+  const complexFiles = data.complexity.averageDiffSizes
+    .filter((f) => !shouldExcludeFileFromAnalysis(f.file))
+    .slice(0, 10);
 
   return `You are an expert software engineering analyst. Analyze the following codebase health metrics and provide actionable insights.
 

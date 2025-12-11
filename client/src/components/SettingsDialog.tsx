@@ -370,9 +370,7 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
                           checked={localOllamaSettings.enabled}
                           onChange={(e) => {
                             const newValue = e.target.checked;
-                            // Optimistically update UI
-                            setLocalOllamaSettings((prev) => ({ ...prev, enabled: newValue }));
-                            // Save immediately
+                            // Save immediately (handleOllamaSettingChange will update state)
                             handleOllamaSettingChange('enabled', newValue);
                           }}
                           className="sr-only peer"
