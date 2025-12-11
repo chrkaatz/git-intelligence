@@ -146,6 +146,83 @@ describe('aiAnalysis service', () => {
       expect(prompt).toContain('John Doe');
     });
 
+    it('should handle empty activeTimeWindows gracefully in developer-analytics', async () => {
+      const data: DeveloperAnalytics = {
+        authors: [
+          {
+            name: 'Jane Smith',
+            email: 'jane@example.com',
+            commits: 50,
+            linesAdded: 2000,
+            linesRemoved: 500,
+            netLines: 1500,
+            firstCommit: '2024-01-01',
+            lastCommit: '2024-12-01',
+            percentage: '25%',
+            activeTimeWindows: {
+              hourOfDay: {}, // Empty object
+              dayOfWeek: {}, // Empty object
+            },
+            signedCommits: 40,
+            signedCommitsPercentage: '80%',
+            fixCommits: 5,
+            fixCommitRatio: '10%',
+            revertCommits: 1,
+            revertCommitRatio: '2%',
+            churn: 500,
+            churnRatio: '20%',
+          },
+        ],
+      };
+
+      const result = await generateInsights('developer-analytics', data, defaultSettings);
+
+      expect(result).toBe('Test AI insights response');
+      expect(mockGenerateCompletion).toHaveBeenCalledOnce();
+      const prompt = mockGenerateCompletion.mock.calls[0][0];
+      expect(prompt).toContain('Jane Smith');
+      expect(prompt).toContain('No activity patterns recorded');
+    });
+
+    it('should handle partially empty activeTimeWindows gracefully', async () => {
+      const data: DeveloperAnalytics = {
+        authors: [
+          {
+            name: 'Bob Johnson',
+            email: 'bob@example.com',
+            commits: 75,
+            linesAdded: 3000,
+            linesRemoved: 1000,
+            netLines: 2000,
+            firstCommit: '2024-01-01',
+            lastCommit: '2024-12-01',
+            percentage: '37.5%',
+            activeTimeWindows: {
+              hourOfDay: { 9: 10 }, // Has data
+              dayOfWeek: {}, // Empty object
+            },
+            signedCommits: 60,
+            signedCommitsPercentage: '80%',
+            fixCommits: 7,
+            fixCommitRatio: '9.3%',
+            revertCommits: 1,
+            revertCommitRatio: '1.3%',
+            churn: 1000,
+            churnRatio: '25%',
+          },
+        ],
+      };
+
+      const result = await generateInsights('developer-analytics', data, defaultSettings);
+
+      expect(result).toBe('Test AI insights response');
+      expect(mockGenerateCompletion).toHaveBeenCalledOnce();
+      const prompt = mockGenerateCompletion.mock.calls[0][0];
+      expect(prompt).toContain('Bob Johnson');
+      expect(prompt).toContain('Peak hour 9:00');
+      expect(prompt).toContain('Peak day N/A');
+    });
+
     it('should generate insights for repository-evolution', async () => {
       const data: RepositoryEvolution = {
         commitFrequency: [

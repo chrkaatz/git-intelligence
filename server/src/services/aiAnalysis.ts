@@ -181,13 +181,28 @@ ${highChurn.map((a) => `- ${a.name}: ${a.churnRatio}% churn ratio`).join('\n')}
 ACTIVITY PATTERNS:
 ${topContributors
   .map((a) => {
-    const peakHour = Object.entries(a.activeTimeWindows.hourOfDay).reduce((prev, curr) =>
-      prev[1] > curr[1] ? prev : curr
-    )[0];
-    const peakDay = Object.entries(a.activeTimeWindows.dayOfWeek).reduce((prev, curr) =>
-      prev[1] > curr[1] ? prev : curr
-    )[0];
-    return `- ${a.name}: Peak hour ${peakHour}:00, Peak day ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][parseInt(peakDay)]}`;
+    const hourEntries = Object.entries(a.activeTimeWindows.hourOfDay);
+    const dayEntries = Object.entries(a.activeTimeWindows.dayOfWeek);
+
+    if (hourEntries.length === 0 && dayEntries.length === 0) {
+      return `- ${a.name}: No activity patterns recorded`;
+    }
+
+    const peakHour =
+      hourEntries.length > 0
+        ? hourEntries.reduce((prev, curr) => (prev[1] > curr[1] ? prev : curr))[0]
+        : 'N/A';
+    const peakDay =
+      dayEntries.length > 0
+        ? dayEntries.reduce((prev, curr) => (prev[1] > curr[1] ? prev : curr))[0]
+        : 'N/A';
+
+    const dayName =
+      peakDay !== 'N/A'
+        ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][parseInt(peakDay)]
+        : 'N/A';
+
+    return `- ${a.name}: Peak hour ${peakHour}:00, Peak day ${dayName}`;
   })
   .join('\n')}
 
