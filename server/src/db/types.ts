@@ -73,6 +73,14 @@ export interface CachedSocialNetworkAnalysis {
   latestCommitHash?: string; // Latest commit hash when cached
 }
 
+export interface CachedAIInsights {
+  insights: string; // AI-generated insights
+  cachedAt: string;
+  repoPath: string;
+  analysisType: string; // e.g., 'codebase-health', 'developer-analytics', etc.
+  latestCommitHash?: string; // Latest commit hash when cached
+}
+
 export interface OllamaSettings {
   enabled: boolean; // Whether Ollama integration is enabled
   host: string; // Ollama host (default: 'localhost')
@@ -92,6 +100,7 @@ export interface DatabaseSchema {
   busFactorCache?: Record<string, CachedBusFactorAndOwnership>; // keyed by repository path
   repositoryEvolutionCache?: Record<string, CachedRepositoryEvolution>; // keyed by repository path
   socialNetworkAnalysisCache?: Record<string, CachedSocialNetworkAnalysis>; // keyed by repository path
+  aiInsightsCache?: Record<string, CachedAIInsights>; // keyed by `${repoPath}:${analysisType}`
   ollamaSettings?: OllamaSettings; // Ollama configuration settings
   schemaVersion?: number; // Track schema version for migrations
 }

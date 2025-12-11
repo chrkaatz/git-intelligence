@@ -3,12 +3,14 @@ import { useParams } from '@tanstack/react-router';
 import { RepositoryEvolution as RepositoryEvolutionComponent } from './RepositoryEvolution';
 import {
   getRepositoryEvolution,
+  getOllamaSettings,
   type RepositoryEvolution as RepositoryEvolutionType,
 } from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { RecalculateButton } from './common/RecalculateButton';
 import { useNotifications } from '../context/NotificationContext';
 import { useApp } from '../hooks/useApp';
+import { AIInsightsPanel } from './AIInsightsPanel';
 
 export function RepositoryEvolutionView() {
   const params = useParams({ strict: false }) as { repoId?: string };
@@ -16,10 +18,14 @@ export function RepositoryEvolutionView() {
   const { repositories } = useApp();
   const [evolution, setEvolution] = useState<RepositoryEvolutionType | null>(null);
   const [loading, setLoading] = useState(false);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
+  const [ollamaEnabled, setOllamaEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showNotification, removeNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
+  const isFetchingAIInsightsRef = useRef(false);
 
   // Get repository name from ID
   const repository = repoId ? repositories.find((r) => r.id === repoId) : null;
@@ -81,9 +87,58 @@ export function RepositoryEvolutionView() {
     [repoId, showNotification, removeNotification]
   );
 
+  const fetchAIInsights = useCallback(async () => {
+    if (!repoId || !evolution) {
+      return;
+    }
+
+    // Prevent duplicate fetches
+    if (isFetchingAIInsightsRef.current) {
+      return;
+    }
+
+    isFetchingAIInsightsRef.current = true;
+    setAiInsightsLoading(true);
+    setAiInsightsError(null);
+
+    try {
+      const data = await getRepositoryEvolution(repoId, false, true);
+      setEvolution(data);
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+          ?.error ||
+        (err as { message?: string })?.message ||
+        'Failed to generate AI insights';
+      setAiInsightsError(errorMessage);
+    } finally {
+      setAiInsightsLoading(false);
+      isFetchingAIInsightsRef.current = false;
+    }
+  }, [repoId, evolution]);
+
   useEffect(() => {
     fetchEvolution(false);
   }, [fetchEvolution]);
+
+  // Check Ollama settings when evolution data is loaded (but don't auto-fetch insights)
+  useEffect(() => {
+    const checkOllama = async () => {
+      if (!evolution) {
+        return;
+      }
+
+      // Check if Ollama is enabled
+      try {
+        const settings = await getOllamaSettings();
+        setOllamaEnabled(settings.enabled);
+      } catch {
+        setOllamaEnabled(false);
+      }
+    };
+
+    checkOllama();
+  }, [evolution]);
 
   return (
     <>
@@ -107,7 +162,18 @@ export function RepositoryEvolutionView() {
           {error}
         </div>
       ) : evolution ? (
-        <RepositoryEvolutionComponent evolution={evolution} loading={loading} />
+        <>
+          <AIInsightsPanel
+            insights={evolution.aiInsights}
+            loading={aiInsightsLoading}
+            error={aiInsightsError}
+            onRefresh={fetchAIInsights}
+            onGenerate={fetchAIInsights}
+            title="AI Insights - Repository Evolution"
+            ollamaEnabled={ollamaEnabled}
+          />
+          <RepositoryEvolutionComponent evolution={evolution} loading={loading} />
+        </>
       ) : (
         <div className="text-center py-12 text-gray-500">
           No repository selected. Select a repository from the list to view repository evolution

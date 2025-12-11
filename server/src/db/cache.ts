@@ -507,6 +507,14 @@ export async function clearCache(repoPath?: string): Promise<void> {
     if (database.data.socialNetworkAnalysisCache) {
       delete database.data.socialNetworkAnalysisCache[repoPath];
     }
+    // Clear AI insights cache for this repository (all analysis types)
+    if (database.data.aiInsightsCache) {
+      Object.keys(database.data.aiInsightsCache).forEach((key) => {
+        if (key.startsWith(`${repoPath}:`)) {
+          delete database.data.aiInsightsCache![key];
+        }
+      });
+    }
   } else {
     database.data.analysisCache = {};
     database.data.codebaseHealthCache = {};
@@ -527,6 +535,9 @@ export async function clearCache(repoPath?: string): Promise<void> {
     }
     if (database.data.socialNetworkAnalysisCache) {
       database.data.socialNetworkAnalysisCache = {};
+    }
+    if (database.data.aiInsightsCache) {
+      database.data.aiInsightsCache = {};
     }
   }
   await database.write();
@@ -677,6 +688,100 @@ export async function setCachedTechnicalDebtIndicators(
     indicators,
     cachedAt: new Date().toISOString(),
     repoPath,
+    latestCommitHash: latestCommitHash || undefined,
+  };
+  await database.write();
+}
+
+/**
+ * Get cached AI insights for a repository and analysis type
+ * @param repoPath Repository path
+ * @param analysisType Analysis type (e.g., 'codebase-health', 'developer-analytics')
+ * @param maxAgeMs Maximum age in milliseconds (default: 24 hours)
+ * @returns Cached AI insights or null if not found/expired
+ */
+export async function getCachedAIInsights(
+  repoPath: string,
+  analysisType: string,
+  maxAgeMs: number = 86400000 // 24 hours default
+): Promise<string | null> {
+  const database = await getDb();
+  if (!database.data.aiInsightsCache) {
+    database.data.aiInsightsCache = {};
+  }
+  const cacheKey = `${repoPath}:${analysisType}`;
+  const cached = database.data.aiInsightsCache[cacheKey];
+
+  if (!cached) {
+    return null;
+  }
+
+  // Check if repository has new commits since cache was created
+  const currentCommitHash = await getLatestCommitHash(repoPath);
+
+  // If we can't get commit hash and we previously had one, repository might be deleted/invalid
+  if (!currentCommitHash && cached.latestCommitHash) {
+    // Repository no longer exists or is invalid, invalidate cache
+    delete database.data.aiInsightsCache[cacheKey];
+    await database.write();
+    return null;
+  }
+
+  if (currentCommitHash && cached.latestCommitHash) {
+    if (currentCommitHash !== cached.latestCommitHash) {
+      // Repository has new commits, invalidate cache
+      delete database.data.aiInsightsCache[cacheKey];
+      await database.write();
+      return null;
+    }
+    // Commit hash matches - cache is still valid (no time check needed)
+    return cached.insights;
+  } else if (currentCommitHash && !cached.latestCommitHash) {
+    // Cache was created before we started tracking commit hashes
+    // Invalidate it to ensure we get fresh data with commit hash tracking
+    delete database.data.aiInsightsCache[cacheKey];
+    await database.write();
+    return null;
+  }
+
+  // Fallback: if we can't get commit hash, use time-based expiration
+  const cachedAt = new Date(cached.cachedAt).getTime();
+  const now = Date.now();
+  const age = now - cachedAt;
+
+  if (age > maxAgeMs) {
+    // Cache expired (fallback when commit hash unavailable)
+    delete database.data.aiInsightsCache[cacheKey];
+    await database.write();
+    return null;
+  }
+
+  return cached.insights;
+}
+
+/**
+ * Set cached AI insights for a repository and analysis type
+ * @param repoPath Repository path
+ * @param analysisType Analysis type (e.g., 'codebase-health', 'developer-analytics')
+ * @param insights AI-generated insights
+ */
+export async function setCachedAIInsights(
+  repoPath: string,
+  analysisType: string,
+  insights: string
+): Promise<void> {
+  const database = await getDb();
+  if (!database.data.aiInsightsCache) {
+    database.data.aiInsightsCache = {};
+  }
+  const cacheKey = `${repoPath}:${analysisType}`;
+  // Get the latest commit hash when caching
+  const latestCommitHash = await getLatestCommitHash(repoPath);
+  database.data.aiInsightsCache[cacheKey] = {
+    insights,
+    cachedAt: new Date().toISOString(),
+    repoPath,
+    analysisType,
     latestCommitHash: latestCommitHash || undefined,
   };
   await database.write();

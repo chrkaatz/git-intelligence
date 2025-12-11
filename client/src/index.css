@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@plugin '@tailwindcss/typography';
 
 /* Ensure dark mode works properly */
 @media (prefers-color-scheme: dark) {

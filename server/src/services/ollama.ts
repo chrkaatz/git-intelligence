@@ -9,7 +9,7 @@ export async function testConnection(settings: OllamaSettings): Promise<boolean>
   try {
     const url = `http://${settings.host}:${settings.port}/api/tags`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), settings.timeout || 30000);
+    const timeoutId = setTimeout(() => controller.abort(), settings.timeout || 120000);
 
     const response = await fetch(url, {
       method: 'GET',
@@ -54,7 +54,7 @@ export async function generateCompletion(
   try {
     const url = `http://${settings.host}:${settings.port}/api/generate`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), settings.timeout || 30000);
+    const timeoutId = setTimeout(() => controller.abort(), settings.timeout || 120000);
 
     const response = await fetch(url, {
       method: 'POST',
@@ -100,7 +100,7 @@ export async function generateCompletion(
   } catch (error) {
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
-        throw new Error(`Ollama request timed out after ${settings.timeout || 30000}ms`);
+        throw new Error(`Ollama request timed out after ${settings.timeout || 120000}ms`);
       }
       throw error;
     }
@@ -214,7 +214,7 @@ export async function isModelAvailable(model: string, settings: OllamaSettings):
   try {
     const url = `http://${settings.host}:${settings.port}/api/tags`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), settings.timeout || 30000);
+    const timeoutId = setTimeout(() => controller.abort(), settings.timeout || 120000);
 
     const response = await fetch(url, {
       method: 'GET',

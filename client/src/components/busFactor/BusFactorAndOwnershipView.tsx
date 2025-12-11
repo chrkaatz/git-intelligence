@@ -3,12 +3,14 @@ import { useParams } from '@tanstack/react-router';
 import { BusFactorAndOwnership as BusFactorAndOwnershipComponent } from './BusFactorAndOwnership';
 import {
   getBusFactorAndOwnership,
+  getOllamaSettings,
   type BusFactorAndOwnership as BusFactorAndOwnershipType,
 } from '../../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { RecalculateButton } from '../common/RecalculateButton';
 import { useNotifications } from '../../context/NotificationContext';
 import { useApp } from '../../hooks/useApp';
+import { AIInsightsPanel } from '../AIInsightsPanel';
 
 export function BusFactorAndOwnershipView() {
   const params = useParams({ strict: false }) as { repoId?: string };
@@ -16,10 +18,14 @@ export function BusFactorAndOwnershipView() {
   const { repositories } = useApp();
   const [analytics, setAnalytics] = useState<BusFactorAndOwnershipType | null>(null);
   const [loading, setLoading] = useState(false);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
+  const [ollamaEnabled, setOllamaEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showNotification, removeNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
+  const isFetchingAIInsightsRef = useRef(false);
 
   // Get repository name from ID
   const repository = repoId ? repositories.find((r) => r.id === repoId) : null;
@@ -81,9 +87,72 @@ export function BusFactorAndOwnershipView() {
     [repoId, showNotification, removeNotification]
   );
 
+  const fetchAIInsights = useCallback(async () => {
+    if (!repoId || !analytics) {
+      return;
+    }
+
+    // Check if Ollama is enabled first
+    try {
+      const settings = await getOllamaSettings();
+      if (!settings.enabled) {
+        setOllamaEnabled(false);
+        return;
+      }
+      setOllamaEnabled(true);
+    } catch {
+      // If we can't get settings, assume disabled
+      setOllamaEnabled(false);
+      return;
+    }
+
+    // Prevent duplicate fetches
+    if (isFetchingAIInsightsRef.current) {
+      return;
+    }
+
+    isFetchingAIInsightsRef.current = true;
+    setAiInsightsLoading(true);
+    setAiInsightsError(null);
+
+    try {
+      const data = await getBusFactorAndOwnership(repoId, false, true);
+      setAnalytics(data);
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+          ?.error ||
+        (err as { message?: string })?.message ||
+        'Failed to generate AI insights';
+      setAiInsightsError(errorMessage);
+    } finally {
+      setAiInsightsLoading(false);
+      isFetchingAIInsightsRef.current = false;
+    }
+  }, [repoId, analytics]);
+
   useEffect(() => {
     fetchAnalytics(false);
   }, [fetchAnalytics]);
+
+  // Check Ollama settings when analytics are loaded (but don't auto-fetch insights)
+  useEffect(() => {
+    const checkOllama = async () => {
+      if (!analytics) {
+        return;
+      }
+
+      // Check if Ollama is enabled
+      try {
+        const settings = await getOllamaSettings();
+        setOllamaEnabled(settings.enabled);
+      } catch {
+        setOllamaEnabled(false);
+      }
+    };
+
+    checkOllama();
+  }, [analytics]);
 
   return (
     <>
@@ -109,11 +178,22 @@ export function BusFactorAndOwnershipView() {
           {error}
         </div>
       ) : analytics ? (
-        <BusFactorAndOwnershipComponent
-          singleMaintainerRisk={analytics.singleMaintainerRisk}
-          fragmentation={analytics.fragmentation}
-          ownerChurn={analytics.ownerChurn}
-        />
+        <>
+          <AIInsightsPanel
+            insights={analytics.aiInsights}
+            loading={aiInsightsLoading}
+            error={aiInsightsError}
+            onRefresh={fetchAIInsights}
+            onGenerate={fetchAIInsights}
+            title="AI Insights - Bus Factor & Ownership"
+            ollamaEnabled={ollamaEnabled}
+          />
+          <BusFactorAndOwnershipComponent
+            singleMaintainerRisk={analytics.singleMaintainerRisk}
+            fragmentation={analytics.fragmentation}
+            ownerChurn={analytics.ownerChurn}
+          />
+        </>
       ) : (
         <div className="text-center py-12 text-gray-500">
           No repository selected. Select a repository from the list to view bus factor and ownership

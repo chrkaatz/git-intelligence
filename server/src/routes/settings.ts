@@ -96,7 +96,7 @@ router.post('/ollama/test', async (req: Request, res: Response) => {
         port: req.body.port !== undefined ? req.body.port : currentSettings.port,
         model: req.body.model !== undefined ? req.body.model : currentSettings.model,
         timeout:
-          req.body.timeout !== undefined ? req.body.timeout : currentSettings.timeout || 30000,
+          req.body.timeout !== undefined ? req.body.timeout : currentSettings.timeout || 120000,
       };
     } else {
       settings = await getOllamaSettings();

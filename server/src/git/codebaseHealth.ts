@@ -2,6 +2,8 @@ import simpleGit from 'simple-git';
 import {
   getCachedCodebaseHealth,
   setCachedCodebaseHealth,
+  getCachedAIInsights,
+  setCachedAIInsights,
   getRepositories,
   getOllamaSettings,
 } from '../db.js';
@@ -237,12 +239,20 @@ export async function getCodebaseHealth(
   if (useCache) {
     const cached = await getCachedCodebaseHealth(repoPath); // Uses default 30-day TTL as fallback
     if (cached) {
-      // If AI insights are requested, generate them even for cached data
+      // If AI insights are requested, check cache first, then generate if needed
       if (includeAIInsights) {
         try {
           const ollamaSettings = await getOllamaSettings();
           if (ollamaSettings.enabled) {
+            // Check for cached AI insights first
+            const cachedInsights = await getCachedAIInsights(repoPath, 'codebase-health');
+            if (cachedInsights) {
+              return { ...cached, aiInsights: cachedInsights };
+            }
+            // Generate new insights if not cached
             const insights = await generateInsights('codebase-health', cached, ollamaSettings);
+            // Cache the insights
+            await setCachedAIInsights(repoPath, 'codebase-health', insights);
             return { ...cached, aiInsights: insights };
           }
         } catch (error) {
@@ -513,8 +523,17 @@ export async function getCodebaseHealth(
       try {
         const ollamaSettings = await getOllamaSettings();
         if (ollamaSettings.enabled) {
-          const insights = await generateInsights('codebase-health', health, ollamaSettings);
-          health.aiInsights = insights;
+          // Check for cached AI insights first
+          const cachedInsights = await getCachedAIInsights(repoPath, 'codebase-health');
+          if (cachedInsights) {
+            health.aiInsights = cachedInsights;
+          } else {
+            // Generate new insights if not cached
+            const insights = await generateInsights('codebase-health', health, ollamaSettings);
+            health.aiInsights = insights;
+            // Cache the insights
+            await setCachedAIInsights(repoPath, 'codebase-health', insights);
+          }
         }
       } catch (error) {
         // Log error but don't fail the entire request if AI insights fail

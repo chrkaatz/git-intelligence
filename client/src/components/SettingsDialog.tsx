@@ -27,6 +27,7 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
     error: ollamaError,
     updateSettings: updateOllamaSettings,
     testConnection,
+    reloadSettings: reloadOllamaSettings,
   } = useOllamaSettings();
 
   const [localOllamaSettings, setLocalOllamaSettings] = useState({
@@ -34,7 +35,7 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
     host: 'localhost',
     port: 11434,
     model: 'llama3',
-    timeout: undefined as number | undefined,
+    timeout: 120000 as number | undefined, // Default 2 minutes
   });
   const [testingConnection, setTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<{
@@ -45,9 +46,10 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
     host?: string;
     port?: string;
     model?: string;
+    timeout?: string;
   }>({});
 
-  // Sync local state with hook settings when they load
+  // Sync local state with hook settings when they load or change
   useEffect(() => {
     if (!ollamaLoading && ollamaSettings) {
       setLocalOllamaSettings({
@@ -96,12 +98,18 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
   };
 
   // Ollama settings handlers
-  const handleOllamaSettingChange = (
+  const handleOllamaSettingChange = async (
     field: keyof typeof localOllamaSettings,
     value: string | number | boolean
   ) => {
-    setLocalOllamaSettings((prev) => ({ ...prev, [field]: value }));
-    setValidationErrors((prev) => ({ ...prev, [field]: undefined }));
+    const updatedSettings = { ...localOllamaSettings, [field]: value };
+    setLocalOllamaSettings(updatedSettings);
+    // Clear validation error for this field
+    setValidationErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[field as keyof typeof newErrors];
+      return newErrors;
+    });
 
     // Validate on change
     if (field === 'port') {
@@ -111,6 +119,7 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
           ...prev,
           port: 'Port must be between 1 and 65535',
         }));
+        return; // Don't save if validation fails
       }
     } else if (field === 'host') {
       const hostValue = typeof value === 'string' ? value : String(value);
@@ -119,6 +128,7 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
           ...prev,
           host: 'Host cannot be empty',
         }));
+        return; // Don't save if validation fails
       }
     } else if (field === 'model') {
       const modelValue = typeof value === 'string' ? value : String(value);
@@ -127,6 +137,45 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
           ...prev,
           model: 'Model name cannot be empty',
         }));
+        return; // Don't save if validation fails
+      }
+    } else if (field === 'timeout') {
+      const timeoutValue =
+        typeof value === 'number' ? value : value ? parseInt(String(value), 10) : 120000;
+      if (isNaN(timeoutValue) || timeoutValue < 1000 || timeoutValue > 300000) {
+        setValidationErrors((prev) => ({
+          ...prev,
+          timeout: 'Timeout must be between 1000ms (1 second) and 300000ms (5 minutes)',
+        }));
+        return; // Don't save if validation fails
+      } else {
+        // Clear timeout error if value is valid
+        setValidationErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.timeout;
+          return newErrors;
+        });
+      }
+    }
+
+    // Auto-save when enabled toggle is changed (immediate feedback)
+    if (field === 'enabled') {
+      try {
+        // When disabling, we can save immediately without validation of other fields
+        // When enabling, we still need valid other fields, but we'll try to save
+        await updateOllamaSettings({ enabled: value as boolean });
+        // Reload settings to ensure sync
+        await reloadOllamaSettings();
+        showNotification('success', 'Ollama settings updated', 2000);
+      } catch (error: unknown) {
+        // Revert the toggle if save failed
+        setLocalOllamaSettings((prev) => ({ ...prev, enabled: !(value as boolean) }));
+        const errorMessage =
+          (error as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+            ?.error ||
+          (error as { message?: string })?.message ||
+          'Failed to update settings';
+        showNotification('error', errorMessage, 5000);
       }
     }
   };
@@ -176,6 +225,10 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
     }
     if (!localOllamaSettings.model || localOllamaSettings.model.trim().length === 0) {
       errors.model = 'Model name cannot be empty';
+    }
+    const timeoutNum = localOllamaSettings.timeout || 120000;
+    if (isNaN(timeoutNum) || timeoutNum < 1000 || timeoutNum > 300000) {
+      errors.timeout = 'Timeout must be between 1000ms (1 second) and 300000ms (5 minutes)';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -315,7 +368,13 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
                         <input
                           type="checkbox"
                           checked={localOllamaSettings.enabled}
-                          onChange={(e) => handleOllamaSettingChange('enabled', e.target.checked)}
+                          onChange={(e) => {
+                            const newValue = e.target.checked;
+                            // Optimistically update UI
+                            setLocalOllamaSettings((prev) => ({ ...prev, enabled: newValue }));
+                            // Save immediately
+                            handleOllamaSettingChange('enabled', newValue);
+                          }}
                           className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
@@ -405,6 +464,41 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
                           )}
                           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             Suggested models: {modelSuggestions.join(', ')}
+                          </p>
+                        </div>
+
+                        {/* Timeout Input */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Timeout (milliseconds)
+                          </label>
+                          <input
+                            type="number"
+                            value={localOllamaSettings.timeout || 120000}
+                            onChange={(e) =>
+                              handleOllamaSettingChange(
+                                'timeout',
+                                e.target.value ? parseInt(e.target.value, 10) : 120000
+                              )
+                            }
+                            min="1000"
+                            max="300000"
+                            step="1000"
+                            className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                              validationErrors.timeout
+                                ? 'border-red-300 dark:border-red-700'
+                                : 'border-gray-300 dark:border-gray-600'
+                            } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                            placeholder="120000"
+                          />
+                          {validationErrors.timeout && (
+                            <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                              {validationErrors.timeout}
+                            </p>
+                          )}
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Request timeout in milliseconds. Recommended: 120000 (2 minutes) to
+                            180000 (3 minutes) for complex analyses. Maximum: 300000 (5 minutes).
                           </p>
                         </div>
 

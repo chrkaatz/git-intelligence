@@ -3,6 +3,8 @@ import {
   getRepositories,
   getCachedDeveloperAnalytics,
   setCachedDeveloperAnalytics,
+  getCachedAIInsights,
+  setCachedAIInsights,
   getOllamaSettings,
 } from '../db.js';
 import type {
@@ -28,12 +30,20 @@ export async function getDeveloperAnalytics(
   if (useCache) {
     const cached = await getCachedDeveloperAnalytics(repoPath); // Uses default 30-day TTL as fallback
     if (cached) {
-      // If AI insights are requested, generate them even for cached data
+      // If AI insights are requested, check cache first, then generate if needed
       if (includeAIInsights) {
         try {
           const ollamaSettings = await getOllamaSettings();
           if (ollamaSettings.enabled) {
+            // Check for cached AI insights first
+            const cachedInsights = await getCachedAIInsights(repoPath, 'developer-analytics');
+            if (cachedInsights) {
+              return { ...cached, aiInsights: cachedInsights };
+            }
+            // Generate new insights if not cached
             const insights = await generateInsights('developer-analytics', cached, ollamaSettings);
+            // Cache the insights
+            await setCachedAIInsights(repoPath, 'developer-analytics', insights);
             return { ...cached, aiInsights: insights };
           }
         } catch (error) {
@@ -303,8 +313,17 @@ export async function getDeveloperAnalytics(
       try {
         const ollamaSettings = await getOllamaSettings();
         if (ollamaSettings.enabled) {
-          const insights = await generateInsights('developer-analytics', result, ollamaSettings);
-          result.aiInsights = insights;
+          // Check for cached AI insights first
+          const cachedInsights = await getCachedAIInsights(repoPath, 'developer-analytics');
+          if (cachedInsights) {
+            result.aiInsights = cachedInsights;
+          } else {
+            // Generate new insights if not cached
+            const insights = await generateInsights('developer-analytics', result, ollamaSettings);
+            result.aiInsights = insights;
+            // Cache the insights
+            await setCachedAIInsights(repoPath, 'developer-analytics', insights);
+          }
         }
       } catch (error) {
         // Log error but don't fail the entire request if AI insights fail

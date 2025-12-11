@@ -4,12 +4,14 @@ import { DeveloperAnalytics as DeveloperAnalyticsComponent } from './DeveloperAn
 import {
   getDeveloperAnalytics,
   getStats,
+  getOllamaSettings,
   type DeveloperAnalytics as DeveloperAnalyticsType,
 } from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
 import { useApp } from '../hooks/useApp';
 import { RecalculateButton } from './common/RecalculateButton';
+import { AIInsightsPanel } from './AIInsightsPanel';
 
 export function DeveloperAnalyticsView() {
   const params = useParams({ strict: false }) as { repoId?: string };
@@ -17,11 +19,15 @@ export function DeveloperAnalyticsView() {
   const { repositories } = useApp();
   const [developerAnalytics, setDeveloperAnalytics] = useState<DeveloperAnalyticsType | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
+  const [ollamaEnabled, setOllamaEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalLOC, setTotalLOC] = useState<number | null>(null);
   const { showNotification, removeNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
+  const isFetchingAIInsightsRef = useRef(false);
 
   // Get repository name from ID
   const repository = repoId ? repositories.find((r) => r.id === repoId) : null;
@@ -101,9 +107,72 @@ export function DeveloperAnalyticsView() {
     [repoId, showNotification, removeNotification]
   );
 
+  const fetchAIInsights = useCallback(async () => {
+    if (!repoId || !developerAnalytics) {
+      return;
+    }
+
+    // Check if Ollama is enabled first
+    try {
+      const settings = await getOllamaSettings();
+      if (!settings.enabled) {
+        setOllamaEnabled(false);
+        return;
+      }
+      setOllamaEnabled(true);
+    } catch {
+      // If we can't get settings, assume disabled
+      setOllamaEnabled(false);
+      return;
+    }
+
+    // Prevent duplicate fetches
+    if (isFetchingAIInsightsRef.current) {
+      return;
+    }
+
+    isFetchingAIInsightsRef.current = true;
+    setAiInsightsLoading(true);
+    setAiInsightsError(null);
+
+    try {
+      const data = await getDeveloperAnalytics(repoId, false, true);
+      setDeveloperAnalytics(data);
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+          ?.error ||
+        (err as { message?: string })?.message ||
+        'Failed to generate AI insights';
+      setAiInsightsError(errorMessage);
+    } finally {
+      setAiInsightsLoading(false);
+      isFetchingAIInsightsRef.current = false;
+    }
+  }, [repoId, developerAnalytics]);
+
   useEffect(() => {
     fetchAnalytics(false);
   }, [fetchAnalytics]);
+
+  // Check Ollama settings when analytics are loaded (but don't auto-fetch insights)
+  useEffect(() => {
+    const checkOllama = async () => {
+      if (!developerAnalytics) {
+        return;
+      }
+
+      // Check if Ollama is enabled
+      try {
+        const settings = await getOllamaSettings();
+        setOllamaEnabled(settings.enabled);
+      } catch {
+        setOllamaEnabled(false);
+      }
+    };
+
+    checkOllama();
+  }, [developerAnalytics]);
 
   return (
     <>
@@ -131,11 +200,22 @@ export function DeveloperAnalyticsView() {
           {error}
         </div>
       ) : developerAnalytics ? (
-        <DeveloperAnalyticsComponent
-          authors={developerAnalytics.authors}
-          longitudinalPatterns={developerAnalytics.longitudinalPatterns}
-          totalLOC={totalLOC}
-        />
+        <>
+          <AIInsightsPanel
+            insights={developerAnalytics.aiInsights}
+            loading={aiInsightsLoading}
+            error={aiInsightsError}
+            onRefresh={fetchAIInsights}
+            onGenerate={fetchAIInsights}
+            title="AI Insights - Contributions Overview"
+            ollamaEnabled={ollamaEnabled}
+          />
+          <DeveloperAnalyticsComponent
+            authors={developerAnalytics.authors}
+            longitudinalPatterns={developerAnalytics.longitudinalPatterns}
+            totalLOC={totalLOC}
+          />
+        </>
       ) : (
         <div className="text-center py-12 text-gray-500">
           No repository selected. Select a repository from the list to view contributions overview.

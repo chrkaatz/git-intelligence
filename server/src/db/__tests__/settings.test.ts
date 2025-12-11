@@ -35,7 +35,7 @@ describe('settings', () => {
         host: 'localhost',
         port: 11434,
         model: 'llama3',
-        timeout: 30000,
+        timeout: 120000,
       });
     });
 
@@ -66,7 +66,7 @@ describe('settings', () => {
         host: 'localhost',
         port: 11434,
         model: 'llama3',
-        timeout: 30000,
+        timeout: 120000,
       });
 
       // Verify settings were saved
@@ -107,7 +107,7 @@ describe('settings', () => {
         host: 'localhost',
         port: 11434,
         model: 'llama3',
-        timeout: 30000,
+        timeout: 120000,
       };
       await testDb.write();
 
@@ -150,7 +150,7 @@ describe('settings', () => {
       };
 
       await expect(updateOllamaSettings(updates)).rejects.toThrow(
-        'Timeout must be between 1000ms and 300000ms'
+        'Timeout must be between 1000ms (1 second) and 300000ms (5 minutes)'
       );
     });
 
@@ -160,7 +160,7 @@ describe('settings', () => {
       };
 
       await expect(updateOllamaSettings(updates)).rejects.toThrow(
-        'Timeout must be between 1000ms and 300000ms'
+        'Timeout must be between 1000ms (1 second) and 300000ms (5 minutes)'
       );
     });
 
@@ -170,7 +170,7 @@ describe('settings', () => {
       };
 
       await expect(updateOllamaSettings(updates)).rejects.toThrow(
-        'Timeout must be between 1000ms and 300000ms'
+        'Timeout must be between 1000ms (1 second) and 300000ms (5 minutes)'
       );
     });
 
@@ -181,7 +181,7 @@ describe('settings', () => {
         host: 'localhost',
         port: 11434,
         model: 'llama3',
-        timeout: 30000,
+        timeout: 120000,
       };
       await testDb.write();
 
@@ -199,7 +199,7 @@ describe('settings', () => {
         host: 'localhost',
         port: 11434,
         model: 'llama3',
-        timeout: 30000,
+        timeout: 120000,
       };
       await testDb.write();
 
@@ -217,7 +217,7 @@ describe('settings', () => {
         host: 'localhost',
         port: 11434,
         model: 'llama3',
-        timeout: 30000,
+        timeout: 120000,
       };
       await testDb.write();
 
@@ -235,7 +235,7 @@ describe('settings', () => {
         host: 'localhost',
         port: 11434,
         model: 'llama3',
-        timeout: 30000,
+        timeout: 120000,
       };
       await testDb.write();
 
@@ -260,7 +260,7 @@ describe('settings', () => {
       expect(updated.host).toBe('localhost');
       expect(updated.port).toBe(11434);
       expect(updated.model).toBe('llama3');
-      expect(updated.timeout).toBe(30000);
+      expect(updated.timeout).toBe(120000);
     });
   });
 });

@@ -41,30 +41,36 @@ export async function updateOllamaSettings(
     host: settings.host !== undefined ? settings.host : currentSettings.host || 'localhost',
     port: settings.port !== undefined ? settings.port : currentSettings.port || 11434,
     model: settings.model !== undefined ? settings.model : currentSettings.model || 'llama3',
-    timeout: settings.timeout !== undefined ? settings.timeout : currentSettings.timeout || 30000,
+    timeout: settings.timeout !== undefined ? settings.timeout : currentSettings.timeout || 120000,
   };
 
-  // Validate port range
-  if (updatedSettings.port < 1 || updatedSettings.port > 65535) {
+  // Validate port range (always validate if port is being set)
+  if (settings.port !== undefined && (updatedSettings.port < 1 || updatedSettings.port > 65535)) {
     throw new Error('Port must be between 1 and 65535');
   }
 
-  // Validate timeout
-  if (
-    updatedSettings.timeout !== undefined &&
-    (updatedSettings.timeout < 1000 || updatedSettings.timeout > 300000)
-  ) {
-    throw new Error('Timeout must be between 1000ms and 300000ms (5 minutes)');
+  // Validate timeout (always validate if timeout is being set)
+  if (settings.timeout !== undefined) {
+    const timeoutValue = settings.timeout;
+    if (timeoutValue < 1000 || timeoutValue > 300000) {
+      throw new Error(
+        'Timeout must be between 1000ms (1 second) and 300000ms (5 minutes). Recommended: 120000ms (2 minutes) to 180000ms (3 minutes) for complex analyses.'
+      );
+    }
   }
 
-  // Validate host (basic validation)
-  if (!updatedSettings.host || updatedSettings.host.trim().length === 0) {
-    throw new Error('Host cannot be empty');
+  // Validate host (always validate if host is being set)
+  if (settings.host !== undefined) {
+    if (!updatedSettings.host || updatedSettings.host.trim().length === 0) {
+      throw new Error('Host cannot be empty');
+    }
   }
 
-  // Validate model name (basic validation)
-  if (!updatedSettings.model || updatedSettings.model.trim().length === 0) {
-    throw new Error('Model name cannot be empty');
+  // Validate model name (always validate if model is being set)
+  if (settings.model !== undefined) {
+    if (!updatedSettings.model || updatedSettings.model.trim().length === 0) {
+      throw new Error('Model name cannot be empty');
+    }
   }
 
   // Update settings

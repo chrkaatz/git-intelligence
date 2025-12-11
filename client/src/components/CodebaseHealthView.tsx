@@ -1,11 +1,16 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { CodebaseHealth as CodebaseHealthComponent } from './CodebaseHealth';
-import { getCodebaseHealth, type CodebaseHealth as CodebaseHealthType } from '../api';
+import {
+  getCodebaseHealth,
+  getOllamaSettings,
+  type CodebaseHealth as CodebaseHealthType,
+} from '../api';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { RecalculateButton } from './common/RecalculateButton';
 import { useNotifications } from '../context/NotificationContext';
 import { useApp } from '../hooks/useApp';
+import { AIInsightsPanel } from './AIInsightsPanel';
 
 export function CodebaseHealthView() {
   const params = useParams({ strict: false }) as { repoId?: string };
@@ -13,10 +18,14 @@ export function CodebaseHealthView() {
   const { repositories } = useApp();
   const [codebaseHealth, setCodebaseHealth] = useState<CodebaseHealthType | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
+  const [ollamaEnabled, setOllamaEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showNotification, removeNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
+  const isFetchingAIInsightsRef = useRef(false);
 
   // Get repository name from ID
   const repository = repoId ? repositories.find((r) => r.id === repoId) : null;
@@ -78,9 +87,72 @@ export function CodebaseHealthView() {
     [repoId, showNotification, removeNotification]
   );
 
+  const fetchAIInsights = useCallback(async () => {
+    if (!repoId || !codebaseHealth) {
+      return;
+    }
+
+    // Check if Ollama is enabled first
+    try {
+      const settings = await getOllamaSettings();
+      if (!settings.enabled) {
+        setOllamaEnabled(false);
+        return;
+      }
+      setOllamaEnabled(true);
+    } catch {
+      // If we can't get settings, assume disabled
+      setOllamaEnabled(false);
+      return;
+    }
+
+    // Prevent duplicate fetches
+    if (isFetchingAIInsightsRef.current) {
+      return;
+    }
+
+    isFetchingAIInsightsRef.current = true;
+    setAiInsightsLoading(true);
+    setAiInsightsError(null);
+
+    try {
+      const data = await getCodebaseHealth(repoId, false, true);
+      setCodebaseHealth(data);
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+          ?.error ||
+        (err as { message?: string })?.message ||
+        'Failed to generate AI insights';
+      setAiInsightsError(errorMessage);
+    } finally {
+      setAiInsightsLoading(false);
+      isFetchingAIInsightsRef.current = false;
+    }
+  }, [repoId, codebaseHealth]);
+
   useEffect(() => {
     fetchHealth(false);
   }, [fetchHealth]);
+
+  // Check Ollama settings when health data is loaded (but don't auto-fetch insights)
+  useEffect(() => {
+    const checkOllama = async () => {
+      if (!codebaseHealth) {
+        return;
+      }
+
+      // Check if Ollama is enabled
+      try {
+        const settings = await getOllamaSettings();
+        setOllamaEnabled(settings.enabled);
+      } catch {
+        setOllamaEnabled(false);
+      }
+    };
+
+    checkOllama();
+  }, [codebaseHealth]);
 
   return (
     <>
@@ -106,13 +178,24 @@ export function CodebaseHealthView() {
           {error}
         </div>
       ) : codebaseHealth ? (
-        <CodebaseHealthComponent
-          hotspots={codebaseHealth.hotspots}
-          changeCoupling={codebaseHealth.changeCoupling}
-          stability={codebaseHealth.stability}
-          complexity={codebaseHealth.complexity}
-          hygiene={codebaseHealth.hygiene}
-        />
+        <>
+          <AIInsightsPanel
+            insights={codebaseHealth.aiInsights}
+            loading={aiInsightsLoading}
+            error={aiInsightsError}
+            onRefresh={fetchAIInsights}
+            onGenerate={fetchAIInsights}
+            title="AI Insights - Codebase Health"
+            ollamaEnabled={ollamaEnabled}
+          />
+          <CodebaseHealthComponent
+            hotspots={codebaseHealth.hotspots}
+            changeCoupling={codebaseHealth.changeCoupling}
+            stability={codebaseHealth.stability}
+            complexity={codebaseHealth.complexity}
+            hygiene={codebaseHealth.hygiene}
+          />
+        </>
       ) : (
         <div className="text-center py-12 text-gray-500">
           No repository selected. Select a repository from the list to view codebase health metrics.

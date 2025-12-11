@@ -65,6 +65,7 @@ export interface LongitudinalPatterns {
 export interface DeveloperAnalytics {
   authors: DeveloperAuthorStats[];
   longitudinalPatterns?: LongitudinalPatterns;
+  aiInsights?: string;
 }
 
 export interface CrossRepoDeveloperStats extends DeveloperAuthorStats {
@@ -247,10 +248,15 @@ export const getStats = async (repoId: string, refresh?: boolean): Promise<GitSt
 
 export const getDeveloperAnalytics = async (
   repoId: string,
-  refresh?: boolean
+  refresh?: boolean,
+  includeAIInsights?: boolean
 ): Promise<DeveloperAnalytics> => {
   const response = await api.get('/developer-analytics', {
-    params: { repoId, refresh: refresh ? 'true' : undefined },
+    params: {
+      repoId,
+      refresh: refresh ? 'true' : undefined,
+      ai: includeAIInsights ? 'true' : undefined,
+    },
   });
   return response.data;
 };
@@ -358,14 +364,20 @@ export interface CodebaseHealth {
   stability: Stability;
   complexity: Complexity;
   hygiene: RepositoryHygiene;
+  aiInsights?: string;
 }
 
 export const getCodebaseHealth = async (
   repoId: string,
-  refresh: boolean = false
+  refresh: boolean = false,
+  includeAIInsights?: boolean
 ): Promise<CodebaseHealth> => {
   const response = await api.get('/codebase-health', {
-    params: { repoId, refresh: refresh ? 'true' : 'false' },
+    params: {
+      repoId,
+      refresh: refresh ? 'true' : 'false',
+      ai: includeAIInsights ? 'true' : undefined,
+    },
   });
   return response.data;
 };
@@ -447,6 +459,7 @@ export interface RepositoryEvolution {
   averageCommitsPerDay: number;
   averageChurnRatio: number;
   refactorCount: number;
+  aiInsights?: string;
 }
 
 export interface CrossRepoRepositoryEvolution {
@@ -466,10 +479,15 @@ export interface CrossRepoRepositoryEvolution {
 
 export const getRepositoryEvolution = async (
   repoId: string,
-  refresh?: boolean
+  refresh?: boolean,
+  includeAIInsights?: boolean
 ): Promise<RepositoryEvolution> => {
   const response = await api.get('/repository-evolution', {
-    params: { repoId, refresh: refresh ? 'true' : undefined },
+    params: {
+      repoId,
+      refresh: refresh ? 'true' : undefined,
+      ai: includeAIInsights ? 'true' : undefined,
+    },
   });
   return response.data;
 };
@@ -544,6 +562,7 @@ export interface BusFactorAndOwnership {
   ownerChurn: {
     files: OwnerChurn[];
   };
+  aiInsights?: string;
 }
 
 export interface CrossRepoBusFactorAndOwnership {
@@ -573,10 +592,15 @@ export interface CrossRepoBusFactorAndOwnership {
 
 export const getBusFactorAndOwnership = async (
   repoId: string,
-  refresh?: boolean
+  refresh?: boolean,
+  includeAIInsights?: boolean
 ): Promise<BusFactorAndOwnership> => {
   const response = await api.get('/bus-factor-and-ownership', {
-    params: { repoId, refresh: refresh ? 'true' : undefined },
+    params: {
+      repoId,
+      refresh: refresh ? 'true' : undefined,
+      ai: includeAIInsights ? 'true' : undefined,
+    },
   });
   return response.data;
 };

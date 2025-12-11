@@ -13,7 +13,7 @@ const defaultOllamaSettings: OllamaSettings = {
   host: 'localhost',
   port: 11434,
   model: 'llama3',
-  timeout: 30000,
+  timeout: 120000, // 2 minutes default (can be increased up to 3-5 minutes for complex analyses)
 };
 
 // Default data structure
@@ -148,6 +148,10 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
 
   if (!db.data.busFactorCache) {
     db.data.busFactorCache = {};
+  }
+
+  if (!db.data.aiInsightsCache) {
+    db.data.aiInsightsCache = {};
   }
 
   if (!db.data.repositoryEvolutionCache) {

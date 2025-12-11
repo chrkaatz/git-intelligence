@@ -232,7 +232,7 @@ describe('database', () => {
         host: 'localhost',
         port: 11434,
         model: 'llama3',
-        timeout: 30000,
+        timeout: 120000,
       });
     });
 
