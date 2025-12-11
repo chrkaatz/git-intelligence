@@ -1,5 +1,11 @@
 import simpleGit from 'simple-git';
-import { getCachedCodebaseHealth, setCachedCodebaseHealth, getRepositories } from '../db.js';
+import {
+  getCachedCodebaseHealth,
+  setCachedCodebaseHealth,
+  getRepositories,
+  getOllamaSettings,
+} from '../db.js';
+import { generateInsights } from '../services/aiAnalysis.js';
 import type {
   CodebaseHealth,
   FileHotspot,
@@ -224,7 +230,8 @@ async function analyzeRepositoryHygiene(
 
 export async function getCodebaseHealth(
   repoPath: string,
-  useCache: boolean = true
+  useCache: boolean = true,
+  includeAIInsights?: boolean
 ): Promise<CodebaseHealth> {
   // Check cache first (default: 1 hour cache)
   if (useCache) {
@@ -469,7 +476,7 @@ export async function getCodebaseHealth(
     // 5. Repository Hygiene
     const hygiene = await analyzeRepositoryHygiene(repoPath, git);
 
-    const health = {
+    const health: CodebaseHealth = {
       hotspots: {
         files: fileHotspots,
         directories: directoryHotspots,
@@ -488,9 +495,25 @@ export async function getCodebaseHealth(
       hygiene,
     };
 
-    // Cache the results
+    // Generate AI insights if requested
+    if (includeAIInsights) {
+      try {
+        const ollamaSettings = await getOllamaSettings();
+        if (ollamaSettings.enabled) {
+          const insights = await generateInsights('codebase-health', health, ollamaSettings);
+          health.aiInsights = insights;
+        }
+      } catch (error) {
+        // Log error but don't fail the entire request if AI insights fail
+        console.warn('Failed to generate AI insights for codebase health:', error);
+      }
+    }
+
+    // Cache the results (without AI insights to avoid caching them)
     if (useCache) {
-      await setCachedCodebaseHealth(repoPath, health);
+      const healthToCache = { ...health };
+      delete healthToCache.aiInsights;
+      await setCachedCodebaseHealth(repoPath, healthToCache);
     }
 
     return health;

@@ -3,7 +3,9 @@ import {
   getRepositories,
   getCachedRepositoryEvolution,
   setCachedRepositoryEvolution,
+  getOllamaSettings,
 } from '../db.js';
+import { generateInsights } from '../services/aiAnalysis.js';
 import type {
   RepositoryEvolution,
   CommitFrequency,
@@ -16,7 +18,8 @@ import type {
 
 export async function getRepositoryEvolution(
   repoPath: string,
-  useCache: boolean = true
+  useCache: boolean = true,
+  includeAIInsights?: boolean
 ): Promise<RepositoryEvolution> {
   // Check cache first
   if (useCache) {
@@ -261,9 +264,25 @@ export async function getRepositoryEvolution(
       refactorCount,
     };
 
-    // Cache the result
+    // Generate AI insights if requested
+    if (includeAIInsights) {
+      try {
+        const ollamaSettings = await getOllamaSettings();
+        if (ollamaSettings.enabled) {
+          const insights = await generateInsights('repository-evolution', result, ollamaSettings);
+          result.aiInsights = insights;
+        }
+      } catch (error) {
+        // Log error but don't fail the entire request if AI insights fail
+        console.warn('Failed to generate AI insights for repository evolution:', error);
+      }
+    }
+
+    // Cache the result (without AI insights to avoid caching them)
     if (useCache) {
-      await setCachedRepositoryEvolution(repoPath, result);
+      const resultToCache = { ...result };
+      delete resultToCache.aiInsights;
+      await setCachedRepositoryEvolution(repoPath, resultToCache);
     }
 
     return result;

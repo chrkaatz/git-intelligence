@@ -55,6 +55,7 @@ export interface LongitudinalPatterns {
 export interface DeveloperAnalytics {
   authors: DeveloperAuthorStats[];
   longitudinalPatterns?: LongitudinalPatterns;
+  aiInsights?: string;
 }
 
 export interface CrossRepoDeveloperStats extends DeveloperAuthorStats {
@@ -203,6 +204,7 @@ export interface CodebaseHealth {
   stability: Stability;
   complexity: Complexity;
   hygiene: RepositoryHygiene;
+  aiInsights?: string;
 }
 
 export interface CrossRepoHotspot {
@@ -272,6 +274,7 @@ export interface RepositoryEvolution {
   averageCommitsPerDay: number;
   averageChurnRatio: number;
   refactorCount: number;
+  aiInsights?: string;
 }
 
 export interface CrossRepoRepositoryEvolution {
@@ -349,6 +352,7 @@ export interface BusFactorAndOwnership {
   ownerChurn: {
     files: OwnerChurn[];
   };
+  aiInsights?: string;
 }
 
 export interface CrossRepoBusFactorAndOwnership {

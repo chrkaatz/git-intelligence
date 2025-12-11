@@ -3,6 +3,7 @@ import {
   getRepositories,
   getCachedDeveloperAnalytics,
   setCachedDeveloperAnalytics,
+  getOllamaSettings,
 } from '../db.js';
 import type {
   DeveloperAnalytics,
@@ -16,10 +17,12 @@ import {
   mergeAuthorsBySimilarity,
   calculateLongitudinalPatterns,
 } from './utils.js';
+import { generateInsights } from '../services/aiAnalysis.js';
 
 export async function getDeveloperAnalytics(
   repoPath: string,
-  useCache: boolean = true
+  useCache: boolean = true,
+  includeAIInsights?: boolean
 ): Promise<DeveloperAnalytics> {
   // Check cache first
   if (useCache) {
@@ -282,9 +285,25 @@ export async function getDeveloperAnalytics(
       longitudinalPatterns,
     };
 
-    // Cache the result
+    // Generate AI insights if requested
+    if (includeAIInsights) {
+      try {
+        const ollamaSettings = await getOllamaSettings();
+        if (ollamaSettings.enabled) {
+          const insights = await generateInsights('developer-analytics', result, ollamaSettings);
+          result.aiInsights = insights;
+        }
+      } catch (error) {
+        // Log error but don't fail the entire request if AI insights fail
+        console.warn('Failed to generate AI insights for developer analytics:', error);
+      }
+    }
+
+    // Cache the result (without AI insights to avoid caching them)
     if (useCache) {
-      await setCachedDeveloperAnalytics(repoPath, result);
+      const resultToCache = { ...result };
+      delete resultToCache.aiInsights;
+      await setCachedDeveloperAnalytics(repoPath, resultToCache);
     }
 
     return result;
