@@ -164,6 +164,16 @@ describe('settings', () => {
       );
     });
 
+    it('should throw error for invalid timeout (zero)', async () => {
+      const updates: Partial<OllamaSettings> = {
+        timeout: 0,
+      };
+
+      await expect(updateOllamaSettings(updates)).rejects.toThrow(
+        'Timeout must be between 1000ms and 300000ms'
+      );
+    });
+
     it('should throw error for empty host', async () => {
       // First set up initial settings
       testDb.data.ollamaSettings = {

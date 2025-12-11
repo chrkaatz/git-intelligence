@@ -51,7 +51,7 @@ export async function updateOllamaSettings(
 
   // Validate timeout
   if (
-    updatedSettings.timeout &&
+    updatedSettings.timeout !== undefined &&
     (updatedSettings.timeout < 1000 || updatedSettings.timeout > 300000)
   ) {
     throw new Error('Timeout must be between 1000ms and 300000ms (5 minutes)');

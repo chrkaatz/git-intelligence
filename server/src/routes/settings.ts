@@ -82,14 +82,21 @@ router.post('/ollama/test', async (req: Request, res: Response) => {
     let settings: OllamaSettings;
 
     // If settings provided in body, use them; otherwise use current settings
-    if (req.body && (req.body.host || req.body.port || req.body.model)) {
+    if (
+      req.body &&
+      (req.body.host !== undefined ||
+        req.body.port !== undefined ||
+        req.body.model !== undefined ||
+        req.body.timeout !== undefined)
+    ) {
       const currentSettings = await getOllamaSettings();
       settings = {
         enabled: true, // Enable for testing
-        host: req.body.host || currentSettings.host,
+        host: req.body.host !== undefined ? req.body.host : currentSettings.host,
         port: req.body.port !== undefined ? req.body.port : currentSettings.port,
-        model: req.body.model || currentSettings.model,
-        timeout: req.body.timeout || currentSettings.timeout || 30000,
+        model: req.body.model !== undefined ? req.body.model : currentSettings.model,
+        timeout:
+          req.body.timeout !== undefined ? req.body.timeout : currentSettings.timeout || 30000,
       };
     } else {
       settings = await getOllamaSettings();

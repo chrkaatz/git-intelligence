@@ -34,6 +34,7 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
     host: 'localhost',
     port: 11434,
     model: 'llama3',
+    timeout: undefined as number | undefined,
   });
   const [testingConnection, setTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<{
@@ -54,6 +55,7 @@ export function SettingsDialog({ open, onClose, currentRepoId }: SettingsDialogP
         host: ollamaSettings.host,
         port: ollamaSettings.port,
         model: ollamaSettings.model,
+        timeout: ollamaSettings.timeout,
       });
     }
   }, [ollamaSettings, ollamaLoading]);
