@@ -174,7 +174,25 @@ describe('settings', () => {
       );
     });
 
-    it('should throw error for empty host', async () => {
+    it('should throw error for empty host (empty string)', async () => {
+      // First set up initial settings
+      testDb.data.ollamaSettings = {
+        enabled: false,
+        host: 'localhost',
+        port: 11434,
+        model: 'llama3',
+        timeout: 30000,
+      };
+      await testDb.write();
+
+      const updates: Partial<OllamaSettings> = {
+        host: '', // Empty string should fail
+      };
+
+      await expect(updateOllamaSettings(updates)).rejects.toThrow('Host cannot be empty');
+    });
+
+    it('should throw error for empty host (whitespace only)', async () => {
       // First set up initial settings
       testDb.data.ollamaSettings = {
         enabled: false,
@@ -192,7 +210,25 @@ describe('settings', () => {
       await expect(updateOllamaSettings(updates)).rejects.toThrow('Host cannot be empty');
     });
 
-    it('should throw error for empty model', async () => {
+    it('should throw error for empty model (empty string)', async () => {
+      // First set up initial settings
+      testDb.data.ollamaSettings = {
+        enabled: false,
+        host: 'localhost',
+        port: 11434,
+        model: 'llama3',
+        timeout: 30000,
+      };
+      await testDb.write();
+
+      const updates: Partial<OllamaSettings> = {
+        model: '', // Empty string should fail
+      };
+
+      await expect(updateOllamaSettings(updates)).rejects.toThrow('Model name cannot be empty');
+    });
+
+    it('should throw error for empty model (whitespace only)', async () => {
       // First set up initial settings
       testDb.data.ollamaSettings = {
         enabled: false,

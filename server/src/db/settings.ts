@@ -38,9 +38,9 @@ export async function updateOllamaSettings(
   // Validate settings
   const updatedSettings: OllamaSettings = {
     enabled: settings.enabled !== undefined ? settings.enabled : currentSettings.enabled,
-    host: settings.host || currentSettings.host || 'localhost',
+    host: settings.host !== undefined ? settings.host : currentSettings.host || 'localhost',
     port: settings.port !== undefined ? settings.port : currentSettings.port || 11434,
-    model: settings.model || currentSettings.model || 'llama3',
+    model: settings.model !== undefined ? settings.model : currentSettings.model || 'llama3',
     timeout: settings.timeout !== undefined ? settings.timeout : currentSettings.timeout || 30000,
   };
 
