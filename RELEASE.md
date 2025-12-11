@@ -1,5 +1,72 @@
 # Release Notes - Git Intelligence
 
+## v0.2.0
+
+**Release Date:** December 11, 2025  
+**Tag:** `v0.2.0`
+
+---
+
+### 🔍 Overview
+
+Git Intelligence v0.2.0 introduces **AI-powered analysis capabilities** through local Ollama integration, **repository synchronization features**, and **enhanced analytics accuracy** with intelligent file exclusion. This release significantly expands the analytical capabilities of the platform while maintaining privacy through local AI processing.
+
+### ✨ Highlights
+
+- **AI-Powered Analysis with Ollama Integration**
+  - Complete Ollama settings management UI in Settings dialog
+  - Connection testing functionality with real-time feedback
+  - AI insights generation for all analytics views:
+    - Developer Analytics insights
+    - Codebase Health recommendations
+    - Repository Evolution analysis
+    - Bus Factor & Ownership insights
+    - Social Network Analysis observations
+    - Risk Analytics assessments
+  - Configurable Ollama connection (host, port, model, timeout)
+  - Settings persistence in database with localStorage caching
+  - Graceful error handling for connection failures and timeouts
+  - AI insights cached separately from analytics data for performance
+  - Optional AI analysis toggle per analytics view
+  - Comprehensive test coverage for Ollama service and settings management
+
+- **Repository Synchronization**
+  - New `POST /repositories/:id/fetch` endpoint for fetching latest changes
+  - Automatic `git fetch --all --prune` and `git pull` for local repositories
+  - Intelligent change detection via commit hash comparison
+  - Automatic cache invalidation when repository changes are detected
+  - UI components for fetching individual repositories or all repositories in a project
+  - Enhanced ProjectsSidebar with "Fetch All" functionality for project-wide updates
+  - Detailed feedback notifications showing fetch results and change status
+  - Proper handling of repositories without upstream branches
+
+- **Enhanced Analytics Accuracy**
+  - **File Exclusion Logic**: Intelligent filtering to reduce false positives
+    - Excludes package management files (package-lock.json, package.json, yarn.lock, pnpm-lock.yaml)
+    - Excludes translation files (JSON, PO, POT, properties, XLIFF files in translation directories)
+    - Excludes common translation file patterns (e.g., de.json, en.json, fr.json)
+    - Applied to risk analytics, codebase health hotspots, and AI analysis prompts
+    - More accurate identification of actual code hotspots and risk areas
+
+- **Infrastructure & Quality**
+  - Updated dependencies:
+    - Vite 7.2.4 → 7.2.7
+    - Prettier 3.6.2 → 3.7.4
+    - Recharts 3.5.0 → 3.5.1
+    - @vitest/coverage-v8 updates
+    - GitHub Actions upload-artifact v4 → v5
+  - Enhanced CI/CD workflows:
+    - Consolidated test coverage uploads
+    - Improved test coverage reporting
+    - Branch restrictions for workflow execution
+  - Comprehensive documentation updates:
+    - OLLAMA_INTEGRATION_SPEC.md with complete feature specification
+    - Updated AGENTS.md with Ollama integration details
+  - Improved error handling for hash comparison (trailing newline fixes)
+  - Enhanced validation for Ollama settings (host, port, model, timeout ranges)
+
+---
+
 ## v0.1.0
 
 **Release Date:** November 28, 2025  
