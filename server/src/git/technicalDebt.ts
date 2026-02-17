@@ -274,6 +274,10 @@ async function detectHugeCommits(
         // Process previous commit if exists
         if (currentCommit) {
           const totalChanges = linesAdded + linesRemoved;
+          // Calculate a risk-weighted score: additions are full risk, removals are weighted lower (10%)
+          // as cleanups generally lower complexity and technical debt.
+          const riskScore = linesAdded + Math.floor(linesRemoved * 0.1);
+
           if (totalChanges >= HUGE_COMMIT_THRESHOLD.LOW) {
             hugeCommits.push({
               commitHash: currentCommit.hash,
@@ -285,7 +289,7 @@ async function detectHugeCommits(
               linesAdded,
               linesRemoved,
               totalChanges,
-              riskLevel: getRiskLevel(totalChanges, HUGE_COMMIT_THRESHOLD),
+              riskLevel: getRiskLevel(riskScore, HUGE_COMMIT_THRESHOLD),
             });
           }
         }
@@ -313,6 +317,10 @@ async function detectHugeCommits(
     // Process last commit
     if (currentCommit) {
       const totalChanges = linesAdded + linesRemoved;
+      // Calculate a risk-weighted score: additions are full risk, removals are weighted lower (10%)
+      // as cleanups generally lower complexity and technical debt.
+      const riskScore = linesAdded + Math.floor(linesRemoved * 0.1);
+
       if (totalChanges >= HUGE_COMMIT_THRESHOLD.LOW) {
         hugeCommits.push({
           commitHash: currentCommit.hash,
@@ -324,7 +332,7 @@ async function detectHugeCommits(
           linesAdded,
           linesRemoved,
           totalChanges,
-          riskLevel: getRiskLevel(totalChanges, HUGE_COMMIT_THRESHOLD),
+          riskLevel: getRiskLevel(riskScore, HUGE_COMMIT_THRESHOLD),
         });
       }
     }

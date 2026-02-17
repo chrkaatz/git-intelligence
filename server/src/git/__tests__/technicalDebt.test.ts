@@ -219,16 +219,16 @@ describe('technicalDebt', () => {
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
 
       // Mock fs.existsSync to return false for all files
-      mockFs.existsSync = vi.fn().mockReturnValue(false);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
         isFile: () => false,
         isDirectory: () => false,
         size: 0,
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
 
       // Mock path.join
-      mockPath.join = vi.fn((...args) => args.join('/'));
+      mockPath.join.mockImplementation((...args) => args.join('/'));
 
       const result = await getTechnicalDebtIndicators('/test/repo', false);
 
@@ -236,8 +236,39 @@ describe('technicalDebt', () => {
       expect(result.hugeCommits.length).toBeGreaterThan(0);
       const hugeCommit = result.hugeCommits[0];
       expect(hugeCommit.commitHash).toBe(hash1);
-      expect(hugeCommit.totalChanges).toBeGreaterThanOrEqual(500);
+      expect(hugeCommit.totalChanges).toBeGreaterThanOrEqual(1500); // 600+300+400+200
       expect(['low', 'medium', 'high']).toContain(hugeCommit.riskLevel);
+    });
+
+    it('should mark large deletions as low risk', async () => {
+      mockGetCachedTechnicalDebtIndicators.mockResolvedValue(null);
+
+      const hash1 = 'a'.repeat(40);
+
+      const mockGit = createMockGit({
+        hugeCommits:
+          `${hash1}|2024-01-01T10:00:00Z|John Doe|john@example.com|Massive cleanup\n` +
+          '0\t1500\tdeleted_file.ts\n',
+      });
+
+      vi.mocked(simpleGit).mockReturnValue(mockGit as any);
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
+        isFile: () => false,
+        isDirectory: () => false,
+        size: 0,
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
+
+      const result = await getTechnicalDebtIndicators('/test/repo', false);
+
+      expect(result.hugeCommits.length).toBeGreaterThan(0);
+      const hugeCommit = result.hugeCommits[0];
+      expect(hugeCommit.linesRemoved).toBe(1500);
+      expect(hugeCommit.linesAdded).toBe(0);
+      // 1500 * 0.1 = 150, which is < 500 (LOW threshold)
+      expect(hugeCommit.riskLevel).toBe('low');
     });
 
     it('should detect WIP commits', async () => {
@@ -253,14 +284,14 @@ describe('technicalDebt', () => {
       });
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
-      mockFs.existsSync = vi.fn().mockReturnValue(false);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
         isFile: () => false,
         isDirectory: () => false,
         size: 0,
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
-      mockPath.join = vi.fn((...args) => args.join('/'));
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
 
       const result = await getTechnicalDebtIndicators('/test/repo', false);
 
@@ -280,14 +311,14 @@ describe('technicalDebt', () => {
       });
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
-      mockFs.existsSync = vi.fn().mockReturnValue(false);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
         isFile: () => false,
         isDirectory: () => false,
         size: 0,
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
-      mockPath.join = vi.fn((...args) => args.join('/'));
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
 
       const result = await getTechnicalDebtIndicators('/test/repo', false);
 
@@ -308,19 +339,19 @@ describe('technicalDebt', () => {
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
 
       // Mock file system operations
-      mockFs.existsSync = vi.fn().mockReturnValue(true);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.statSync.mockReturnValue({
         isFile: () => true,
         isDirectory: () => false,
         size: 2 * 1024 * 1024, // 2MB
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
-      mockPath.join = vi.fn((...args) => args.join('/'));
-      mockPath.extname = vi.fn((file) => {
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
+      mockPath.extname.mockImplementation((file: string) => {
         if (file.includes('.jpg')) return '.jpg';
         return '';
       });
-      mockPath.basename = vi.fn((file) => file.split('/').pop() || file);
+      mockPath.basename.mockImplementation((file: string) => file.split('/').pop() || file);
 
       const result = await getTechnicalDebtIndicators('/test/repo', false);
 
@@ -343,14 +374,14 @@ describe('technicalDebt', () => {
       });
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
-      mockFs.existsSync = vi.fn().mockReturnValue(false);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
         isFile: () => false,
         isDirectory: () => false,
         size: 0,
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
-      mockPath.join = vi.fn((...args) => args.join('/'));
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
 
       const result = await getTechnicalDebtIndicators('/test/repo', false);
 
@@ -373,15 +404,15 @@ describe('technicalDebt', () => {
       });
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
-      mockFs.existsSync = vi.fn().mockReturnValue(false);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
         isFile: () => false,
         isDirectory: () => false,
         size: 0,
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
-      mockPath.join = vi.fn((...args) => args.join('/'));
-      mockPath.basename = vi.fn((file) => file.split('/').pop() || file);
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
+      mockPath.basename.mockImplementation((file: string) => file.split('/').pop() || file);
 
       const result = await getTechnicalDebtIndicators('/test/repo', false);
 
@@ -398,14 +429,14 @@ describe('technicalDebt', () => {
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
 
       // Mock file system - no automation files exist
-      mockFs.existsSync = vi.fn().mockReturnValue(false);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
         isFile: () => false,
         isDirectory: () => false,
         size: 0,
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
-      mockPath.join = vi.fn((...args) => args.join('/'));
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
 
       const result = await getTechnicalDebtIndicators('/test/repo', false);
 
@@ -423,24 +454,24 @@ describe('technicalDebt', () => {
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
 
       // Mock file system - automation files exist
-      mockFs.existsSync = vi.fn((filePath: string) => {
+      mockFs.existsSync.mockImplementation((filePath: string) => {
         return (
           filePath.includes('.github/dependabot.yml') || filePath.includes('.github/workflows')
         );
       });
-      mockFs.statSync = vi.fn((filePath: string) => {
+      mockFs.statSync.mockImplementation((filePath: string) => {
         if (filePath.includes('workflows')) {
-          return { isDirectory: () => true, isFile: () => false, size: 0 };
+          return { isDirectory: () => true, isFile: () => false, size: 0 } as any;
         }
-        return { isFile: () => true, isDirectory: () => false, size: 0 };
+        return { isFile: () => true, isDirectory: () => false, size: 0 } as any;
       });
-      mockFs.readdirSync = vi.fn((dirPath: string) => {
+      mockFs.readdirSync.mockImplementation((dirPath: string) => {
         if (dirPath.includes('workflows')) {
           return ['ci.yml', 'deploy.yml'];
         }
         return [];
       });
-      mockPath.join = vi.fn((...args) => args.join('/'));
+      mockPath.join.mockImplementation((...args) => args.join('/'));
 
       const result = await getTechnicalDebtIndicators('/test/repo', false);
 
@@ -456,14 +487,14 @@ describe('technicalDebt', () => {
       const mockGit = createMockGit();
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
-      mockFs.existsSync = vi.fn().mockReturnValue(false);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
         isFile: () => false,
         isDirectory: () => false,
         size: 0,
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
-      mockPath.join = vi.fn((...args) => args.join('/'));
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
 
       const progressCallback = vi.fn();
 
@@ -484,14 +515,14 @@ describe('technicalDebt', () => {
       const mockGit = createMockGit();
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
-      mockFs.existsSync = vi.fn().mockReturnValue(false);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
         isFile: () => false,
         isDirectory: () => false,
         size: 0,
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
-      mockPath.join = vi.fn((...args) => args.join('/'));
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
 
       await getTechnicalDebtIndicators('/test/repo', true);
 
@@ -520,14 +551,14 @@ describe('technicalDebt', () => {
       };
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
-      mockFs.existsSync = vi.fn().mockReturnValue(false);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
         isFile: () => false,
         isDirectory: () => false,
         size: 0,
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
-      mockPath.join = vi.fn((...args) => args.join('/'));
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
 
       // Should not throw, but return empty array for failed detection
       const result = await getTechnicalDebtIndicators('/test/repo', false);
@@ -561,15 +592,15 @@ describe('technicalDebt', () => {
       const mockGit = createMockGit();
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
-      mockFs.existsSync = vi.fn().mockReturnValue(false);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
         isFile: () => false,
         isDirectory: () => false,
         size: 0,
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
-      mockPath.join = vi.fn((...args) => args.join('/'));
-      mockPath.basename = vi.fn((file) => file.split('/').pop() || file);
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
+      mockPath.basename.mockImplementation((file: string) => file.split('/').pop() || file);
 
       const result = await getCrossRepoTechnicalDebtIndicators('project-1', false);
 
@@ -602,15 +633,15 @@ describe('technicalDebt', () => {
       };
 
       vi.mocked(simpleGit).mockImplementation(mockGitFactory as any);
-      mockFs.existsSync = vi.fn().mockReturnValue(false);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
         isFile: () => false,
         isDirectory: () => false,
         size: 0,
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
-      mockPath.join = vi.fn((...args) => args.join('/'));
-      mockPath.basename = vi.fn((file) => file.split('/').pop() || file);
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
+      mockPath.basename.mockImplementation((file: string) => file.split('/').pop() || file);
 
       const result = await getCrossRepoTechnicalDebtIndicators('project-1', false);
 
@@ -640,15 +671,15 @@ describe('technicalDebt', () => {
       });
 
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
-      mockFs.existsSync = vi.fn().mockReturnValue(false);
-      mockFs.statSync = vi.fn().mockReturnValue({
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockReturnValue({
         isFile: () => false,
         isDirectory: () => false,
         size: 0,
-      });
-      mockFs.readdirSync = vi.fn().mockReturnValue([]);
-      mockPath.join = vi.fn((...args) => args.join('/'));
-      mockPath.basename = vi.fn((file) => file.split('/').pop() || file);
+      } as any);
+      mockFs.readdirSync.mockReturnValue([]);
+      mockPath.join.mockImplementation((...args) => args.join('/'));
+      mockPath.basename.mockImplementation((file: string) => file.split('/').pop() || file);
 
       const result = await getCrossRepoTechnicalDebtIndicators('project-1', false);
 
