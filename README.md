@@ -215,6 +215,60 @@ cd server && npm run build
 cd server && npm start
 ```
 
+### Docker Compose
+
+Run the full stack in containers:
+
+```bash
+docker compose up --build
+```
+
+- Frontend (Nginx + built app): `http://localhost:5173`
+- Backend API: `http://localhost:3001`
+- Note: path-based repository analysis inside Docker only works for paths visible inside the server container; ZIP upload works out of the box.
+
+To stop:
+
+```bash
+docker compose down
+```
+
+### Docker Compose with SSH Key for Git Pull
+
+If your repositories use SSH remotes (for example `git@github.com:...`), mount a private key into the server container:
+
+```bash
+export SSH_PRIVATE_KEY_PATH=/absolute/path/to/id_ed25519
+docker compose -f docker-compose.yml -f docker-compose.ssh.yml up --build
+```
+
+Notes:
+
+- The server image includes both `git` and `openssh-client`.
+- Use an absolute path for `SSH_PRIVATE_KEY_PATH`.
+- The mounted key is read-only and used via `GIT_SSH_COMMAND`.
+
+### Docker Compose with Mounted Repositories Directory
+
+To use "add repository by path" with host repositories in Docker, mount a host directory:
+
+```bash
+export REPOSITORIES_HOST_PATH=/absolute/path/to/your/repos
+docker compose -f docker-compose.yml -f docker-compose.repositories.yml up --build
+```
+
+Then add repositories in the UI using container paths, for example:
+
+- `/repositories/my-repo`
+
+You can combine both SSH and repository mounts:
+
+```bash
+export SSH_PRIVATE_KEY_PATH=/absolute/path/to/id_ed25519
+export REPOSITORIES_HOST_PATH=/absolute/path/to/your/repos
+docker compose -f docker-compose.yml -f docker-compose.ssh.yml -f docker-compose.repositories.yml up --build
+```
+
 ### Adding Repositories
 
 1. **Create a Project**: Navigate to the Projects page and create a new project
@@ -281,6 +335,12 @@ cd server && npm run test:coverage
 
 - Backend: `3001` (configured in `server/src/index.ts`)
 - Frontend: `5173` (Vite default)
+
+### Environment Variables
+
+- Frontend API base URL: `VITE_API_BASE_URL` (default: `http://localhost:3001`)
+- Server DB path: `DB_FILE_PATH` (default: `<server cwd>/db.json`)
+- Server upload directory: `UPLOAD_DIR` (default: `<server cwd>/uploads/`)
 
 ### Database
 

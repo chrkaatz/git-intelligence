@@ -5,7 +5,9 @@ import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import type { DatabaseSchema, Project, Repository, OllamaSettings } from './types.js';
 
-const DB_FILE = path.join(process.cwd(), 'db.json');
+const DB_FILE = process.env.DB_FILE_PATH
+  ? path.resolve(process.env.DB_FILE_PATH)
+  : path.join(process.cwd(), 'db.json');
 
 // Default Ollama settings
 const defaultOllamaSettings: OllamaSettings = {
@@ -40,10 +42,16 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
     return db;
   }
 
+  const dbDirectory = path.dirname(DB_FILE);
+  const mkdirSync = (fs as unknown as { mkdirSync?: typeof fs.mkdirSync }).mkdirSync;
+  if (!fs.existsSync(dbDirectory) && typeof mkdirSync === 'function') {
+    mkdirSync(dbDirectory, { recursive: true });
+  }
+
   // Ensure database file exists
   if (!fs.existsSync(DB_FILE)) {
     // Try to migrate from old projects.json if it exists
-    const oldDbFile = path.join(process.cwd(), 'projects.json');
+    const oldDbFile = path.join(dbDirectory, 'projects.json');
     if (fs.existsSync(oldDbFile)) {
       try {
         const oldData = JSON.parse(fs.readFileSync(oldDbFile, 'utf-8'));

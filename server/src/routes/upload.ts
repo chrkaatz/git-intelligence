@@ -33,7 +33,8 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
 
   try {
     const zip = new AdmZip(req.file.path);
-    extractPath = path.join(process.cwd(), 'uploads', req.file.filename + '_extracted');
+    const uploadBaseDir = path.dirname(req.file.path);
+    extractPath = path.join(uploadBaseDir, req.file.filename + '_extracted');
 
     // Create directory if it doesn't exist
     if (!fs.existsSync(extractPath)) {

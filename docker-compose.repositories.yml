@@ -1,0 +1,4 @@
+services:
+  server:
+    volumes:
+      - ${REPOSITORIES_HOST_PATH}:/repositories

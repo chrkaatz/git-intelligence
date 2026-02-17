@@ -224,7 +224,7 @@ src/
 
 3. **API Communication**
    - Centralized API client in `api.ts` using Axios
-   - Base URL: `http://localhost:3001`
+   - Base URL: `VITE_API_BASE_URL` environment variable (defaults to `http://localhost:3001`)
    - All API functions return typed Promises
    - Error handling in components via try/catch
 
@@ -509,6 +509,36 @@ npm run dev
 - **Backend**: Runs on `http://localhost:3001`
 - **Frontend**: Runs on `http://localhost:5173` (Vite dev server)
 
+### Running with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+- **Frontend (containerized)**: `http://localhost:5173`
+- **Backend API (containerized)**: `http://localhost:3001`
+
+For SSH-based Git remotes in Docker, use the SSH override compose file:
+
+```bash
+export SSH_PRIVATE_KEY_PATH=/absolute/path/to/id_ed25519
+docker compose -f docker-compose.yml -f docker-compose.ssh.yml up --build
+```
+
+- Server container includes `git` and `openssh-client`
+- SSH key is mounted read-only to `/run/secrets/git_ssh_key`
+- `GIT_SSH_COMMAND` is configured in `docker-compose.ssh.yml`
+
+For path-based repository add inside Docker, use the repository mount override:
+
+```bash
+export REPOSITORIES_HOST_PATH=/absolute/path/to/your/repos
+docker compose -f docker-compose.yml -f docker-compose.repositories.yml up --build
+```
+
+- Host path mounts to `/repositories` in the server container
+- Add repositories by container path (example: `/repositories/my-repo`)
+
 ### Build Process
 
 ```bash
@@ -567,8 +597,10 @@ cd server && npm run build
 ### Port Configuration
 
 - Backend hardcoded to port 3001 in `server/src/index.ts`
-- Frontend API base URL hardcoded to `http://localhost:3001` in `client/src/api.ts`
-- No environment variable configuration currently
+- Frontend API base URL configurable via `VITE_API_BASE_URL` in `client/src/api.ts`
+- Optional server storage paths:
+  - `DB_FILE_PATH` for LowDB JSON file location
+  - `UPLOAD_DIR` for upload/extraction directory location
 
 ### Dark Mode
 
@@ -643,7 +675,7 @@ When implementing new features or making significant changes, always update the 
 
 1. `README.md`: Update feature lists and architecture diagrams if necessary.
 2. `RELEASE.md`: Add a new entry or update the current version's highlights.
-3. `AGENTS.md`: Update the project overview, tech stack, and structure if they have changed.
+3. `AGENTS.md`: Update the project overview, tech stack, and structure if they have changed. Update, refine it concisely to keep it short and accurate. Remove any outdated information and ensure it reflects the current state of the codebase and architecture.
 
 ## Code Style Guidelines
 

@@ -1,0 +1,29 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: git-intelligence-server
+    environment:
+      NODE_ENV: production
+      DB_FILE_PATH: /data/db.json
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - server-data:/data
+    ports:
+      - '3001:3001'
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: git-intelligence-client
+    depends_on:
+      - server
+    ports:
+      - '5173:80'
+
+volumes:
+  server-data:

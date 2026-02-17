@@ -1,0 +1,6 @@
+services:
+  server:
+    volumes:
+      - ${SSH_PRIVATE_KEY_PATH}:/run/secrets/git_ssh_key:ro
+    environment:
+      GIT_SSH_COMMAND: ssh -i /run/secrets/git_ssh_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/tmp/known_hosts

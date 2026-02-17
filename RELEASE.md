@@ -1,5 +1,37 @@
 # Release Notes - Git Intelligence
 
+## v0.3.1
+
+**Release Date:** February 17, 2026  
+**Tag:** `v0.3.1`
+
+---
+
+### 🔍 Overview
+
+Git Intelligence v0.3.1 introduces first-class container support for local deployment with Docker and Docker Compose, plus configuration updates for API and server storage paths.
+
+### ✨ Highlights
+
+- **Dockerized Deployment**
+  - Added multi-stage `Dockerfile`s for `client/` and `server/`.
+  - Added root `docker-compose.yml` for one-command startup of frontend and backend.
+  - Added Nginx SPA configuration for frontend routing with `/api` reverse proxy to backend.
+
+- **Configurable Runtime Paths**
+  - Frontend API URL now supports `VITE_API_BASE_URL` (defaults to `http://localhost:3001`).
+  - Backend DB location now supports `DB_FILE_PATH`.
+  - Backend upload/extraction directory now supports `UPLOAD_DIR`.
+
+- **Container Build Optimizations**
+  - Added `.dockerignore` files for `client/` and `server/` to reduce build context.
+  - Added persistent compose volume for server data (`/data`).
+  - Added optional `docker-compose.ssh.yml` for mounting SSH keys to support Git pull/fetch over SSH remotes in containers.
+  - Server container now includes `openssh-client` in addition to `git`.
+  - Added optional `docker-compose.repositories.yml` for mounting a host repositories directory at `/repositories` for path-based repository management in Docker.
+
+---
+
 ## v0.3.0
 
 **Release Date:** February 17, 2026  
