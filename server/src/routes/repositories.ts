@@ -22,6 +22,29 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+// Get analyze-all job status (must be before /:id to avoid wildcard match)
+router.get('/analyze-all/status', async (req: Request, res: Response) => {
+  const { jobId } = req.query;
+  if (!jobId || typeof jobId !== 'string') {
+    return res.status(400).json({ error: 'Job ID is required' });
+  }
+
+  const { jobQueue } = await import('../queue/jobQueue.js');
+  const job = jobQueue.getJob(jobId);
+  if (!job) {
+    return res.status(404).json({ error: 'Job not found' });
+  }
+
+  res.json(job);
+});
+
+// Get all active analyze-all jobs (must be before /:id)
+router.get('/analyze-all/active', async (req: Request, res: Response) => {
+  const { jobQueue } = await import('../queue/jobQueue.js');
+  const activeJobs = jobQueue.getActiveJobs('analyze-all');
+  res.json(activeJobs);
+});
+
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const repository = await getRepository(req.params.id);
@@ -168,6 +191,147 @@ router.post('/:id/fetch', async (req: Request, res: Response) => {
     console.error('Error fetching repository:', error);
     res.status(500).json({
       error: 'Failed to fetch repository changes',
+      details: error.message,
+    });
+  }
+});
+
+// Run all analyses for a repository
+router.post('/:id/analyze-all', async (req: Request, res: Response) => {
+  try {
+    const repository = await getRepository(req.params.id);
+    if (!repository) {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
+
+    const { jobQueue } = await import('../queue/jobQueue.js');
+    const {
+      getStats,
+      getDeveloperAnalytics,
+      getCodebaseHealth,
+      getRepositoryEvolution,
+      getBusFactorAndOwnership,
+      getSocialNetworkAnalysis,
+      getRiskAnalytics,
+      getCrossRepoDeveloperAnalytics,
+      getCrossRepoCodebaseHealth,
+      getCrossRepoRepositoryEvolution,
+      getCrossRepoBusFactorAndOwnership,
+      getCrossRepoSocialNetworkAnalysis,
+      getCrossRepoRiskAnalytics,
+      getCrossRepoTechnicalDebtIndicators,
+    } = await import('../git/index.js');
+
+    const repoPath = repository.path;
+    // Pass repoId in data so we can rebuild UI state on refresh
+    const jobId = jobQueue.createJob('analyze-all', { repoId: repository.id });
+
+    console.log(
+      `[Analyze All] Starting all analyses for ${repository.name} (${repoPath}) (jobId: ${jobId})`
+    );
+
+    // Run analyses in the background
+    (async () => {
+      // Wait for job to be ready (queue will start it when capacity is available)
+      const waitForJob = () => {
+        return new Promise<void>((resolve) => {
+          const checkJob = () => {
+            const job = jobQueue.getJob(jobId);
+            if (job && job.status === 'running') {
+              resolve();
+            } else {
+              setTimeout(checkJob, 100);
+            }
+          };
+          checkJob();
+        });
+      };
+
+      await waitForJob();
+
+      const analysisSteps = [
+        { name: 'Statistics', fn: () => getStats(repoPath, true) },
+        { name: 'Developer Analytics', fn: () => getDeveloperAnalytics(repoPath, true) },
+        { name: 'Codebase Health', fn: () => getCodebaseHealth(repoPath, true) },
+        { name: 'Repository Evolution', fn: () => getRepositoryEvolution(repoPath, true) },
+        { name: 'Bus Factor & Ownership', fn: () => getBusFactorAndOwnership(repoPath, true) },
+        { name: 'Social Network Analysis', fn: () => getSocialNetworkAnalysis(repoPath, true) },
+        { name: 'Risk Analytics', fn: () => getRiskAnalytics(repoPath, true) },
+      ];
+
+      // If this repo is part of a project, also add cross-repo steps
+      if (repository.projectId) {
+        const projectId = repository.projectId;
+        analysisSteps.push(
+          {
+            name: 'Cross-Repo Developer Analytics',
+            fn: () => getCrossRepoDeveloperAnalytics(projectId, true),
+          },
+          {
+            name: 'Cross-Repo Codebase Health',
+            fn: () => getCrossRepoCodebaseHealth(projectId, true),
+          },
+          {
+            name: 'Cross-Repo Repository Evolution',
+            fn: () => getCrossRepoRepositoryEvolution(projectId, true),
+          },
+          {
+            name: 'Cross-Repo Bus Factor & Ownership',
+            fn: () => getCrossRepoBusFactorAndOwnership(projectId, true),
+          },
+          {
+            name: 'Cross-Repo Social Network Analysis',
+            fn: () => getCrossRepoSocialNetworkAnalysis(projectId, true),
+          },
+          {
+            name: 'Cross-Repo Risk Analytics',
+            fn: () => getCrossRepoRiskAnalytics(projectId, true),
+          },
+          {
+            name: 'Cross-Repo Technical Debt',
+            fn: () => getCrossRepoTechnicalDebtIndicators(projectId, true),
+          }
+        );
+      }
+
+      const results: Record<string, any> = {};
+      const errors: Record<string, string> = {};
+      let completedCount = 0;
+      let failedCount = 0;
+
+      for (let i = 0; i < analysisSteps.length; i++) {
+        const step = analysisSteps[i];
+        const progress = Math.round((i / analysisSteps.length) * 100);
+        jobQueue.updateProgress(jobId, progress, `Running ${step.name}...`);
+
+        try {
+          results[step.name] = await step.fn();
+          completedCount++;
+        } catch (error: any) {
+          console.error(`[Analyze All] ${step.name} failed for ${repository.name}:`, error.message);
+          errors[step.name] = error.message || 'Analysis failed';
+          failedCount++;
+        }
+      }
+
+      const summary = {
+        repository: { id: repository.id, name: repository.name, path: repoPath },
+        completedCount,
+        failedCount,
+        totalCount: analysisSteps.length,
+        completed: Object.keys(results),
+        failed: errors,
+      };
+
+      jobQueue.completeJob(jobId, summary);
+      jobQueue.jobFinished(); // Process next job in queue
+    })();
+
+    res.json({ jobId, status: 'pending', repoName: repository.name });
+  } catch (error: any) {
+    console.error('Error starting analyze-all:', error);
+    res.status(500).json({
+      error: 'Failed to start analysis',
       details: error.message,
     });
   }

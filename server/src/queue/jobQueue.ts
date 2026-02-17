@@ -9,6 +9,7 @@ export interface JobProgress {
   currentStep?: string;
   error?: string;
   result?: any;
+  data?: any;
 }
 
 export interface Job {
@@ -19,6 +20,7 @@ export interface Job {
   currentStep?: string;
   error?: string;
   result?: any;
+  data?: any;
   createdAt: Date;
   startedAt?: Date;
   completedAt?: Date;
@@ -33,15 +35,31 @@ export class JobQueue extends EventEmitter {
   /**
    * Create a new job and add it to the queue
    */
-  createJob(type: string, onProgress?: (progress: number, step?: string) => void): string {
+  createJob(
+    type: string,
+    dataOrProgress?: any | ((progress: number, step?: string) => void),
+    onProgress?: (progress: number, step?: string) => void
+  ): string {
     const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    let data: any = undefined;
+    let progressCallback = onProgress;
+
+    // Handle backward compatibility where onProgress was the second argument
+    if (typeof dataOrProgress === 'function') {
+      progressCallback = dataOrProgress as (progress: number, step?: string) => void;
+    } else {
+      data = dataOrProgress;
+    }
+
     const job: Job = {
       id: jobId,
       type,
       status: 'pending',
       progress: 0,
+      data,
       createdAt: new Date(),
-      onProgress,
+      onProgress: progressCallback,
     };
 
     this.jobs.set(jobId, job);
@@ -68,7 +86,28 @@ export class JobQueue extends EventEmitter {
       currentStep: job.currentStep,
       error: job.error,
       result: job.result,
+      data: job.data,
     };
+  }
+
+  /**
+   * Get all active jobs of a certain type
+   */
+  getActiveJobs(type?: string): JobProgress[] {
+    return Array.from(this.jobs.values())
+      .filter(
+        (job) =>
+          (job.status === 'pending' || job.status === 'running') && (!type || job.type === type)
+      )
+      .map((job) => ({
+        jobId: job.id,
+        status: job.status,
+        progress: job.progress,
+        currentStep: job.currentStep,
+        error: job.error,
+        result: job.result,
+        data: job.data,
+      }));
   }
 
   /**

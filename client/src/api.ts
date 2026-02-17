@@ -1081,3 +1081,54 @@ export const testOllamaConnection = async (
   const response = await api.post('/settings/ollama/test', settings || {});
   return response.data;
 };
+
+// Run All Analyses API
+export interface AnalyzeAllJobResponse {
+  jobId: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  repoName?: string;
+  projectName?: string;
+}
+
+export interface AnalyzeAllJobStatus {
+  jobId: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  progress: number;
+  currentStep?: string;
+  error?: string;
+  data?: {
+    repoId?: string;
+    projectId?: string;
+  };
+  result?: {
+    repository?: { id: string; name: string; path: string };
+    project?: { id: string; name: string };
+    completedCount: number;
+    failedCount: number;
+    totalCount: number;
+    completed: string[];
+    failed: Record<string, string>;
+  };
+}
+
+export const runAllAnalyses = async (repoId: string): Promise<AnalyzeAllJobResponse> => {
+  const response = await api.post(`/repositories/${repoId}/analyze-all`);
+  return response.data;
+};
+
+export const runProjectAllAnalyses = async (projectId: string): Promise<AnalyzeAllJobResponse> => {
+  const response = await api.post(`/projects/${projectId}/analyze-all`);
+  return response.data;
+};
+
+export const getAnalyzeAllStatus = async (jobId: string): Promise<AnalyzeAllJobStatus> => {
+  const response = await api.get('/repositories/analyze-all/status', {
+    params: { jobId },
+  });
+  return response.data;
+};
+
+export const getActiveAnalyzeAllJobs = async (): Promise<AnalyzeAllJobStatus[]> => {
+  const response = await api.get('/repositories/analyze-all/active');
+  return response.data;
+};
