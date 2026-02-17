@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TechnicalDebtIndicatorsRouteImport } from './routes/technical-debt-indicators'
 import { Route as SocialNetworkAnalysisRouteImport } from './routes/social-network-analysis'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RiskAnalyticsRouteImport } from './routes/risk-analytics'
 import { Route as RepositoryEvolutionRouteImport } from './routes/repository-evolution'
 import { Route as ProjectsRouteImport } from './routes/projects'
@@ -43,6 +44,11 @@ const TechnicalDebtIndicatorsRoute = TechnicalDebtIndicatorsRouteImport.update({
 const SocialNetworkAnalysisRoute = SocialNetworkAnalysisRouteImport.update({
   id: '/social-network-analysis',
   path: '/social-network-analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RiskAnalyticsRoute = RiskAnalyticsRouteImport.update({
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/projects': typeof ProjectsRoute
   '/repository-evolution': typeof RepositoryEvolutionRouteWithChildren
   '/risk-analytics': typeof RiskAnalyticsRouteWithChildren
+  '/settings': typeof SettingsRoute
   '/social-network-analysis': typeof SocialNetworkAnalysisRouteWithChildren
   '/technical-debt-indicators': typeof TechnicalDebtIndicatorsRouteWithChildren
   '/bus-factor-and-ownership/$repoId': typeof BusFactorAndOwnershipRepoIdRoute
@@ -209,6 +216,7 @@ export interface FileRoutesByTo {
   '/projects': typeof ProjectsRoute
   '/repository-evolution': typeof RepositoryEvolutionRouteWithChildren
   '/risk-analytics': typeof RiskAnalyticsRouteWithChildren
+  '/settings': typeof SettingsRoute
   '/social-network-analysis': typeof SocialNetworkAnalysisRouteWithChildren
   '/technical-debt-indicators': typeof TechnicalDebtIndicatorsRouteWithChildren
   '/bus-factor-and-ownership/$repoId': typeof BusFactorAndOwnershipRepoIdRoute
@@ -237,6 +245,7 @@ export interface FileRoutesById {
   '/projects': typeof ProjectsRoute
   '/repository-evolution': typeof RepositoryEvolutionRouteWithChildren
   '/risk-analytics': typeof RiskAnalyticsRouteWithChildren
+  '/settings': typeof SettingsRoute
   '/social-network-analysis': typeof SocialNetworkAnalysisRouteWithChildren
   '/technical-debt-indicators': typeof TechnicalDebtIndicatorsRouteWithChildren
   '/bus-factor-and-ownership/$repoId': typeof BusFactorAndOwnershipRepoIdRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/repository-evolution'
     | '/risk-analytics'
+    | '/settings'
     | '/social-network-analysis'
     | '/technical-debt-indicators'
     | '/bus-factor-and-ownership/$repoId'
@@ -293,6 +303,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/repository-evolution'
     | '/risk-analytics'
+    | '/settings'
     | '/social-network-analysis'
     | '/technical-debt-indicators'
     | '/bus-factor-and-ownership/$repoId'
@@ -320,6 +331,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/repository-evolution'
     | '/risk-analytics'
+    | '/settings'
     | '/social-network-analysis'
     | '/technical-debt-indicators'
     | '/bus-factor-and-ownership/$repoId'
@@ -348,6 +360,7 @@ export interface RootRouteChildren {
   ProjectsRoute: typeof ProjectsRoute
   RepositoryEvolutionRoute: typeof RepositoryEvolutionRouteWithChildren
   RiskAnalyticsRoute: typeof RiskAnalyticsRouteWithChildren
+  SettingsRoute: typeof SettingsRoute
   SocialNetworkAnalysisRoute: typeof SocialNetworkAnalysisRouteWithChildren
   TechnicalDebtIndicatorsRoute: typeof TechnicalDebtIndicatorsRouteWithChildren
   CrossRepoAnalyticsProjectIdRoute: typeof CrossRepoAnalyticsProjectIdRoute
@@ -373,6 +386,13 @@ declare module '@tanstack/react-router' {
       path: '/social-network-analysis'
       fullPath: '/social-network-analysis'
       preLoaderRoute: typeof SocialNetworkAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/risk-analytics': {
@@ -646,6 +666,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProjectsRoute: ProjectsRoute,
   RepositoryEvolutionRoute: RepositoryEvolutionRouteWithChildren,
   RiskAnalyticsRoute: RiskAnalyticsRouteWithChildren,
+  SettingsRoute: SettingsRoute,
   SocialNetworkAnalysisRoute: SocialNetworkAnalysisRouteWithChildren,
   TechnicalDebtIndicatorsRoute: TechnicalDebtIndicatorsRouteWithChildren,
   CrossRepoAnalyticsProjectIdRoute: CrossRepoAnalyticsProjectIdRoute,

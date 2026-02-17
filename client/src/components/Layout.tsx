@@ -20,8 +20,6 @@ import {
   WrenchScrewdriverIcon,
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
-import { SettingsDialog } from './SettingsDialog';
-import { useParams } from '@tanstack/react-router';
 
 const navigation = [
   { name: 'Dashboard', to: '/dashboard', icon: HomeIcon, id: 'dashboard' },
@@ -73,6 +71,12 @@ const navigation = [
     icon: FolderOpenIcon,
     id: 'projects',
   },
+  {
+    name: 'Settings',
+    to: '/settings',
+    icon: Cog6ToothIcon,
+    id: 'settings',
+  },
 ];
 
 function classNames(...classes: (string | boolean | undefined | null)[]) {
@@ -87,9 +91,6 @@ interface LayoutProps {
 export default function Layout({ children, sidebar }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [projectsSidebarOpen, setProjectsSidebarOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const params = useParams({ strict: false }) as { repoId?: string };
-  const repoId = params?.repoId;
 
   // Load collapsed state from localStorage
   const [navSidebarCollapsed, setNavSidebarCollapsed] = useState(() => {
@@ -204,19 +205,6 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                         })}
                       </ul>
                     </li>
-                    <li className="mt-auto">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSidebarOpen(false);
-                          setSettingsOpen(true);
-                        }}
-                        className="flex items-center gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
-                      >
-                        <Cog6ToothIcon className="size-6 shrink-0" />
-                        Settings
-                      </button>
-                    </li>
                   </ul>
                 </nav>
               </div>
@@ -323,25 +311,13 @@ export default function Layout({ children, sidebar }: LayoutProps) {
                     ))}
                   </ul>
                 </li>*/}
-                {/* Settings and Collapse buttons */}
+                {/* Collapse button */}
                 <li
                   className={classNames(
                     'mt-auto space-y-2',
                     navSidebarCollapsed ? '-mx-2 mb-2' : '-mx-6 mt-2 mb-2'
                   )}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setSettingsOpen(true)}
-                    className={classNames(
-                      'flex items-center rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white transition-colors',
-                      navSidebarCollapsed ? 'w-full justify-center' : 'w-full gap-x-3'
-                    )}
-                    title="Settings"
-                  >
-                    <Cog6ToothIcon className="size-6 shrink-0" />
-                    {!navSidebarCollapsed && <span>Settings</span>}
-                  </button>
                   <button
                     type="button"
                     onClick={() => setNavSidebarCollapsed(!navSidebarCollapsed)}
@@ -389,15 +365,14 @@ export default function Layout({ children, sidebar }: LayoutProps) {
               <FolderIcon aria-hidden="true" className="size-6" />
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => setSettingsOpen(true)}
+          <Link
+            to="/settings"
             className="relative -m-2.5 p-2.5 text-gray-700 dark:text-gray-400"
             title="Settings"
           >
             <span className="sr-only">Settings</span>
             <Cog6ToothIcon aria-hidden="true" className="size-6" />
-          </button>
+          </Link>
         </div>
 
         {/* Projects sidebar mobile dialog */}
@@ -504,13 +479,6 @@ export default function Layout({ children, sidebar }: LayoutProps) {
           </aside>
         )}
       </div>
-
-      {/* Settings Dialog */}
-      <SettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        currentRepoId={repoId}
-      />
     </>
   );
 }
