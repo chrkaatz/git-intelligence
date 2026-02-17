@@ -143,6 +143,7 @@ vite.config.ts.timestamp-*
 
 server/uploads/
 server/db.json
+server/.db.json.tmp
 server/projects.json
 
 **/.tanstack/

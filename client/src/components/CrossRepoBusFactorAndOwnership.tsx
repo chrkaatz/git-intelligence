@@ -184,7 +184,10 @@ export function CrossRepoBusFactorAndOwnership({
                         border: '1px solid var(--tw-color-gray-700)',
                         borderRadius: '0.5rem',
                       }}
-                      formatter={(value: number) => [`${value.toFixed(1)}%`, 'Ownership']}
+                      formatter={(value: number | undefined) => [
+                        `${(value ?? 0).toFixed(1)}%`,
+                        'Ownership',
+                      ]}
                     />
                     <Legend />
                     <Bar dataKey="ownershipPercentage" name="Ownership %" fill="#f97316">
