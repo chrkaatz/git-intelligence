@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -25,6 +25,112 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
   const [selectedSection, setSelectedSection] = useState<
     'activity' | 'growth' | 'churn' | 'bursts' | 'releases'
   >('activity');
+
+  // Process evolution data for charts with aggregation if span is large
+  const processedData = useMemo(() => {
+    const dailyFreq = evolution.commitFrequency;
+    if (dailyFreq.length === 0) {
+      return { commitFrequency: [], growthCurve: [], churnMetrics: [], isMonthly: false };
+    }
+
+    const firstDate = new Date(dailyFreq[0].date);
+    const lastDate = new Date(dailyFreq[dailyFreq.length - 1].date);
+    const diffDays = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
+    const isMonthly = diffDays > 180;
+
+    if (!isMonthly) {
+      return {
+        commitFrequency: evolution.commitFrequency,
+        growthCurve: evolution.growthCurve,
+        churnMetrics: evolution.churnMetrics,
+        isMonthly: false,
+      };
+    }
+
+    // Aggregate commit frequency by month
+    const monthlyFreqMap = new Map<string, number>();
+    evolution.commitFrequency.forEach((p) => {
+      const monthKey = p.date.substring(0, 7);
+      monthlyFreqMap.set(monthKey, (monthlyFreqMap.get(monthKey) || 0) + p.commits);
+    });
+    const commitFrequency = Array.from(monthlyFreqMap.entries())
+      .map(([date, commits]) => ({ date, commits }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Aggregate growth curve by month (take last value of the month)
+    const monthlyGrowthMap = new Map<string, { loc: number; files: number }>();
+    evolution.growthCurve.forEach((p) => {
+      const monthKey = p.date.substring(0, 7);
+      monthlyGrowthMap.set(monthKey, { loc: p.loc, files: p.files });
+    });
+    const growthCurve = Array.from(monthlyGrowthMap.entries())
+      .map(([date, { loc, files }]) => ({ date, loc, files }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Aggregate churn metrics by month
+    const monthlyChurnMap = new Map<
+      string,
+      { additions: number; deletions: number; netChange: number }
+    >();
+    evolution.churnMetrics.forEach((p) => {
+      const monthKey = p.date.substring(0, 7);
+      const existing = monthlyChurnMap.get(monthKey) || {
+        additions: 0,
+        deletions: 0,
+        netChange: 0,
+      };
+      monthlyChurnMap.set(monthKey, {
+        additions: existing.additions + p.additions,
+        deletions: existing.deletions + p.deletions,
+        netChange: existing.netChange + p.netChange,
+      });
+    });
+    const churnMetrics = Array.from(monthlyChurnMap.entries())
+      .map(([date, { additions, deletions, netChange }]) => ({
+        date,
+        additions,
+        deletions,
+        netChange,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Calculate trendlines
+    const addTrendline = <T extends Record<string, number | string | boolean | undefined>>(
+      data: T[],
+      key: keyof T & string
+    ) => {
+      const n = data.length;
+      if (n < 2) return data;
+
+      let sumX = 0;
+      let sumY = 0;
+      let sumXY = 0;
+      let sumXX = 0;
+
+      for (let i = 0; i < n; i++) {
+        const val = Number(data[i][key]) || 0;
+        sumX += i;
+        sumY += val;
+        sumXY += i * val;
+        sumXX += i * i;
+      }
+
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+
+      return data.map((p, i) => ({
+        ...p,
+        [`${key}Trend`]: Math.max(0, slope * i + intercept),
+      }));
+    };
+
+    return {
+      commitFrequency: addTrendline(commitFrequency, 'commits'),
+      growthCurve,
+      churnMetrics: addTrendline(churnMetrics, 'netChange'),
+      isMonthly,
+    };
+  }, [evolution]);
 
   if (loading) {
     return (
@@ -154,12 +260,13 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
               Commit Frequency Over Time
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Number of commits per day, showing the activity pattern of the repository.
+              Number of commits {processedData.isMonthly ? 'per month' : 'per day'}, showing the
+              activity pattern of the repository.
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <ResponsiveContainer width="100%" height={400}>
-              <AreaChart data={evolution.commitFrequency}>
+              <AreaChart data={processedData.commitFrequency}>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   className="stroke-gray-300 dark:stroke-gray-700"
@@ -191,6 +298,15 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
                   fillOpacity={0.3}
                   name="Commits"
                 />
+                <Line
+                  type="monotone"
+                  dataKey="commitsTrend"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  name="Trend"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -206,12 +322,14 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
               Repository Growth Over Time
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Lines of code and file count growth showing how the repository has evolved.
+              Lines of code and file count growth{' '}
+              {processedData.isMonthly ? '(monthly snapshots)' : ''} showing how the repository has
+              evolved.
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <ResponsiveContainer width="100%" height={400}>
-              <ComposedChart data={evolution.growthCurve}>
+              <ComposedChart data={processedData.growthCurve}>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   className="stroke-gray-300 dark:stroke-gray-700"
@@ -274,8 +392,8 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
               Churn Metrics - Additions vs Deletions
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Code additions and deletions over time. High churn indicates active refactoring or
-              rapid changes.
+              Code additions and deletions {processedData.isMonthly ? 'per month' : 'per day'}. High
+              churn indicates active refactoring or rapid changes.
             </p>
             <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -289,7 +407,7 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <ResponsiveContainer width="100%" height={400}>
-              <ComposedChart data={evolution.churnMetrics}>
+              <ComposedChart data={processedData.churnMetrics}>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   className="stroke-gray-300 dark:stroke-gray-700"
@@ -322,6 +440,15 @@ export function RepositoryEvolution({ evolution, loading }: RepositoryEvolutionP
                   stroke="#6366f1"
                   strokeWidth={2}
                   name="Net Change"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="netChangeTrend"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  name="Trend"
                 />
               </ComposedChart>
             </ResponsiveContainer>

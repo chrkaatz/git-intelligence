@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Area,
   AreaChart,
@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Line,
 } from 'recharts';
 import type { CrossRepoRepositoryEvolution as CrossRepoRepositoryEvolutionType } from '../api';
 import { GitBranch, Activity, TrendingUp, RefreshCw, Tag, Link2 } from 'lucide-react';
@@ -27,6 +28,142 @@ export function CrossRepoRepositoryEvolution({
     'overview'
   );
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
+
+  // Process aggregated commit frequency with monthly aggregation and trendline
+  const processedCommitFreq = useMemo(() => {
+    const commitFreqMap = new Map<string, number>();
+    evolution.repositories.forEach((repo) => {
+      repo.evolution.commitFrequency.forEach((cf) => {
+        commitFreqMap.set(cf.date, (commitFreqMap.get(cf.date) || 0) + cf.commits);
+      });
+    });
+
+    const dailySeries = Array.from(commitFreqMap.entries())
+      .map(([date, commits]) => ({ date, commits }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    if (dailySeries.length === 0) {
+      return { series: [], isMonthly: false };
+    }
+
+    const firstDate = new Date(dailySeries[0].date);
+    const lastDate = new Date(dailySeries[dailySeries.length - 1].date);
+    const diffDays = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
+    const isMonthly = diffDays > 180;
+
+    let series = dailySeries;
+    if (isMonthly) {
+      const monthlyMap = new Map<string, number>();
+      dailySeries.forEach((p) => {
+        const monthKey = p.date.substring(0, 7);
+        monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + p.commits);
+      });
+      series = Array.from(monthlyMap.entries())
+        .map(([date, commits]) => ({ date, commits }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    // Calculate Trendline
+    const n = series.length;
+    if (n >= 2) {
+      let sumX = 0;
+      let sumY = 0;
+      let sumXY = 0;
+      let sumXX = 0;
+
+      for (let i = 0; i < n; i++) {
+        sumX += i;
+        sumY += series[i].commits;
+        sumXY += i * series[i].commits;
+        sumXX += i * i;
+      }
+
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+
+      series = series.map((p, i) => ({
+        ...p,
+        trendline: Math.max(0, slope * i + intercept),
+      }));
+    }
+
+    return { series, isMonthly };
+  }, [evolution]);
+
+  // Process synchronization data with monthly aggregation and trendline
+  const processedSyncData = useMemo(() => {
+    const dailySync = evolution.synchronization.map((sync) => ({
+      date: sync.date,
+      repoCount: sync.repos.length,
+      repos: sync.repos,
+      totalCommits: Object.values(sync.commitCounts).reduce((sum, count) => sum + count, 0),
+    }));
+
+    if (dailySync.length === 0) {
+      return { series: [], isMonthly: false };
+    }
+
+    const firstDate = new Date(dailySync[0].date);
+    const lastDate = new Date(dailySync[dailySync.length - 1].date);
+    const diffDays = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
+    const isMonthly = diffDays > 180;
+
+    let series = dailySync;
+    if (isMonthly) {
+      const monthlyMap = new Map<
+        string,
+        { repoCount: number; repos: Set<string>; totalCommits: number }
+      >();
+      dailySync.forEach((p) => {
+        const monthKey = p.date.substring(0, 7);
+        const existing = monthlyMap.get(monthKey) || {
+          repoCount: 0,
+          repos: new Set<string>(),
+          totalCommits: 0,
+        };
+        p.repos.forEach((r) => existing.repos.add(r));
+        monthlyMap.set(monthKey, {
+          repoCount: existing.repos.size,
+          repos: existing.repos,
+          totalCommits: existing.totalCommits + p.totalCommits,
+        });
+      });
+      series = Array.from(monthlyMap.entries())
+        .map(([date, { repos, totalCommits }]) => ({
+          date,
+          repoCount: repos.size,
+          repos: Array.from(repos),
+          totalCommits,
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    // Calculate Trendline for totalCommits
+    const n = series.length;
+    if (n >= 2) {
+      let sumX = 0;
+      let sumY = 0;
+      let sumXY = 0;
+      let sumXX = 0;
+
+      for (let i = 0; i < n; i++) {
+        sumX += i;
+        sumY += series[i].totalCommits;
+        sumXY += i * series[i].totalCommits;
+        sumXX += i * i;
+      }
+
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+
+      series = series.map((p, i) => ({
+        ...p,
+        trendline: Math.max(0, slope * i + intercept),
+      }));
+    }
+
+    return { series, isMonthly };
+  }, [evolution.synchronization]);
 
   if (loading) {
     return (
@@ -50,25 +187,6 @@ export function CrossRepoRepositoryEvolution({
     (sum, r) => sum + r.evolution.refactorCount,
     0
   );
-
-  // Prepare synchronization data
-  const syncData = evolution.synchronization.map((sync) => ({
-    date: sync.date,
-    repoCount: sync.repos.length,
-    repos: sync.repos,
-    totalCommits: Object.values(sync.commitCounts).reduce((sum, count) => sum + count, 0),
-  }));
-
-  // Prepare aggregated commit frequency (sum across all repos)
-  const commitFreqMap = new Map<string, number>();
-  evolution.repositories.forEach((repo) => {
-    repo.evolution.commitFrequency.forEach((cf) => {
-      commitFreqMap.set(cf.date, (commitFreqMap.get(cf.date) || 0) + cf.commits);
-    });
-  });
-  const aggregatedCommitFrequency = Array.from(commitFreqMap.entries())
-    .map(([date, commits]) => ({ date, commits }))
-    .sort((a, b) => a.date.localeCompare(b.date));
 
   return (
     <div className="space-y-6">
@@ -174,12 +292,13 @@ export function CrossRepoRepositoryEvolution({
               Aggregated Commit Frequency Across All Repositories
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Combined commit activity across all repositories in this project.
+              Combined commit activity across all repositories in this project, aggregated{' '}
+              {processedCommitFreq.isMonthly ? 'monthly' : 'daily'}.
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <ResponsiveContainer width="100%" height={400}>
-              <AreaChart data={aggregatedCommitFrequency}>
+              <AreaChart data={processedCommitFreq.series}>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   className="stroke-gray-300 dark:stroke-gray-700"
@@ -211,6 +330,15 @@ export function CrossRepoRepositoryEvolution({
                   fillOpacity={0.3}
                   name="Total Commits"
                 />
+                <Line
+                  type="monotone"
+                  dataKey="trendline"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  name="Trend"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -226,14 +354,15 @@ export function CrossRepoRepositoryEvolution({
               Repository Synchronization
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Dates when multiple repositories had commits, showing which repos evolve in parallel.
+              Dates when multiple repositories had commits, showing which repos evolve in parallel,
+              aggregated {processedSyncData.isMonthly ? 'monthly' : 'daily'}.
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            {syncData.length > 0 ? (
+            {processedSyncData.series.length > 0 ? (
               <div className="space-y-4">
                 <ResponsiveContainer width="100%" height={400}>
-                  <BarChart data={syncData}>
+                  <BarChart data={processedSyncData.series}>
                     <CartesianGrid
                       strokeDasharray="3 3"
                       className="stroke-gray-300 dark:stroke-gray-700"
@@ -260,6 +389,15 @@ export function CrossRepoRepositoryEvolution({
                     <Legend />
                     <Bar dataKey="repoCount" fill="#6366f1" name="Repos Active" />
                     <Bar dataKey="totalCommits" fill="#10b981" name="Total Commits" />
+                    <Line
+                      type="monotone"
+                      dataKey="trendline"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      dot={false}
+                      name="Trend (Commits)"
+                    />
                   </BarChart>
                 </ResponsiveContainer>
                 <div className="mt-4">
@@ -267,7 +405,7 @@ export function CrossRepoRepositoryEvolution({
                     Synchronization Events (dates with multiple repos active)
                   </h4>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {syncData
+                    {processedSyncData.series
                       .slice(-30)
                       .reverse()
                       .map((sync, idx) => (
@@ -276,13 +414,15 @@ export function CrossRepoRepositoryEvolution({
                           className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
                         >
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {new Date(sync.date).toLocaleDateString()}
+                            {processedSyncData.isMonthly
+                              ? sync.date
+                              : new Date(sync.date).toLocaleDateString()}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {sync.repoCount} repositories active, {sync.totalCommits} total commits
                           </div>
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {sync.repos.map((repo, rIdx) => (
+                            {sync.repos.map((repo: string, rIdx: number) => (
                               <span
                                 key={rIdx}
                                 className="text-xs px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded"

@@ -36,6 +36,7 @@ import {
   BarChart,
   Bar,
   Legend,
+  Line,
 } from 'recharts';
 import { useNotifications } from '../../context/NotificationContext';
 import { RecalculateButton } from '../common/RecalculateButton';
@@ -168,7 +169,8 @@ export function CrossRepoAnalyticsPortfolioView() {
   }, [fetchAll]);
 
   const overallActivityData = useMemo(() => {
-    if (!data.evolution) return { series: [], recentTotal: 0, previousTotal: 0, trend: 0 };
+    if (!data.evolution)
+      return { series: [], recentTotal: 0, previousTotal: 0, trend: 0, isMonthly: false };
 
     const commitFreqMap = new Map<string, number>();
     data.evolution.repositories.forEach((repo) => {
@@ -177,12 +179,35 @@ export function CrossRepoAnalyticsPortfolioView() {
       });
     });
 
-    const series = Array.from(commitFreqMap.entries())
+    const dailySeries = Array.from(commitFreqMap.entries())
       .map(([date, commits]) => ({ date, commits }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
+    if (dailySeries.length === 0) {
+      return { series: [], recentTotal: 0, previousTotal: 0, trend: 0, isMonthly: false };
+    }
+
+    const firstDate = new Date(dailySeries[0].date);
+    const lastDate = new Date(dailySeries[dailySeries.length - 1].date);
+    const diffDays = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    // If more than 6 months (180 days), aggregate by month
+    const isMonthly = diffDays > 180;
+    let series = dailySeries;
+
+    if (isMonthly) {
+      const monthlyMap = new Map<string, number>();
+      dailySeries.forEach((p) => {
+        const monthKey = p.date.substring(0, 7); // YYYY-MM
+        monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + p.commits);
+      });
+      series = Array.from(monthlyMap.entries())
+        .map(([date, commits]) => ({ date, commits }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+    }
+
     const daysWindow = 30;
-    const now = series.length > 0 ? new Date(series[series.length - 1].date) : new Date();
+    const now = lastDate;
 
     const sumInWindow = (startOffset: number, endOffset: number) => {
       const start = new Date(now);
@@ -190,7 +215,7 @@ export function CrossRepoAnalyticsPortfolioView() {
       const end = new Date(now);
       end.setDate(end.getDate() - endOffset);
 
-      return series
+      return dailySeries
         .filter((p) => {
           const d = new Date(p.date);
           return d >= end && d <= start;
@@ -207,7 +232,32 @@ export function CrossRepoAnalyticsPortfolioView() {
           : 0
         : ((recentTotal - previousTotal) / previousTotal) * 100;
 
-    return { series, recentTotal, previousTotal, trend };
+    // Calculate trendline (Linear Regression)
+    const n = series.length;
+    let seriesWithTrend = series;
+    if (n >= 2) {
+      let sumX = 0;
+      let sumY = 0;
+      let sumXY = 0;
+      let sumXX = 0;
+
+      for (let i = 0; i < n; i++) {
+        sumX += i;
+        sumY += series[i].commits;
+        sumXY += i * series[i].commits;
+        sumXX += i * i;
+      }
+
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+
+      seriesWithTrend = series.map((p, i) => ({
+        ...p,
+        trendline: Math.max(0, slope * i + intercept),
+      }));
+    }
+
+    return { series: seriesWithTrend, recentTotal, previousTotal, trend, isMonthly };
   }, [data.evolution]);
 
   const totalLOC = useMemo(() => {
@@ -476,7 +526,8 @@ export function CrossRepoAnalyticsPortfolioView() {
                     Overall Engineering Activity Trend
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Organization-wide commit volume aggregated across all repositories.
+                    Organization-wide commit volume aggregated{' '}
+                    {overallActivityData.isMonthly ? 'monthly' : 'daily'} across all repositories.
                   </p>
                 </div>
               </div>
@@ -506,6 +557,15 @@ export function CrossRepoAnalyticsPortfolioView() {
                     fill="#6366f1"
                     fillOpacity={0.25}
                     name="Commits"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="trendline"
+                    stroke="#ef4444"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={false}
+                    name="Trend"
                   />
                 </AreaChart>
               </ResponsiveContainer>
