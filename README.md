@@ -41,11 +41,12 @@ Currently it works only on local machines.
   - **Complexity**: Average diff sizes, largest diffs, most rewritten files
 
 - **Repository Evolution**:
-  - Commit frequency over time
+  - Commit frequency over time with **trendline analysis**
   - Release information (tags, dates, commit hashes)
   - Growth curves (LOC and files over time)
   - Change bursts (periods of high activity)
   - Churn metrics (additions, deletions, net change)
+  - Monthly aggregation for long-term trend visualization
 
 - **Bus Factor & Ownership**:
   - Single maintainer risk analysis
@@ -64,6 +65,12 @@ Currently it works only on local machines.
 - Repository clusters (repos worked on by same teams)
 - Synchronization patterns (commits across repos on same dates)
 - Portfolio-level views of organization-wide activity, unstable/dying repositories, and overloaded contributors
+
+### Batch Analysis & Jobs
+
+- **Analyze All**: Trigger all analysis types for a repository or project with a single click
+- **Background Processing**: Long-running analyses run in a background queue
+- **Real-time Progress**: Monitor analysis progress with detailed status updates and percentage completion
 
 ### Project Management
 
@@ -171,7 +178,7 @@ git-intelligence/
    ```
 
    d. **Configure in Git Intelligence**
-   - Open the application and go to Settings (gear icon)
+   - Open the application and navigate to the **Settings** page via the sidebar
    - Navigate to the "AI Analysis (Ollama)" section
    - Enable Ollama integration
    - Configure host (default: `localhost`), port (default: `11434`), and model name
@@ -224,6 +231,7 @@ cd server && npm start
 - Select a repository to view single-repository analytics
 - Select a project to view cross-repository analytics
 - Use the refresh option to bypass cache and get fresh data
+- Use the **Analyze All** feature to trigger comprehensive background analysis for a repository or project
 
 ## 🧪 Testing
 

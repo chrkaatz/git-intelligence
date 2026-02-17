@@ -22,6 +22,7 @@ This document provides essential context and guidelines for AI assistants workin
 - **Bus Factor & Ownership**: Single maintainer risk, fragmentation, and owner churn analysis
 - **Social Network Analysis**: Collaboration graphs, knowledge silos, and orphaned code detection
 - **Cross-Repository Analytics**: Aggregated analysis across all repositories in a project
+- **Batch Analysis & Jobs**: Background job queue for "Analyze All" comprehensive repository/project analysis
 - **AI-Powered Analysis** (Optional): Local Ollama integration for enhanced insights and natural language analysis
 
 ## Architecture
@@ -112,7 +113,8 @@ src/
 │   ├── cross-repo-codebase-health.$projectId.tsx # Cross-repo health
 │   ├── cross-repo-repository-evolution.$projectId.tsx # Cross-repo evolution
 │   ├── cross-repo-bus-factor-and-ownership.$projectId.tsx # Cross-repo bus factor
-│   └── cross-repo-social-network-analysis.$projectId.tsx # Cross-repo SNA
+│   ├── cross-repo-social-network-analysis.$projectId.tsx # Cross-repo SNA
+│   └── settings.tsx          # Dedicated settings page
 └── components/
     ├── Layout.tsx            # Main layout with sidebar (Headless UI)
     ├── ProjectsSidebar.tsx   # Sidebar for project/repository selection
@@ -285,6 +287,11 @@ src/
      - `GET /cross-repo-bus-factor-and-ownership?projectId=<id>` - Cross-repo bus factor
      - `GET /social-network-analysis?path=<repo-path>` - Social network analysis
      - `GET /cross-repo-social-network-analysis?projectId=<id>` - Cross-repo SNA
+   - **Jobs**:
+     - `POST /repositories/:id/analyze-all` - Start full analysis for a repository
+     - `POST /projects/:id/analyze-all` - Start full analysis for all repositories in a project
+     - `GET /repositories/analyze-all/active` - List all active analysis jobs
+     - `GET /repositories/analyze-all/status?jobId=<id>` - Get status of a specific job
    - **Cache**:
      - `POST /cache/clear` - Clear analysis cache (optional `path` in body)
    - **Settings** (Ollama Integration):
@@ -683,8 +690,11 @@ cd server && npm run build
 
 ---
 
-**Last Updated**: December 2024 - Updated to reflect:
+**Last Updated**: February 2026 - Updated to reflect:
 
+- Batch Analysis & Background Job Queue
+- Dedicated Settings Page migration
+- Enhanced Repository Evolution with trendlines
 - Ollama integration for AI-powered analysis
 - Settings management API and UI
 - Ollama service module with connection testing

@@ -1,5 +1,43 @@
 # Release Notes - Git Intelligence
 
+## v0.3.0
+
+**Release Date:** February 17, 2026  
+**Tag:** `v0.3.0`
+
+---
+
+### 🔍 Overview
+
+Git Intelligence v0.3.0 introduces **comprehensive batch analysis** capabilities with the "Analyze All" feature, a **dedicated Settings page** for better configuration management, and **enhanced evolution analytics** with trendline calculations. This release focuses on improving the workflow for analyzing large projects and providing deeper long-term insights.
+
+### ✨ Highlights
+
+- **Batch Analysis: "Analyze All"**
+  - Trigger all analysis types (Stats, Developer, Health, Evolution, Bus Factor, SNA, Risk) in a single action.
+  - New **Background Job Queue** system to handle long-running analyses without blocking the UI.
+  - Real-time progress monitoring showing percentage completion and current step.
+  - Available for both individual repositories and entire projects (cross-repo analysis).
+  - Automatic cache refreshing when using Analyze All to ensure the latest data.
+
+- **Dedicated Settings Page**
+  - Migrated settings from a modal dialog to a full-width, dedicated page.
+  - Streamlined layout for managing Ollama configuration and AI analysis settings.
+  - Improved accessibility and focus for application configuration.
+
+- **Enhanced Repository Evolution**
+  - **Trendline Analysis**: Added linear regression trendlines to commit frequency charts.
+  - **Monthly Data Aggregation**: Improved visualization of long-term trends for mature repositories.
+  - Refined chart tooltips and axis formatting for better readability.
+
+- **Infrastructure & UX**
+  - New `jobQueue` module for managing concurrent analysis tasks.
+  - Real-time status updates in `ProjectsList` for ongoing jobs.
+  - Downgraded client ESLint dependency to fix environment-specific build issues.
+  - Cleaned up obsolete integration specifications.
+
+---
+
 ## v0.2.0
 
 **Release Date:** December 11, 2025  
