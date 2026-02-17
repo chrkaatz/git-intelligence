@@ -471,6 +471,9 @@ export interface HighRiskHotspot {
   complexity: number; // Average diff size
   ownershipDiversity: number; // Number of authors
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number; // Coverage percentage (0-100)
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface TemporalCouplingHotspot {
@@ -494,6 +497,10 @@ export interface RiskAnalytics {
   highRiskHotspots: HighRiskHotspot[];
   temporalCouplingHotspots: TemporalCouplingHotspot[];
   riskyFileTrends: RiskyFileTrend[];
+  coverage?: {
+    totalCoverage: number;
+    files: Record<string, { coverage: number; linesFound: number; linesHit: number }>;
+  };
   aiInsights?: string;
 }
 
@@ -524,6 +531,10 @@ export interface CrossRepoRiskAnalytics {
   };
   totalRepos: number;
   repoNames: string[];
+  coverage?: {
+    averageCoverage: number;
+    repositories: { repoName: string; coverage: number }[];
+  };
 }
 
 // Technical Debt Indicators Types

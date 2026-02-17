@@ -511,6 +511,9 @@ export interface SingleMaintainerFile {
   totalCommits: number;
   ownershipPercentage: number;
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface SingleMaintainerRepo {
@@ -522,6 +525,9 @@ export interface SingleMaintainerRepo {
   totalCommits: number;
   ownershipPercentage: number;
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface FragmentedFile {
@@ -530,6 +536,9 @@ export interface FragmentedFile {
   totalCommits: number;
   averageCommitsPerAuthor: number;
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface OwnerChurn {
@@ -542,6 +551,9 @@ export interface OwnerChurn {
   currentOwnerFirstCommit: string;
   daysSinceTransition: number;
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface BusFactorAndOwnership {
@@ -653,6 +665,9 @@ export interface KnowledgeSilo {
   lastCommitDate: string;
   daysSinceLastCommit: number;
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface OrphanedCode {
@@ -663,6 +678,9 @@ export interface OrphanedCode {
   lastAuthorEmail: string;
   totalCommits: number;
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface SocialNetworkAnalysis {
@@ -731,6 +749,9 @@ export interface HighRiskHotspot {
   complexity: number; // Average diff size
   ownershipDiversity: number; // Number of authors
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface TemporalCouplingHotspot {
@@ -739,6 +760,9 @@ export interface TemporalCouplingHotspot {
   relatedFiles: string[]; // Top related files
   totalCoChanges: number; // Total co-change count
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface RiskyFileTrend {
@@ -748,12 +772,19 @@ export interface RiskyFileTrend {
   trendDirection: 'increasing' | 'decreasing' | 'stable';
   trendPercentage: number; // Percentage change
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface RiskAnalytics {
   highRiskHotspots: HighRiskHotspot[];
   temporalCouplingHotspots: TemporalCouplingHotspot[];
   riskyFileTrends: RiskyFileTrend[];
+  coverage?: {
+    totalCoverage: number;
+    files: Record<string, { coverage: number; linesFound: number; linesHit: number }>;
+  };
   aiInsights?: string;
 }
 
@@ -784,6 +815,10 @@ export interface CrossRepoRiskAnalytics {
   };
   totalRepos: number;
   repoNames: string[];
+  coverage?: {
+    averageCoverage: number;
+    repositories: { repoName: string; coverage: number }[];
+  };
 }
 
 export const getRiskAnalytics = async (
@@ -818,6 +853,9 @@ export interface CommentedOutCode {
   commitDate: string;
   linesCommented: number;
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface HugeCommit {
@@ -831,6 +869,9 @@ export interface HugeCommit {
   linesRemoved: number;
   totalChanges: number;
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface WipCommit {
@@ -859,6 +900,9 @@ export interface LargeBinaryFile {
   sizeMB: number;
   fileType: string;
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface VendoredCodeGrowth {
@@ -868,6 +912,9 @@ export interface VendoredCodeGrowth {
   growthPercentage: number;
   filesAdded: number;
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface LongLivedBranch {
@@ -879,6 +926,9 @@ export interface LongLivedBranch {
   commitCount: number;
   isMerged: boolean;
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface DependencyBump {
@@ -896,6 +946,9 @@ export interface StaleDependency {
   lastUpdated: string;
   daysSinceUpdate: number;
   riskLevel: 'low' | 'medium' | 'high';
+  coverage?: number;
+  linesFound?: number;
+  linesHit?: number;
 }
 
 export interface TechnicalDebtIndicators {

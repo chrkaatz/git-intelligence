@@ -21,6 +21,7 @@ This document provides essential context and guidelines for AI assistants workin
 - **Repository Evolution**: Commit frequency, releases, growth curves, change bursts, and churn metrics
 - **Bus Factor & Ownership**: Single maintainer risk, fragmentation, and owner churn analysis
 - **Social Network Analysis**: Collaboration graphs, knowledge silos, and orphaned code detection
+- **Risk Analytics**: Combined risk assessment with **Code Coverage Overlay**
 - **Cross-Repository Analytics**: Aggregated analysis across all repositories in a project
 - **Batch Analysis & Jobs**: Background job queue for "Analyze All" comprehensive repository/project analysis
 - **AI-Powered Analysis** (Optional): Local Ollama integration for enhanced insights and natural language analysis
@@ -162,6 +163,7 @@ src/
 │   ├── stats.ts             # Basic repository statistics
 │   ├── developerAnalytics.ts # Developer analytics (churn, patterns, etc.)
 │   ├── codebaseHealth.ts    # Codebase health metrics
+│   ├── coverage.ts          # Code coverage parsing (LCOV)
 │   ├── repositoryEvolution.ts # Repository evolution analysis
 │   ├── busFactor.ts         # Bus factor and ownership analysis
 ├── services/                 # External service integrations
@@ -635,6 +637,14 @@ cd server && npm run build
 3. Ensure dark mode support with `dark:` variants
 4. Test responsive breakpoints
 
+### Updating Documentation
+
+When implementing new features or making significant changes, always update the following:
+
+1. `README.md`: Update feature lists and architecture diagrams if necessary.
+2. `RELEASE.md`: Add a new entry or update the current version's highlights.
+3. `AGENTS.md`: Update the project overview, tech stack, and structure if they have changed.
+
 ## Code Style Guidelines
 
 - **TypeScript**: Strict typing, prefer interfaces over types for objects
@@ -694,7 +704,9 @@ cd server && npm run build
 
 - Batch Analysis & Background Job Queue
 - Dedicated Settings Page migration
+- **Code Coverage Overlay** in Risk Analytics
 - Enhanced Repository Evolution with trendlines
+- Documentation update requirements for AI assistants
 - Ollama integration for AI-powered analysis
 - Settings management API and UI
 - Ollama service module with connection testing

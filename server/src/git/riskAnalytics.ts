@@ -11,6 +11,7 @@ import {
 import { normalizeEmail, shouldExcludeFileFromAnalysis } from './utils.js';
 import { getCodebaseHealth } from './codebaseHealth.js';
 import { getBusFactorAndOwnership } from './busFactor.js';
+import { getCoverageData } from './coverage.js';
 import { generateInsights } from '../services/aiAnalysis.js';
 import type {
   RiskAnalytics,
@@ -66,10 +67,11 @@ export async function getRiskAnalytics(
       throw new Error('Not a git repository');
     }
 
-    // Get codebase health and bus factor data
-    const [codebaseHealth, busFactor] = await Promise.all([
+    // Get codebase health, bus factor data and coverage data
+    const [codebaseHealth, busFactor, coverageData] = await Promise.all([
       getCodebaseHealth(repoPath, useCache),
       getBusFactorAndOwnership(repoPath, useCache),
+      getCoverageData(repoPath),
     ]);
 
     // Get commit history with author info for ownership diversity
@@ -210,6 +212,24 @@ export async function getRiskAnalytics(
           riskLevel = 'low';
         }
 
+        // Match with coverage data if available
+        let fileCoverage;
+        if (coverageData) {
+          // Try exact match first
+          fileCoverage = coverageData.files[file];
+
+          // Try suffix match if not found (for absolute paths in lcov)
+          if (!fileCoverage) {
+            const normalizedFile = file.startsWith('./') ? file.substring(2) : file;
+            const matchingPath = Object.keys(coverageData.files).find(
+              (p) => p.endsWith(normalizedFile) || normalizedFile.endsWith(p)
+            );
+            if (matchingPath) {
+              fileCoverage = coverageData.files[matchingPath];
+            }
+          }
+        }
+
         highRiskHotspots.push({
           file,
           riskScore: Math.round(riskScore * 10) / 10,
@@ -217,6 +237,9 @@ export async function getRiskAnalytics(
           complexity,
           ownershipDiversity,
           riskLevel,
+          coverage: fileCoverage?.coverage,
+          linesFound: fileCoverage?.linesFound,
+          linesHit: fileCoverage?.linesHit,
         });
       }
     });
@@ -384,6 +407,12 @@ export async function getRiskAnalytics(
       highRiskHotspots: highRiskHotspots.slice(0, 50), // Top 50
       temporalCouplingHotspots: temporalCouplingHotspots.slice(0, 30), // Top 30
       riskyFileTrends: riskyFileTrends.slice(0, 20), // Top 20
+      coverage: coverageData
+        ? {
+            totalCoverage: coverageData.totalCoverage,
+            files: coverageData.files,
+          }
+        : undefined,
     };
 
     // Generate AI insights if requested
@@ -471,6 +500,8 @@ export async function getCrossRepoRiskAnalytics(
   }[] = [];
   const aggregatedTrends = new Map<string, RiskyFileTrend>();
 
+  const repoCoverages: { repoName: string; coverage: number }[] = [];
+
   // Process each repository
   for (const repo of repositories) {
     try {
@@ -536,6 +567,13 @@ export async function getCrossRepoRiskAnalytics(
           });
         }
       });
+
+      if (analytics.coverage) {
+        repoCoverages.push({
+          repoName: repo.name,
+          coverage: analytics.coverage.totalCoverage,
+        });
+      }
     } catch (error) {
       console.error(`Failed to analyze repository ${repo.path}:`, error);
       // Continue with other repositories
@@ -570,5 +608,13 @@ export async function getCrossRepoRiskAnalytics(
     },
     totalRepos: repositories.length,
     repoNames: repositories.map((r) => r.name),
+    coverage:
+      repoCoverages.length > 0
+        ? {
+            averageCoverage:
+              repoCoverages.reduce((sum, r) => sum + r.coverage, 0) / repoCoverages.length,
+            repositories: repoCoverages,
+          }
+        : undefined,
   };
 }

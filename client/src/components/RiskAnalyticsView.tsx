@@ -192,6 +192,7 @@ export function RiskAnalyticsView() {
             highRiskHotspots={riskAnalytics.highRiskHotspots}
             temporalCouplingHotspots={riskAnalytics.temporalCouplingHotspots}
             riskyFileTrends={riskAnalytics.riskyFileTrends}
+            coverage={riskAnalytics.coverage}
           />
         </>
       ) : (

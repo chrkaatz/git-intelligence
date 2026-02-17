@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { CrossRepoRiskAnalytics as CrossRepoRiskAnalyticsType } from '../api';
 import { getRiskLabel } from './common/riskUtils';
-import { Flame, Link2, TrendingUp, GitBranch } from 'lucide-react';
+import { Flame, Link2, TrendingUp, GitBranch, ShieldCheck } from 'lucide-react';
 
 interface CrossRepoRiskAnalyticsProps {
   analytics: CrossRepoRiskAnalyticsType;
@@ -28,7 +28,7 @@ export function CrossRepoRiskAnalytics({ analytics, loading }: CrossRepoRiskAnal
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className={`grid grid-cols-1 md:grid-cols-${analytics.coverage ? '5' : '4'} gap-3`}>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -81,6 +81,21 @@ export function CrossRepoRiskAnalytics({ analytics, loading }: CrossRepoRiskAnal
             <TrendingUp className="w-6 h-6 text-purple-500" />
           </div>
         </div>
+        {analytics.coverage && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Project Coverage
+                </p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
+                  {analytics.coverage.averageCoverage.toFixed(1)}%
+                </p>
+              </div>
+              <ShieldCheck className="w-6 h-6 text-green-500" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Section Navigation */}

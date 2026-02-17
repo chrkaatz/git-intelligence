@@ -30,6 +30,12 @@ Git Intelligence v0.3.0 introduces **comprehensive batch analysis** capabilities
   - **Monthly Data Aggregation**: Improved visualization of long-term trends for mature repositories.
   - Refined chart tooltips and axis formatting for better readability.
 
+- **Code Coverage Overlay**
+  - **Hotspot Integration**: Integrated LCOV coverage data directly into Risk Analytics.
+  - **Critical Area Identification**: Automatically identify "High Risk / Low Coverage" files.
+  - **Automated Discovery**: Built-in parser for `lcov.info` files supporting common test runners.
+  - **Portfolio Metrics**: Aggregated coverage statistics for project-wide health assessment.
+
 - **Infrastructure & UX**
   - New `jobQueue` module for managing concurrent analysis tasks.
   - Real-time status updates in `ProjectsList` for ongoing jobs.

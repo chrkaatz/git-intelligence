@@ -14,18 +14,20 @@ import {
 } from 'recharts';
 import type { RiskAnalytics as RiskAnalyticsType } from '../api';
 import { getRiskColor, getRiskLabel } from './common/riskUtils';
-import { Link2, TrendingUp, Flame } from 'lucide-react';
+import { Link2, TrendingUp, Flame, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 interface RiskAnalyticsProps {
   highRiskHotspots: RiskAnalyticsType['highRiskHotspots'];
   temporalCouplingHotspots: RiskAnalyticsType['temporalCouplingHotspots'];
   riskyFileTrends: RiskAnalyticsType['riskyFileTrends'];
+  coverage?: RiskAnalyticsType['coverage'];
 }
 
 export function RiskAnalytics({
   highRiskHotspots,
   temporalCouplingHotspots,
   riskyFileTrends,
+  coverage,
 }: RiskAnalyticsProps) {
   const [selectedSection, setSelectedSection] = useState<'high-risk' | 'coupling' | 'trends'>(
     'high-risk'
@@ -47,40 +49,51 @@ export function RiskAnalytics({
   return (
     <div className="space-y-6">
       {/* Section Navigation */}
-      <div className="flex flex-wrap gap-2 border-b border-gray-200 dark:border-gray-700 pb-4">
-        <button
-          onClick={() => setSelectedSection('high-risk')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            selectedSection === 'high-risk'
-              ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}
-        >
-          <Flame className="w-4 h-4 inline mr-2" />
-          High-Risk Hotspots
-        </button>
-        <button
-          onClick={() => setSelectedSection('coupling')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            selectedSection === 'coupling'
-              ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}
-        >
-          <Link2 className="w-4 h-4 inline mr-2" />
-          Temporal Coupling
-        </button>
-        <button
-          onClick={() => setSelectedSection('trends')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            selectedSection === 'trends'
-              ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-          }`}
-        >
-          <TrendingUp className="w-4 h-4 inline mr-2" />
-          Risky File Trends
-        </button>
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setSelectedSection('high-risk')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              selectedSection === 'high-risk'
+                ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Flame className="w-4 h-4 inline mr-2" />
+            High-Risk Hotspots
+          </button>
+          <button
+            onClick={() => setSelectedSection('coupling')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              selectedSection === 'coupling'
+                ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Link2 className="w-4 h-4 inline mr-2" />
+            Temporal Coupling
+          </button>
+          <button
+            onClick={() => setSelectedSection('trends')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              selectedSection === 'trends'
+                ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4 inline mr-2" />
+            Risky File Trends
+          </button>
+        </div>
+
+        {coverage && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <ShieldCheck className="w-4 h-4 text-green-600 dark:text-green-400" />
+            <span className="text-sm font-medium text-green-700 dark:text-green-300">
+              Total Coverage: {coverage.totalCoverage.toFixed(1)}%
+            </span>
+          </div>
+        )}
       </div>
 
       {/* High-Risk Hotspots Section */}
@@ -129,6 +142,9 @@ export function RiskAnalytics({
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Ownership
                         </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Coverage
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -162,6 +178,40 @@ export function RiskAnalytics({
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             {hotspot.ownershipDiversity} author
                             {hotspot.ownershipDiversity !== 1 ? 's' : ''}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                            {hotspot.coverage !== undefined ? (
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${
+                                      hotspot.coverage > 80
+                                        ? 'bg-green-500'
+                                        : hotspot.coverage > 50
+                                          ? 'bg-yellow-500'
+                                          : 'bg-red-500'
+                                    }`}
+                                    style={{ width: `${hotspot.coverage}%` }}
+                                  />
+                                </div>
+                                <span
+                                  className={
+                                    hotspot.coverage < 50
+                                      ? 'text-red-600 dark:text-red-400 font-medium'
+                                      : 'text-gray-600 dark:text-gray-400'
+                                  }
+                                >
+                                  {hotspot.coverage.toFixed(1)}%
+                                </span>
+                                {hotspot.riskLevel === 'high' && hotspot.coverage < 50 && (
+                                  <span title="High risk hotspot with low coverage!">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 italic">No data</span>
+                            )}
                           </td>
                         </tr>
                       ))}
