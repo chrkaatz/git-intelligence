@@ -26,7 +26,7 @@ Currently it works only on local machines.
 
 - **Risk Analytics**:
   - High-risk hotspots combining churn, complexity proxies, and ownership concentration
-  - **Code Coverage Overlay**: Identify under-tested critical files by overlaying LCOV data
+  - **Code Coverage Overlay**: Identify under-tested critical files by overlaying LCOV or JaCoCo data
   - Temporal coupling hotspots (files that frequently change together)
   - Trend analysis of risky files to anticipate regressions
 
@@ -322,7 +322,7 @@ cd server && npm run test:coverage
   - `repositoryEvolution.ts` - Evolution metrics
   - `busFactor.ts` - Bus factor analysis
   - `socialNetwork.ts` - Social network analysis
-  - `coverage.ts` - Code coverage parsing (LCOV)
+  - `coverage.ts` - Code coverage parsing (LCOV, JaCoCo XML)
 - `db/` - Database modules
   - `database.ts` - LowDB initialization and migrations
   - `projects.ts` - Project CRUD operations

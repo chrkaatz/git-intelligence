@@ -163,7 +163,7 @@ src/
 │   ├── stats.ts             # Basic repository statistics
 │   ├── developerAnalytics.ts # Developer analytics (churn, patterns, etc.)
 │   ├── codebaseHealth.ts    # Codebase health metrics
-│   ├── coverage.ts          # Code coverage parsing (LCOV)
+│   ├── coverage.ts          # Code coverage parsing (LCOV, JaCoCo XML)
 │   ├── repositoryEvolution.ts # Repository evolution analysis
 │   ├── busFactor.ts         # Bus factor and ownership analysis
 ├── services/                 # External service integrations

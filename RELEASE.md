@@ -1,5 +1,15 @@
 # Release Notes - Git Intelligence
 
+## Unreleased
+
+### ✨ Highlights
+
+- **JaCoCo Coverage Support**
+  - Risk Analytics coverage overlay now supports JaCoCo XML reports in addition to LCOV.
+  - Added common-path discovery for Maven/Gradle report locations plus recursive fallback search.
+
+---
+
 ## v0.3.1
 
 **Release Date:** February 17, 2026  
