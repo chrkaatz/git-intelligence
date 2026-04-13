@@ -9,6 +9,34 @@ import {
 } from '../db.js';
 
 const router = Router();
+const ANALYZE_STEP_TIMEOUT_MS = 180000; // 3 minutes per step
+
+const runWithTimeout = async <T>(
+  fn: () => Promise<T>,
+  timeoutMs: number,
+  stepName: string
+): Promise<T> => {
+  let timeoutId: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      fn(),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error(`${stepName} timed out after ${Math.round(timeoutMs / 1000)}s`));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
+
+type AnalysisStepWithArgs<TArgs extends unknown[]> = {
+  name: string;
+  fn: (...args: TArgs) => Promise<unknown>;
+};
 
 router.get('/', async (req: Request, res: Response) => {
   try {
@@ -110,6 +138,8 @@ router.post('/:id/analyze-all', async (req: Request, res: Response) => {
       getCrossRepoSocialNetworkAnalysis,
       getCrossRepoRiskAnalytics,
       getCrossRepoTechnicalDebtIndicators,
+      getReadinessDiagnostics,
+      getCrossRepoReadinessDiagnostics,
     } = await import('../git/index.js');
 
     // Create a job with project data
@@ -121,94 +151,110 @@ router.post('/:id/analyze-all', async (req: Request, res: Response) => {
 
     // Run analyses in the background
     (async () => {
-      // Wait for job to be ready
-      const waitForJob = () => {
-        return new Promise<void>((resolve) => {
-          const checkJob = () => {
-            const job = jobQueue.getJob(jobId);
-            if (job && job.status === 'running') {
-              resolve();
-            } else {
-              setTimeout(checkJob, 100);
+      try {
+        // Wait for job to be ready
+        const waitForJob = () => {
+          return new Promise<void>((resolve) => {
+            const checkJob = () => {
+              const job = jobQueue.getJob(jobId);
+              if (job && job.status === 'running') {
+                resolve();
+              } else {
+                setTimeout(checkJob, 100);
+              }
+            };
+            checkJob();
+          });
+        };
+
+        await waitForJob();
+
+        const repoSteps: AnalysisStepWithArgs<[string, boolean]>[] = [
+          { name: 'Statistics', fn: getStats },
+          { name: 'Developer Analytics', fn: getDeveloperAnalytics },
+          { name: 'Codebase Health', fn: getCodebaseHealth },
+          { name: 'Repository Evolution', fn: getRepositoryEvolution },
+          { name: 'Bus Factor & Ownership', fn: getBusFactorAndOwnership },
+          { name: 'Social Network Analysis', fn: getSocialNetworkAnalysis },
+          { name: 'Risk Analytics', fn: getRiskAnalytics },
+          { name: 'Readiness diagnostics', fn: getReadinessDiagnostics },
+        ];
+
+        const crossRepoSteps: AnalysisStepWithArgs<[string, boolean]>[] = [
+          { name: 'Cross-Repo Developer Analytics', fn: getCrossRepoDeveloperAnalytics },
+          { name: 'Cross-Repo Codebase Health', fn: getCrossRepoCodebaseHealth },
+          { name: 'Cross-Repo Repository Evolution', fn: getCrossRepoRepositoryEvolution },
+          { name: 'Cross-Repo Bus Factor & Ownership', fn: getCrossRepoBusFactorAndOwnership },
+          { name: 'Cross-Repo Social Network Analysis', fn: getCrossRepoSocialNetworkAnalysis },
+          { name: 'Cross-Repo Risk Analytics', fn: getCrossRepoRiskAnalytics },
+          { name: 'Cross-Repo Technical Debt', fn: getCrossRepoTechnicalDebtIndicators },
+          { name: 'Cross-Repo Readiness diagnostics', fn: getCrossRepoReadinessDiagnostics },
+        ];
+
+        const totalSteps = repositories.length * repoSteps.length + crossRepoSteps.length;
+        let completedSteps = 0;
+
+        // 1. Analyze each repository
+        for (let r = 0; r < repositories.length; r++) {
+          const repo = repositories[r];
+          for (let s = 0; s < repoSteps.length; s++) {
+            const step = repoSteps[s];
+            const progress = Math.round((completedSteps / totalSteps) * 100);
+            jobQueue.updateProgress(
+              jobId,
+              progress,
+              `Analyzing ${repo.name} (${r + 1}/${repositories.length}): ${step.name}...`
+            );
+
+            try {
+              await runWithTimeout(
+                () => step.fn(repo.path, true),
+                ANALYZE_STEP_TIMEOUT_MS,
+                `${step.name} (${repo.name})`
+              );
+            } catch (error: any) {
+              console.error(
+                `[Analyze All Project] ${step.name} failed for ${repo.name}:`,
+                error.message
+              );
             }
-          };
-          checkJob();
-        });
-      };
+            completedSteps++;
+          }
+        }
 
-      await waitForJob();
-
-      const repoSteps = [
-        { name: 'Statistics', fn: getStats },
-        { name: 'Developer Analytics', fn: getDeveloperAnalytics },
-        { name: 'Codebase Health', fn: getCodebaseHealth },
-        { name: 'Repository Evolution', fn: getRepositoryEvolution },
-        { name: 'Bus Factor & Ownership', fn: getBusFactorAndOwnership },
-        { name: 'Social Network Analysis', fn: getSocialNetworkAnalysis },
-        { name: 'Risk Analytics', fn: getRiskAnalytics },
-      ];
-
-      const crossRepoSteps = [
-        { name: 'Cross-Repo Developer Analytics', fn: getCrossRepoDeveloperAnalytics },
-        { name: 'Cross-Repo Codebase Health', fn: getCrossRepoCodebaseHealth },
-        { name: 'Cross-Repo Repository Evolution', fn: getCrossRepoRepositoryEvolution },
-        { name: 'Cross-Repo Bus Factor & Ownership', fn: getCrossRepoBusFactorAndOwnership },
-        { name: 'Cross-Repo Social Network Analysis', fn: getCrossRepoSocialNetworkAnalysis },
-        { name: 'Cross-Repo Risk Analytics', fn: getCrossRepoRiskAnalytics },
-        { name: 'Cross-Repo Technical Debt', fn: getCrossRepoTechnicalDebtIndicators },
-      ];
-
-      const totalSteps = repositories.length * repoSteps.length + crossRepoSteps.length;
-      let completedSteps = 0;
-
-      // 1. Analyze each repository
-      for (let r = 0; r < repositories.length; r++) {
-        const repo = repositories[r];
-        for (let s = 0; s < repoSteps.length; s++) {
-          const step = repoSteps[s];
+        // 2. Run cross-repo analyses
+        for (let s = 0; s < crossRepoSteps.length; s++) {
+          const step = crossRepoSteps[s];
           const progress = Math.round((completedSteps / totalSteps) * 100);
-          jobQueue.updateProgress(
-            jobId,
-            progress,
-            `Analyzing ${repo.name} (${r + 1}/${repositories.length}): ${step.name}...`
-          );
+          jobQueue.updateProgress(jobId, progress, `Running ${step.name}...`);
 
           try {
-            await step.fn(repo.path, true); // Use refresh: true
+            await runWithTimeout(
+              () => step.fn(project.id, true),
+              ANALYZE_STEP_TIMEOUT_MS,
+              `${step.name} (${project.name})`
+            );
           } catch (error: any) {
             console.error(
-              `[Analyze All Project] ${step.name} failed for ${repo.name}:`,
+              `[Analyze All Project] ${step.name} failed for ${project.name}:`,
               error.message
             );
           }
           completedSteps++;
         }
+
+        jobQueue.completeJob(jobId, {
+          project: { id: project.id, name: project.name },
+          repoCount: repositories.length,
+          completedSteps,
+          totalSteps,
+        });
+      } catch (error: any) {
+        console.error(`[Analyze All Project] Job ${jobId} failed:`, error.message);
+        jobQueue.failJob(jobId, error.message || 'Analyze all project job failed');
+      } finally {
+        jobQueue.jobFinished();
       }
-
-      // 2. Run cross-repo analyses
-      for (let s = 0; s < crossRepoSteps.length; s++) {
-        const step = crossRepoSteps[s];
-        const progress = Math.round((completedSteps / totalSteps) * 100);
-        jobQueue.updateProgress(jobId, progress, `Running ${step.name}...`);
-
-        try {
-          await step.fn(project.id, true); // Use refresh: true
-        } catch (error: any) {
-          console.error(
-            `[Analyze All Project] ${step.name} failed for ${project.name}:`,
-            error.message
-          );
-        }
-        completedSteps++;
-      }
-
-      jobQueue.completeJob(jobId, {
-        project: { id: project.id, name: project.name },
-        repoCount: repositories.length,
-        completedSteps,
-        totalSteps,
-      });
-      jobQueue.jobFinished();
     })();
 
     res.json({ jobId, status: 'pending', projectName: project.name });

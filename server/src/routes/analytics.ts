@@ -15,6 +15,8 @@ import {
   getCrossRepoRiskAnalytics,
   getTechnicalDebtIndicators,
   getCrossRepoTechnicalDebtIndicators,
+  getReadinessDiagnostics,
+  getCrossRepoReadinessDiagnostics,
 } from '../git/index.js';
 import {
   getRepository,
@@ -401,6 +403,46 @@ router.get('/cross-repo-technical-debt-indicators', async (req: Request, res: Re
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to get cross-repo technical debt indicators' });
+  }
+});
+
+router.get('/readiness-diagnostics', async (req: Request, res: Response) => {
+  const { repoId, refresh, ai } = req.query;
+  if (!repoId || typeof repoId !== 'string') {
+    return res.status(400).json({ error: 'Repository ID is required' });
+  }
+  try {
+    const repoPath = await resolveRepositoryPath(repoId);
+    const useCache = refresh !== 'true';
+    const includeAIInsights = ai === 'true' ? true : undefined;
+    const diagnostics = await getReadinessDiagnostics(repoPath, useCache, includeAIInsights);
+    res.json(diagnostics);
+  } catch (error: any) {
+    console.error(error);
+    if (error.message === 'Repository not found') {
+      return res.status(404).json({ error: 'Repository not found' });
+    }
+    res.status(500).json({ error: 'Failed to get readiness diagnostics' });
+  }
+});
+
+router.get('/cross-repo-readiness-diagnostics', async (req: Request, res: Response) => {
+  const { projectId, refresh, ai } = req.query;
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+  try {
+    const useCache = refresh !== 'true';
+    const includeAIInsights = ai === 'true' ? true : undefined;
+    const diagnostics = await getCrossRepoReadinessDiagnostics(
+      projectId,
+      useCache,
+      includeAIInsights
+    );
+    res.json(diagnostics);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get cross-repo readiness diagnostics' });
   }
 });
 

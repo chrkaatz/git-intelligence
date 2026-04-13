@@ -19,6 +19,7 @@ import {
   ShieldExclamationIcon,
   WrenchScrewdriverIcon,
   Cog6ToothIcon,
+  ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
@@ -64,6 +65,12 @@ const navigation = [
     to: '/technical-debt-indicators',
     icon: WrenchScrewdriverIcon,
     id: 'technical-debt-indicators',
+  },
+  {
+    name: 'Readiness diagnostics',
+    to: '/readiness-diagnostics',
+    icon: ClipboardDocumentListIcon,
+    id: 'readiness-diagnostics',
   },
   {
     name: 'Projects',
@@ -129,7 +136,9 @@ export default function Layout({ children, sidebar }: LayoutProps) {
               ? '/risk-analytics'
               : currentPath.startsWith('/cross-repo-technical-debt-indicators')
                 ? '/technical-debt-indicators'
-                : currentPath;
+                : currentPath.startsWith('/cross-repo-readiness-diagnostics')
+                  ? '/readiness-diagnostics'
+                  : currentPath;
   const currentView =
     navigation.find((item) => normalizedPath.startsWith(item.to))?.id || 'dashboard';
 

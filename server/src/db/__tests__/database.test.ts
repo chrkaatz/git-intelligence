@@ -3,7 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import { Low } from 'lowdb';
 import { Memory } from 'lowdb';
-import { getDb, resetDb, migrateToSchemaV2, migrateToSchemaV5, defaultData } from '../database';
+import {
+  getDb,
+  resetDb,
+  migrateToSchemaV2,
+  migrateToSchemaV5,
+  migrateToSchemaV6,
+  defaultData,
+} from '../database';
 import type { DatabaseSchema } from '../types';
 
 // Mock fs module
@@ -259,6 +266,38 @@ describe('database', () => {
 
       expect(db.data.schemaVersion).toBe(5);
       expect(db.data.ollamaSettings).toEqual(existingSettings);
+    });
+  });
+
+  describe('migrateToSchemaV6', () => {
+    it('should initialize readiness diagnostics cache', async () => {
+      const MemoryAdapter = Memory;
+      const adapter = new MemoryAdapter<DatabaseSchema>();
+      const db = new Low(adapter, {
+        projects: [],
+        repositories: [],
+        analysisCache: {},
+        codebaseHealthCache: {},
+        technicalDebtCache: {},
+        developerAnalyticsCache: {},
+        riskAnalyticsCache: {},
+        busFactorCache: {},
+        repositoryEvolutionCache: {},
+        socialNetworkAnalysisCache: {},
+        ollamaSettings: {
+          enabled: false,
+          host: 'localhost',
+          port: 11434,
+          model: 'llama3',
+          timeout: 120000,
+        },
+        schemaVersion: 5,
+      });
+
+      await migrateToSchemaV6(db);
+
+      expect(db.data.schemaVersion).toBe(6);
+      expect(db.data.readinessDiagnosticsCache).toEqual({});
     });
   });
 

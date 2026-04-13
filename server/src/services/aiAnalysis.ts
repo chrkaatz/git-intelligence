@@ -23,7 +23,9 @@ export type AnalysisType =
   | 'technical-debt'
   | 'risk-assessment'
   | 'risk-analytics'
-  | 'technical-debt-indicators';
+  | 'technical-debt-indicators'
+  | 'readiness-diagnostics'
+  | 'cross-repo-readiness-diagnostics';
 
 /**
  * Generate AI insights for a specific analysis type
@@ -108,6 +110,49 @@ Format your response as clear, structured text with bullet points where appropri
 
     case 'technical-debt-indicators':
       return buildTechnicalDebtIndicatorsPrompt(data as TechnicalDebtIndicators);
+
+    case 'readiness-diagnostics':
+      return buildReadinessDiagnosticsPrompt(
+        data as {
+          topChurnFiles: Array<{ path: string; touches: number; rank: number }>;
+          bugFixTouchFiles: Array<{ path: string; touches: number; rank: number }>;
+          highRiskOverlap: string[];
+          contributorsAllTime: Array<{ name: string; commits: number; rank: number }>;
+          contributorsRecent: Array<{ name: string; commits: number; rank: number }>;
+          dominantContributorSharePercent: number;
+          topContributorInactiveRecently: boolean;
+          commitsByMonth: Array<{ month: string; count: number }>;
+          firefightingCommits: Array<{ hash: string; date: string; subject: string }>;
+          caveats: string[];
+          windows: {
+            churnSince: string;
+            recentContributorsSince: string;
+            firefightingSince: string;
+          };
+        }
+      );
+
+    case 'cross-repo-readiness-diagnostics':
+      return buildCrossRepoReadinessDiagnosticsPrompt(
+        data as {
+          totalRepos: number;
+          repoNames: string[];
+          aggregatedCommitsByMonth: Array<{ month: string; count: number }>;
+          aggregatedContributors: Array<{ name: string; commits: number; rank: number }>;
+          repositories: Array<{
+            repoName: string;
+            diagnostics: {
+              highRiskOverlap: string[];
+              topChurnFiles: Array<{ path: string; touches: number; rank: number }>;
+              bugFixTouchFiles: Array<{ path: string; touches: number; rank: number }>;
+              dominantContributorSharePercent: number;
+              topContributorInactiveRecently: boolean;
+              firefightingCommits: Array<{ hash: string; date: string; subject: string }>;
+              caveats: string[];
+            };
+          }>;
+        }
+      );
 
     default:
       return basePrompt;
@@ -601,4 +646,191 @@ Please provide:
 5. **Refactoring Roadmap**: Suggested order for addressing different types of debt
 
 Focus on providing a clear, prioritized plan for reducing technical debt.`;
+}
+
+function buildReadinessDiagnosticsPrompt(data: {
+  topChurnFiles: Array<{ path: string; touches: number; rank: number }>;
+  bugFixTouchFiles: Array<{ path: string; touches: number; rank: number }>;
+  highRiskOverlap: string[];
+  contributorsAllTime: Array<{ name: string; commits: number; rank: number }>;
+  contributorsRecent: Array<{ name: string; commits: number; rank: number }>;
+  dominantContributorSharePercent: number;
+  topContributorInactiveRecently: boolean;
+  commitsByMonth: Array<{ month: string; count: number }>;
+  firefightingCommits: Array<{ hash: string; date: string; subject: string }>;
+  caveats: string[];
+  windows: {
+    churnSince: string;
+    recentContributorsSince: string;
+    firefightingSince: string;
+  };
+}): string {
+  const topChurn = data.topChurnFiles.slice(0, 12);
+  const topBugTouch = data.bugFixTouchFiles.slice(0, 12);
+  const overlap = data.highRiskOverlap.slice(0, 12);
+  const contributorsAll = data.contributorsAllTime.slice(0, 12);
+  const contributorsRecent = data.contributorsRecent.slice(0, 12);
+  const recentMonths = data.commitsByMonth.slice(-18);
+  const firefighting = data.firefightingCommits.slice(0, 30);
+
+  return `You are a senior software engineering auditor. Analyze readiness diagnostics derived from Git history and produce practical, decision-grade conclusions for engineering leads.
+
+Core principle:
+These diagnostics are pre-code-reading triage signals. Prioritize where to inspect first and what to do next. Do not overstate certainty.
+
+READINESS DIAGNOSTICS DATA
+
+WINDOWS:
+- Churn window: ${data.windows.churnSince}
+- Recent contributor window: ${data.windows.recentContributorsSince}
+- Firefighting window: ${data.windows.firefightingSince}
+
+TOP CHURN FILES:
+${topChurn.map((p) => `- #${p.rank} ${p.path}: ${p.touches} touches`).join('\n')}
+
+BUG-STYLE TOUCH FILES (fix|bug|broken):
+${topBugTouch.map((p) => `- #${p.rank} ${p.path}: ${p.touches} touches`).join('\n')}
+
+HIGH-RISK OVERLAP (churn ∩ bug-touch):
+${overlap.length > 0 ? overlap.map((p) => `- ${p}`).join('\n') : '- none'}
+
+CONTRIBUTORS (ALL-TIME):
+${contributorsAll.map((c) => `- #${c.rank} ${c.name}: ${c.commits} commits`).join('\n')}
+
+CONTRIBUTORS (RECENT):
+${contributorsRecent.map((c) => `- #${c.rank} ${c.name}: ${c.commits} commits`).join('\n')}
+
+OWNERSHIP SIGNALS:
+- Dominant contributor share: ${data.dominantContributorSharePercent}%
+- Top contributor inactive recently: ${data.topContributorInactiveRecently ? 'yes' : 'no'}
+
+COMMITS BY MONTH (RECENT SERIES):
+${recentMonths.map((m) => `- ${m.month}: ${m.count}`).join('\n')}
+
+FIREFIGHTING COMMITS:
+${firefighting.length > 0 ? firefighting.map((c) => `- ${c.date} ${c.hash.substring(0, 8)} ${c.subject}`).join('\n') : '- none'}
+
+CAVEATS:
+${data.caveats.map((c) => `- ${c}`).join('\n')}
+
+Interpretation rules:
+1) Prioritize intersections over single signals; highest risk is churn+bug overlap.
+2) High churn alone can be normal activity; avoid labeling it as inherently bad.
+3) High dominant share plus recent inactivity implies bus-factor continuity risk.
+4) Commit-rhythm trends are signals, not causal proof.
+5) Zero firefighting can indicate either stability or weak message discipline.
+
+Output format (strict):
+## Executive assessment
+- 3-5 bullets and an overall readiness rating: Low / Moderate / High risk.
+
+## Highest-priority code areas
+- Top 3-7 paths ordered by urgency.
+- For each: why risky (which signals) and what to inspect first.
+
+## Team and ownership risks
+- Bus-factor and maintainer continuity observations.
+
+## Delivery/process risks
+- Firefighting and commit-rhythm implications.
+
+## 30-day action plan
+- 5-8 concrete actions labeled P0 / P1 / P2.
+- Actions must be specific, operational, and outcome-oriented.
+
+## Confidence and caveats
+- Explicit uncertainty and data limitations from caveats.
+
+Style constraints:
+- Be concise and specific.
+- Reference exact path names from the data.
+- Avoid generic advice not tied to evidence.`;
+}
+
+function buildCrossRepoReadinessDiagnosticsPrompt(data: {
+  totalRepos: number;
+  repoNames: string[];
+  aggregatedCommitsByMonth: Array<{ month: string; count: number }>;
+  aggregatedContributors: Array<{ name: string; commits: number; rank: number }>;
+  repositories: Array<{
+    repoName: string;
+    diagnostics: {
+      highRiskOverlap: string[];
+      topChurnFiles: Array<{ path: string; touches: number; rank: number }>;
+      bugFixTouchFiles: Array<{ path: string; touches: number; rank: number }>;
+      dominantContributorSharePercent: number;
+      topContributorInactiveRecently: boolean;
+      firefightingCommits: Array<{ hash: string; date: string; subject: string }>;
+      caveats: string[];
+    };
+  }>;
+}): string {
+  const topContributors = data.aggregatedContributors.slice(0, 20);
+  const recentMonths = data.aggregatedCommitsByMonth.slice(-24);
+  const repoSummaries = data.repositories.slice(0, 20);
+
+  return `You are a senior software engineering portfolio auditor. Analyze cross-repository readiness diagnostics and deliver one overarching conclusion using project-level and child-repository signals.
+
+Goal:
+Synthesize child diagnostics into portfolio-level risk and action priorities for engineering leadership.
+
+CROSS-REPO DATA
+- Total repositories: ${data.totalRepos}
+- Repositories: ${data.repoNames.join(', ')}
+
+AGGREGATED COMMITS BY MONTH:
+${recentMonths.map((m) => `- ${m.month}: ${m.count}`).join('\n')}
+
+AGGREGATED CONTRIBUTORS:
+${topContributors.map((c) => `- #${c.rank} ${c.name}: ${c.commits} commits`).join('\n')}
+
+CHILD REPOSITORY SIGNALS:
+${repoSummaries
+  .map((r) => {
+    const overlap = r.diagnostics.highRiskOverlap.slice(0, 5);
+    const topChurn = r.diagnostics.topChurnFiles
+      .slice(0, 3)
+      .map((p) => `${p.path} (${p.touches})`)
+      .join(', ');
+    const topBug = r.diagnostics.bugFixTouchFiles
+      .slice(0, 3)
+      .map((p) => `${p.path} (${p.touches})`)
+      .join(', ');
+    return `- ${r.repoName}
+  - overlap paths: ${overlap.length ? overlap.join(', ') : 'none'}
+  - top churn: ${topChurn || 'none'}
+  - top bug-touch: ${topBug || 'none'}
+  - dominant contributor share: ${r.diagnostics.dominantContributorSharePercent}%
+  - top contributor inactive recently: ${r.diagnostics.topContributorInactiveRecently ? 'yes' : 'no'}
+  - firefighting commits: ${r.diagnostics.firefightingCommits.length}
+  - caveats: ${r.diagnostics.caveats.join(' | ')}`;
+  })
+  .join('\n')}
+
+Interpretation priorities:
+1) Identify systemic risks across repos (repeated overlap, repeated firefighting, repeated ownership fragility).
+2) Identify outlier repos that need immediate intervention.
+3) Separate portfolio-level process risks from repo-specific code risks.
+4) Keep uncertainty explicit where commit message quality or merge strategy may bias signals.
+
+Output format (strict):
+## Portfolio readiness rating
+- Low / Moderate / High with brief justification.
+
+## Cross-repo risk patterns
+- 4-7 bullets on recurring patterns across repositories.
+
+## Critical repository outliers
+- Top 3-5 repos with why they are outliers and what to validate first.
+
+## Execution plan (30 days)
+- 6-10 actions with P0/P1/P2 labels.
+- Include both portfolio-wide actions and repo-specific actions.
+
+## Confidence and caveats
+- Explicit uncertainty and data caveats.
+
+Style:
+- concise, decision-grade, evidence-linked.
+- no generic advice without tying to observed signals.`;
 }

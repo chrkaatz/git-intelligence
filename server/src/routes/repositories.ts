@@ -11,6 +11,29 @@ import { clearCache } from '../db/cache.js';
 import fs from 'fs';
 
 const router = Router();
+const ANALYZE_STEP_TIMEOUT_MS = 180000; // 3 minutes per step
+
+const runWithTimeout = async <T>(
+  fn: () => Promise<T>,
+  timeoutMs: number,
+  stepName: string
+): Promise<T> => {
+  let timeoutId: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      fn(),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error(`${stepName} timed out after ${Math.round(timeoutMs / 1000)}s`));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
 
 router.get('/', async (req: Request, res: Response) => {
   try {
@@ -220,6 +243,8 @@ router.post('/:id/analyze-all', async (req: Request, res: Response) => {
       getCrossRepoSocialNetworkAnalysis,
       getCrossRepoRiskAnalytics,
       getCrossRepoTechnicalDebtIndicators,
+      getReadinessDiagnostics,
+      getCrossRepoReadinessDiagnostics,
     } = await import('../git/index.js');
 
     const repoPath = repository.path;
@@ -232,99 +257,117 @@ router.post('/:id/analyze-all', async (req: Request, res: Response) => {
 
     // Run analyses in the background
     (async () => {
-      // Wait for job to be ready (queue will start it when capacity is available)
-      const waitForJob = () => {
-        return new Promise<void>((resolve) => {
-          const checkJob = () => {
-            const job = jobQueue.getJob(jobId);
-            if (job && job.status === 'running') {
-              resolve();
-            } else {
-              setTimeout(checkJob, 100);
+      try {
+        // Wait for job to be ready (queue will start it when capacity is available)
+        const waitForJob = () => {
+          return new Promise<void>((resolve) => {
+            const checkJob = () => {
+              const job = jobQueue.getJob(jobId);
+              if (job && job.status === 'running') {
+                resolve();
+              } else {
+                setTimeout(checkJob, 100);
+              }
+            };
+            checkJob();
+          });
+        };
+
+        await waitForJob();
+
+        const analysisSteps = [
+          { name: 'Statistics', fn: () => getStats(repoPath, true) },
+          { name: 'Developer Analytics', fn: () => getDeveloperAnalytics(repoPath, true) },
+          { name: 'Codebase Health', fn: () => getCodebaseHealth(repoPath, true) },
+          { name: 'Repository Evolution', fn: () => getRepositoryEvolution(repoPath, true) },
+          { name: 'Bus Factor & Ownership', fn: () => getBusFactorAndOwnership(repoPath, true) },
+          { name: 'Social Network Analysis', fn: () => getSocialNetworkAnalysis(repoPath, true) },
+          { name: 'Risk Analytics', fn: () => getRiskAnalytics(repoPath, true) },
+          { name: 'Readiness diagnostics', fn: () => getReadinessDiagnostics(repoPath, true) },
+        ];
+
+        // If this repo is part of a project, also add cross-repo steps
+        if (repository.projectId) {
+          const projectId = repository.projectId;
+          analysisSteps.push(
+            {
+              name: 'Cross-Repo Developer Analytics',
+              fn: () => getCrossRepoDeveloperAnalytics(projectId, true),
+            },
+            {
+              name: 'Cross-Repo Codebase Health',
+              fn: () => getCrossRepoCodebaseHealth(projectId, true),
+            },
+            {
+              name: 'Cross-Repo Repository Evolution',
+              fn: () => getCrossRepoRepositoryEvolution(projectId, true),
+            },
+            {
+              name: 'Cross-Repo Bus Factor & Ownership',
+              fn: () => getCrossRepoBusFactorAndOwnership(projectId, true),
+            },
+            {
+              name: 'Cross-Repo Social Network Analysis',
+              fn: () => getCrossRepoSocialNetworkAnalysis(projectId, true),
+            },
+            {
+              name: 'Cross-Repo Risk Analytics',
+              fn: () => getCrossRepoRiskAnalytics(projectId, true),
+            },
+            {
+              name: 'Cross-Repo Technical Debt',
+              fn: () => getCrossRepoTechnicalDebtIndicators(projectId, true),
+            },
+            {
+              name: 'Cross-Repo Readiness diagnostics',
+              fn: () => getCrossRepoReadinessDiagnostics(projectId, true),
             }
-          };
-          checkJob();
-        });
-      };
-
-      await waitForJob();
-
-      const analysisSteps = [
-        { name: 'Statistics', fn: () => getStats(repoPath, true) },
-        { name: 'Developer Analytics', fn: () => getDeveloperAnalytics(repoPath, true) },
-        { name: 'Codebase Health', fn: () => getCodebaseHealth(repoPath, true) },
-        { name: 'Repository Evolution', fn: () => getRepositoryEvolution(repoPath, true) },
-        { name: 'Bus Factor & Ownership', fn: () => getBusFactorAndOwnership(repoPath, true) },
-        { name: 'Social Network Analysis', fn: () => getSocialNetworkAnalysis(repoPath, true) },
-        { name: 'Risk Analytics', fn: () => getRiskAnalytics(repoPath, true) },
-      ];
-
-      // If this repo is part of a project, also add cross-repo steps
-      if (repository.projectId) {
-        const projectId = repository.projectId;
-        analysisSteps.push(
-          {
-            name: 'Cross-Repo Developer Analytics',
-            fn: () => getCrossRepoDeveloperAnalytics(projectId, true),
-          },
-          {
-            name: 'Cross-Repo Codebase Health',
-            fn: () => getCrossRepoCodebaseHealth(projectId, true),
-          },
-          {
-            name: 'Cross-Repo Repository Evolution',
-            fn: () => getCrossRepoRepositoryEvolution(projectId, true),
-          },
-          {
-            name: 'Cross-Repo Bus Factor & Ownership',
-            fn: () => getCrossRepoBusFactorAndOwnership(projectId, true),
-          },
-          {
-            name: 'Cross-Repo Social Network Analysis',
-            fn: () => getCrossRepoSocialNetworkAnalysis(projectId, true),
-          },
-          {
-            name: 'Cross-Repo Risk Analytics',
-            fn: () => getCrossRepoRiskAnalytics(projectId, true),
-          },
-          {
-            name: 'Cross-Repo Technical Debt',
-            fn: () => getCrossRepoTechnicalDebtIndicators(projectId, true),
-          }
-        );
-      }
-
-      const results: Record<string, any> = {};
-      const errors: Record<string, string> = {};
-      let completedCount = 0;
-      let failedCount = 0;
-
-      for (let i = 0; i < analysisSteps.length; i++) {
-        const step = analysisSteps[i];
-        const progress = Math.round((i / analysisSteps.length) * 100);
-        jobQueue.updateProgress(jobId, progress, `Running ${step.name}...`);
-
-        try {
-          results[step.name] = await step.fn();
-          completedCount++;
-        } catch (error: any) {
-          console.error(`[Analyze All] ${step.name} failed for ${repository.name}:`, error.message);
-          errors[step.name] = error.message || 'Analysis failed';
-          failedCount++;
+          );
         }
+
+        const results: Record<string, any> = {};
+        const errors: Record<string, string> = {};
+        let completedCount = 0;
+        let failedCount = 0;
+
+        for (let i = 0; i < analysisSteps.length; i++) {
+          const step = analysisSteps[i];
+          const progress = Math.round((i / analysisSteps.length) * 100);
+          jobQueue.updateProgress(jobId, progress, `Running ${step.name}...`);
+
+          try {
+            results[step.name] = await runWithTimeout(
+              () => step.fn(),
+              ANALYZE_STEP_TIMEOUT_MS,
+              `${step.name} (${repository.name})`
+            );
+            completedCount++;
+          } catch (error: any) {
+            console.error(
+              `[Analyze All] ${step.name} failed for ${repository.name}:`,
+              error.message
+            );
+            errors[step.name] = error.message || 'Analysis failed';
+            failedCount++;
+          }
+        }
+
+        const summary = {
+          repository: { id: repository.id, name: repository.name, path: repoPath },
+          completedCount,
+          failedCount,
+          totalCount: analysisSteps.length,
+          completed: Object.keys(results),
+          failed: errors,
+        };
+
+        jobQueue.completeJob(jobId, summary);
+      } catch (error: any) {
+        console.error(`[Analyze All] Job ${jobId} failed for ${repository.name}:`, error.message);
+        jobQueue.failJob(jobId, error.message || 'Analyze all repository job failed');
+      } finally {
+        jobQueue.jobFinished(); // Process next job in queue
       }
-
-      const summary = {
-        repository: { id: repository.id, name: repository.name, path: repoPath },
-        completedCount,
-        failedCount,
-        totalCount: analysisSteps.length,
-        completed: Object.keys(results),
-        failed: errors,
-      };
-
-      jobQueue.completeJob(jobId, summary);
-      jobQueue.jobFinished(); // Process next job in queue
     })();
 
     res.json({ jobId, status: 'pending', repoName: repository.name });

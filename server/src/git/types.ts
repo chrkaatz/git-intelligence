@@ -654,6 +654,61 @@ export interface TechnicalDebtIndicators {
   aiInsights?: string;
 }
 
+/** Paths ranked by how often they appear in name-only commit history (see readiness diagnostics). */
+export interface ReadinessRankedPath {
+  path: string;
+  touches: number;
+  rank: number;
+}
+
+export interface ReadinessContributor {
+  name: string;
+  commits: number;
+  rank: number;
+}
+
+export interface ReadinessFirefightingCommit {
+  hash: string;
+  date: string;
+  subject: string;
+}
+
+/** Git-history signals inspired by common “before reading code” diagnostics (churn, authorship, bugs, rhythm). */
+export interface ReadinessDiagnostics {
+  generatedAt: string;
+  windows: {
+    churnSince: string;
+    firefightingSince: string;
+    recentContributorsSince: string;
+  };
+  topChurnFiles: ReadinessRankedPath[];
+  bugFixTouchFiles: ReadinessRankedPath[];
+  /** Paths that appear among top churn and top bug-touch lists. */
+  highRiskOverlap: string[];
+  contributorsAllTime: ReadinessContributor[];
+  contributorsRecent: ReadinessContributor[];
+  dominantContributorSharePercent: number;
+  /** True when the top all-time contributor has no commits in the recent window. */
+  topContributorInactiveRecently: boolean;
+  commitsByMonth: { month: string; count: number }[];
+  firefightingCommits: ReadinessFirefightingCommit[];
+  caveats: string[];
+  aiInsights?: string;
+}
+
+export interface CrossRepoReadinessDiagnostics {
+  repositories: {
+    repoName: string;
+    repoPath: string;
+    diagnostics: ReadinessDiagnostics;
+  }[];
+  totalRepos: number;
+  repoNames: string[];
+  aggregatedCommitsByMonth: { month: string; count: number }[];
+  aggregatedContributors: ReadinessContributor[];
+  aiInsights?: string;
+}
+
 export interface CrossRepoTechnicalDebtIndicators {
   repositories: {
     repoName: string;

@@ -8,3 +8,4 @@ export * from './busFactor.js';
 export * from './socialNetwork.js';
 export * from './riskAnalytics.js';
 export * from './technicalDebt.js';
+export * from './readinessDiagnostics.js';

@@ -477,6 +477,57 @@ export interface CrossRepoRepositoryEvolution {
   repoNames: string[];
 }
 
+export interface ReadinessRankedPath {
+  path: string;
+  touches: number;
+  rank: number;
+}
+
+export interface ReadinessContributor {
+  name: string;
+  commits: number;
+  rank: number;
+}
+
+export interface ReadinessFirefightingCommit {
+  hash: string;
+  date: string;
+  subject: string;
+}
+
+export interface ReadinessDiagnostics {
+  generatedAt: string;
+  windows: {
+    churnSince: string;
+    firefightingSince: string;
+    recentContributorsSince: string;
+  };
+  topChurnFiles: ReadinessRankedPath[];
+  bugFixTouchFiles: ReadinessRankedPath[];
+  highRiskOverlap: string[];
+  contributorsAllTime: ReadinessContributor[];
+  contributorsRecent: ReadinessContributor[];
+  dominantContributorSharePercent: number;
+  topContributorInactiveRecently: boolean;
+  commitsByMonth: { month: string; count: number }[];
+  firefightingCommits: ReadinessFirefightingCommit[];
+  caveats: string[];
+  aiInsights?: string;
+}
+
+export interface CrossRepoReadinessDiagnostics {
+  repositories: {
+    repoName: string;
+    repoPath: string;
+    diagnostics: ReadinessDiagnostics;
+  }[];
+  totalRepos: number;
+  repoNames: string[];
+  aggregatedCommitsByMonth: { month: string; count: number }[];
+  aggregatedContributors: ReadinessContributor[];
+  aiInsights?: string;
+}
+
 export const getRepositoryEvolution = async (
   repoId: string,
   refresh?: boolean,
@@ -498,6 +549,36 @@ export const getCrossRepoRepositoryEvolution = async (
 ): Promise<CrossRepoRepositoryEvolution> => {
   const response = await api.get('/cross-repo-repository-evolution', {
     params: { projectId, refresh: refresh ? 'true' : undefined },
+  });
+  return response.data;
+};
+
+export const getReadinessDiagnostics = async (
+  repoId: string,
+  refresh?: boolean,
+  includeAIInsights?: boolean
+): Promise<ReadinessDiagnostics> => {
+  const response = await api.get('/readiness-diagnostics', {
+    params: {
+      repoId,
+      refresh: refresh ? 'true' : undefined,
+      ai: includeAIInsights ? 'true' : undefined,
+    },
+  });
+  return response.data;
+};
+
+export const getCrossRepoReadinessDiagnostics = async (
+  projectId: string,
+  refresh?: boolean,
+  includeAIInsights?: boolean
+): Promise<CrossRepoReadinessDiagnostics> => {
+  const response = await api.get('/cross-repo-readiness-diagnostics', {
+    params: {
+      projectId,
+      refresh: refresh ? 'true' : undefined,
+      ai: includeAIInsights ? 'true' : undefined,
+    },
   });
   return response.data;
 };

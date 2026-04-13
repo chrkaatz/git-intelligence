@@ -14,6 +14,7 @@ import { Route as SocialNetworkAnalysisRouteImport } from './routes/social-netwo
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RiskAnalyticsRouteImport } from './routes/risk-analytics'
 import { Route as RepositoryEvolutionRouteImport } from './routes/repository-evolution'
+import { Route as ReadinessDiagnosticsRouteImport } from './routes/readiness-diagnostics'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as DeveloperAnalyticsRouteImport } from './routes/developer-analytics'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -24,12 +25,14 @@ import { Route as TechnicalDebtIndicatorsRepoIdRouteImport } from './routes/tech
 import { Route as SocialNetworkAnalysisRepoIdRouteImport } from './routes/social-network-analysis.$repoId'
 import { Route as RiskAnalyticsRepoIdRouteImport } from './routes/risk-analytics.$repoId'
 import { Route as RepositoryEvolutionRepoIdRouteImport } from './routes/repository-evolution.$repoId'
+import { Route as ReadinessDiagnosticsRepoIdRouteImport } from './routes/readiness-diagnostics.$repoId'
 import { Route as DeveloperAnalyticsRepoIdRouteImport } from './routes/developer-analytics.$repoId'
 import { Route as DashboardRepoIdRouteImport } from './routes/dashboard.$repoId'
 import { Route as CrossRepoTechnicalDebtIndicatorsProjectIdRouteImport } from './routes/cross-repo-technical-debt-indicators.$projectId'
 import { Route as CrossRepoSocialNetworkAnalysisProjectIdRouteImport } from './routes/cross-repo-social-network-analysis.$projectId'
 import { Route as CrossRepoRiskAnalyticsProjectIdRouteImport } from './routes/cross-repo-risk-analytics.$projectId'
 import { Route as CrossRepoRepositoryEvolutionProjectIdRouteImport } from './routes/cross-repo-repository-evolution.$projectId'
+import { Route as CrossRepoReadinessDiagnosticsProjectIdRouteImport } from './routes/cross-repo-readiness-diagnostics.$projectId'
 import { Route as CrossRepoCodebaseHealthProjectIdRouteImport } from './routes/cross-repo-codebase-health.$projectId'
 import { Route as CrossRepoBusFactorAndOwnershipProjectIdRouteImport } from './routes/cross-repo-bus-factor-and-ownership.$projectId'
 import { Route as CrossRepoAnalyticsProjectIdRouteImport } from './routes/cross-repo-analytics.$projectId'
@@ -59,6 +62,11 @@ const RiskAnalyticsRoute = RiskAnalyticsRouteImport.update({
 const RepositoryEvolutionRoute = RepositoryEvolutionRouteImport.update({
   id: '/repository-evolution',
   path: '/repository-evolution',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReadinessDiagnosticsRoute = ReadinessDiagnosticsRouteImport.update({
+  id: '/readiness-diagnostics',
+  path: '/readiness-diagnostics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsRoute = ProjectsRouteImport.update({
@@ -114,6 +122,12 @@ const RepositoryEvolutionRepoIdRoute =
     path: '/$repoId',
     getParentRoute: () => RepositoryEvolutionRoute,
   } as any)
+const ReadinessDiagnosticsRepoIdRoute =
+  ReadinessDiagnosticsRepoIdRouteImport.update({
+    id: '/$repoId',
+    path: '/$repoId',
+    getParentRoute: () => ReadinessDiagnosticsRoute,
+  } as any)
 const DeveloperAnalyticsRepoIdRoute =
   DeveloperAnalyticsRepoIdRouteImport.update({
     id: '/$repoId',
@@ -147,6 +161,12 @@ const CrossRepoRepositoryEvolutionProjectIdRoute =
   CrossRepoRepositoryEvolutionProjectIdRouteImport.update({
     id: '/cross-repo-repository-evolution/$projectId',
     path: '/cross-repo-repository-evolution/$projectId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CrossRepoReadinessDiagnosticsProjectIdRoute =
+  CrossRepoReadinessDiagnosticsProjectIdRouteImport.update({
+    id: '/cross-repo-readiness-diagnostics/$projectId',
+    path: '/cross-repo-readiness-diagnostics/$projectId',
     getParentRoute: () => rootRouteImport,
   } as any)
 const CrossRepoCodebaseHealthProjectIdRoute =
@@ -186,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/developer-analytics': typeof DeveloperAnalyticsRouteWithChildren
   '/projects': typeof ProjectsRoute
+  '/readiness-diagnostics': typeof ReadinessDiagnosticsRouteWithChildren
   '/repository-evolution': typeof RepositoryEvolutionRouteWithChildren
   '/risk-analytics': typeof RiskAnalyticsRouteWithChildren
   '/settings': typeof SettingsRoute
@@ -196,12 +217,14 @@ export interface FileRoutesByFullPath {
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
   '/cross-repo-bus-factor-and-ownership/$projectId': typeof CrossRepoBusFactorAndOwnershipProjectIdRoute
   '/cross-repo-codebase-health/$projectId': typeof CrossRepoCodebaseHealthProjectIdRoute
+  '/cross-repo-readiness-diagnostics/$projectId': typeof CrossRepoReadinessDiagnosticsProjectIdRoute
   '/cross-repo-repository-evolution/$projectId': typeof CrossRepoRepositoryEvolutionProjectIdRoute
   '/cross-repo-risk-analytics/$projectId': typeof CrossRepoRiskAnalyticsProjectIdRoute
   '/cross-repo-social-network-analysis/$projectId': typeof CrossRepoSocialNetworkAnalysisProjectIdRoute
   '/cross-repo-technical-debt-indicators/$projectId': typeof CrossRepoTechnicalDebtIndicatorsProjectIdRoute
   '/dashboard/$repoId': typeof DashboardRepoIdRoute
   '/developer-analytics/$repoId': typeof DeveloperAnalyticsRepoIdRoute
+  '/readiness-diagnostics/$repoId': typeof ReadinessDiagnosticsRepoIdRoute
   '/repository-evolution/$repoId': typeof RepositoryEvolutionRepoIdRoute
   '/risk-analytics/$repoId': typeof RiskAnalyticsRepoIdRoute
   '/social-network-analysis/$repoId': typeof SocialNetworkAnalysisRepoIdRoute
@@ -214,6 +237,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRouteWithChildren
   '/developer-analytics': typeof DeveloperAnalyticsRouteWithChildren
   '/projects': typeof ProjectsRoute
+  '/readiness-diagnostics': typeof ReadinessDiagnosticsRouteWithChildren
   '/repository-evolution': typeof RepositoryEvolutionRouteWithChildren
   '/risk-analytics': typeof RiskAnalyticsRouteWithChildren
   '/settings': typeof SettingsRoute
@@ -224,12 +248,14 @@ export interface FileRoutesByTo {
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
   '/cross-repo-bus-factor-and-ownership/$projectId': typeof CrossRepoBusFactorAndOwnershipProjectIdRoute
   '/cross-repo-codebase-health/$projectId': typeof CrossRepoCodebaseHealthProjectIdRoute
+  '/cross-repo-readiness-diagnostics/$projectId': typeof CrossRepoReadinessDiagnosticsProjectIdRoute
   '/cross-repo-repository-evolution/$projectId': typeof CrossRepoRepositoryEvolutionProjectIdRoute
   '/cross-repo-risk-analytics/$projectId': typeof CrossRepoRiskAnalyticsProjectIdRoute
   '/cross-repo-social-network-analysis/$projectId': typeof CrossRepoSocialNetworkAnalysisProjectIdRoute
   '/cross-repo-technical-debt-indicators/$projectId': typeof CrossRepoTechnicalDebtIndicatorsProjectIdRoute
   '/dashboard/$repoId': typeof DashboardRepoIdRoute
   '/developer-analytics/$repoId': typeof DeveloperAnalyticsRepoIdRoute
+  '/readiness-diagnostics/$repoId': typeof ReadinessDiagnosticsRepoIdRoute
   '/repository-evolution/$repoId': typeof RepositoryEvolutionRepoIdRoute
   '/risk-analytics/$repoId': typeof RiskAnalyticsRepoIdRoute
   '/social-network-analysis/$repoId': typeof SocialNetworkAnalysisRepoIdRoute
@@ -243,6 +269,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/developer-analytics': typeof DeveloperAnalyticsRouteWithChildren
   '/projects': typeof ProjectsRoute
+  '/readiness-diagnostics': typeof ReadinessDiagnosticsRouteWithChildren
   '/repository-evolution': typeof RepositoryEvolutionRouteWithChildren
   '/risk-analytics': typeof RiskAnalyticsRouteWithChildren
   '/settings': typeof SettingsRoute
@@ -253,12 +280,14 @@ export interface FileRoutesById {
   '/cross-repo-analytics/$projectId': typeof CrossRepoAnalyticsProjectIdRoute
   '/cross-repo-bus-factor-and-ownership/$projectId': typeof CrossRepoBusFactorAndOwnershipProjectIdRoute
   '/cross-repo-codebase-health/$projectId': typeof CrossRepoCodebaseHealthProjectIdRoute
+  '/cross-repo-readiness-diagnostics/$projectId': typeof CrossRepoReadinessDiagnosticsProjectIdRoute
   '/cross-repo-repository-evolution/$projectId': typeof CrossRepoRepositoryEvolutionProjectIdRoute
   '/cross-repo-risk-analytics/$projectId': typeof CrossRepoRiskAnalyticsProjectIdRoute
   '/cross-repo-social-network-analysis/$projectId': typeof CrossRepoSocialNetworkAnalysisProjectIdRoute
   '/cross-repo-technical-debt-indicators/$projectId': typeof CrossRepoTechnicalDebtIndicatorsProjectIdRoute
   '/dashboard/$repoId': typeof DashboardRepoIdRoute
   '/developer-analytics/$repoId': typeof DeveloperAnalyticsRepoIdRoute
+  '/readiness-diagnostics/$repoId': typeof ReadinessDiagnosticsRepoIdRoute
   '/repository-evolution/$repoId': typeof RepositoryEvolutionRepoIdRoute
   '/risk-analytics/$repoId': typeof RiskAnalyticsRepoIdRoute
   '/social-network-analysis/$repoId': typeof SocialNetworkAnalysisRepoIdRoute
@@ -273,6 +302,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/developer-analytics'
     | '/projects'
+    | '/readiness-diagnostics'
     | '/repository-evolution'
     | '/risk-analytics'
     | '/settings'
@@ -283,12 +313,14 @@ export interface FileRouteTypes {
     | '/cross-repo-analytics/$projectId'
     | '/cross-repo-bus-factor-and-ownership/$projectId'
     | '/cross-repo-codebase-health/$projectId'
+    | '/cross-repo-readiness-diagnostics/$projectId'
     | '/cross-repo-repository-evolution/$projectId'
     | '/cross-repo-risk-analytics/$projectId'
     | '/cross-repo-social-network-analysis/$projectId'
     | '/cross-repo-technical-debt-indicators/$projectId'
     | '/dashboard/$repoId'
     | '/developer-analytics/$repoId'
+    | '/readiness-diagnostics/$repoId'
     | '/repository-evolution/$repoId'
     | '/risk-analytics/$repoId'
     | '/social-network-analysis/$repoId'
@@ -301,6 +333,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/developer-analytics'
     | '/projects'
+    | '/readiness-diagnostics'
     | '/repository-evolution'
     | '/risk-analytics'
     | '/settings'
@@ -311,12 +344,14 @@ export interface FileRouteTypes {
     | '/cross-repo-analytics/$projectId'
     | '/cross-repo-bus-factor-and-ownership/$projectId'
     | '/cross-repo-codebase-health/$projectId'
+    | '/cross-repo-readiness-diagnostics/$projectId'
     | '/cross-repo-repository-evolution/$projectId'
     | '/cross-repo-risk-analytics/$projectId'
     | '/cross-repo-social-network-analysis/$projectId'
     | '/cross-repo-technical-debt-indicators/$projectId'
     | '/dashboard/$repoId'
     | '/developer-analytics/$repoId'
+    | '/readiness-diagnostics/$repoId'
     | '/repository-evolution/$repoId'
     | '/risk-analytics/$repoId'
     | '/social-network-analysis/$repoId'
@@ -329,6 +364,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/developer-analytics'
     | '/projects'
+    | '/readiness-diagnostics'
     | '/repository-evolution'
     | '/risk-analytics'
     | '/settings'
@@ -339,12 +375,14 @@ export interface FileRouteTypes {
     | '/cross-repo-analytics/$projectId'
     | '/cross-repo-bus-factor-and-ownership/$projectId'
     | '/cross-repo-codebase-health/$projectId'
+    | '/cross-repo-readiness-diagnostics/$projectId'
     | '/cross-repo-repository-evolution/$projectId'
     | '/cross-repo-risk-analytics/$projectId'
     | '/cross-repo-social-network-analysis/$projectId'
     | '/cross-repo-technical-debt-indicators/$projectId'
     | '/dashboard/$repoId'
     | '/developer-analytics/$repoId'
+    | '/readiness-diagnostics/$repoId'
     | '/repository-evolution/$repoId'
     | '/risk-analytics/$repoId'
     | '/social-network-analysis/$repoId'
@@ -358,6 +396,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   DeveloperAnalyticsRoute: typeof DeveloperAnalyticsRouteWithChildren
   ProjectsRoute: typeof ProjectsRoute
+  ReadinessDiagnosticsRoute: typeof ReadinessDiagnosticsRouteWithChildren
   RepositoryEvolutionRoute: typeof RepositoryEvolutionRouteWithChildren
   RiskAnalyticsRoute: typeof RiskAnalyticsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
@@ -366,6 +405,7 @@ export interface RootRouteChildren {
   CrossRepoAnalyticsProjectIdRoute: typeof CrossRepoAnalyticsProjectIdRoute
   CrossRepoBusFactorAndOwnershipProjectIdRoute: typeof CrossRepoBusFactorAndOwnershipProjectIdRoute
   CrossRepoCodebaseHealthProjectIdRoute: typeof CrossRepoCodebaseHealthProjectIdRoute
+  CrossRepoReadinessDiagnosticsProjectIdRoute: typeof CrossRepoReadinessDiagnosticsProjectIdRoute
   CrossRepoRepositoryEvolutionProjectIdRoute: typeof CrossRepoRepositoryEvolutionProjectIdRoute
   CrossRepoRiskAnalyticsProjectIdRoute: typeof CrossRepoRiskAnalyticsProjectIdRoute
   CrossRepoSocialNetworkAnalysisProjectIdRoute: typeof CrossRepoSocialNetworkAnalysisProjectIdRoute
@@ -407,6 +447,13 @@ declare module '@tanstack/react-router' {
       path: '/repository-evolution'
       fullPath: '/repository-evolution'
       preLoaderRoute: typeof RepositoryEvolutionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/readiness-diagnostics': {
+      id: '/readiness-diagnostics'
+      path: '/readiness-diagnostics'
+      fullPath: '/readiness-diagnostics'
+      preLoaderRoute: typeof ReadinessDiagnosticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/projects': {
@@ -479,6 +526,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RepositoryEvolutionRepoIdRouteImport
       parentRoute: typeof RepositoryEvolutionRoute
     }
+    '/readiness-diagnostics/$repoId': {
+      id: '/readiness-diagnostics/$repoId'
+      path: '/$repoId'
+      fullPath: '/readiness-diagnostics/$repoId'
+      preLoaderRoute: typeof ReadinessDiagnosticsRepoIdRouteImport
+      parentRoute: typeof ReadinessDiagnosticsRoute
+    }
     '/developer-analytics/$repoId': {
       id: '/developer-analytics/$repoId'
       path: '/$repoId'
@@ -519,6 +573,13 @@ declare module '@tanstack/react-router' {
       path: '/cross-repo-repository-evolution/$projectId'
       fullPath: '/cross-repo-repository-evolution/$projectId'
       preLoaderRoute: typeof CrossRepoRepositoryEvolutionProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cross-repo-readiness-diagnostics/$projectId': {
+      id: '/cross-repo-readiness-diagnostics/$projectId'
+      path: '/cross-repo-readiness-diagnostics/$projectId'
+      fullPath: '/cross-repo-readiness-diagnostics/$projectId'
+      preLoaderRoute: typeof CrossRepoReadinessDiagnosticsProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cross-repo-codebase-health/$projectId': {
@@ -607,6 +668,17 @@ const DeveloperAnalyticsRouteChildren: DeveloperAnalyticsRouteChildren = {
 const DeveloperAnalyticsRouteWithChildren =
   DeveloperAnalyticsRoute._addFileChildren(DeveloperAnalyticsRouteChildren)
 
+interface ReadinessDiagnosticsRouteChildren {
+  ReadinessDiagnosticsRepoIdRoute: typeof ReadinessDiagnosticsRepoIdRoute
+}
+
+const ReadinessDiagnosticsRouteChildren: ReadinessDiagnosticsRouteChildren = {
+  ReadinessDiagnosticsRepoIdRoute: ReadinessDiagnosticsRepoIdRoute,
+}
+
+const ReadinessDiagnosticsRouteWithChildren =
+  ReadinessDiagnosticsRoute._addFileChildren(ReadinessDiagnosticsRouteChildren)
+
 interface RepositoryEvolutionRouteChildren {
   RepositoryEvolutionRepoIdRoute: typeof RepositoryEvolutionRepoIdRoute
 }
@@ -664,6 +736,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   DeveloperAnalyticsRoute: DeveloperAnalyticsRouteWithChildren,
   ProjectsRoute: ProjectsRoute,
+  ReadinessDiagnosticsRoute: ReadinessDiagnosticsRouteWithChildren,
   RepositoryEvolutionRoute: RepositoryEvolutionRouteWithChildren,
   RiskAnalyticsRoute: RiskAnalyticsRouteWithChildren,
   SettingsRoute: SettingsRoute,
@@ -673,6 +746,8 @@ const rootRouteChildren: RootRouteChildren = {
   CrossRepoBusFactorAndOwnershipProjectIdRoute:
     CrossRepoBusFactorAndOwnershipProjectIdRoute,
   CrossRepoCodebaseHealthProjectIdRoute: CrossRepoCodebaseHealthProjectIdRoute,
+  CrossRepoReadinessDiagnosticsProjectIdRoute:
+    CrossRepoReadinessDiagnosticsProjectIdRoute,
   CrossRepoRepositoryEvolutionProjectIdRoute:
     CrossRepoRepositoryEvolutionProjectIdRoute,
   CrossRepoRiskAnalyticsProjectIdRoute: CrossRepoRiskAnalyticsProjectIdRoute,

@@ -30,8 +30,9 @@ export const defaultData: DatabaseSchema = {
   busFactorCache: {},
   repositoryEvolutionCache: {},
   socialNetworkAnalysisCache: {},
+  readinessDiagnosticsCache: {},
   ollamaSettings: defaultOllamaSettings,
-  schemaVersion: 5, // Current schema version
+  schemaVersion: 6, // Current schema version
 };
 
 // Initialize database
@@ -82,6 +83,7 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
           busFactorCache: {},
           repositoryEvolutionCache: {},
           socialNetworkAnalysisCache: {},
+          readinessDiagnosticsCache: {},
           ollamaSettings: defaultOllamaSettings,
           schemaVersion: 2,
         };
@@ -126,6 +128,11 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
     await migrateToSchemaV5(db);
   }
 
+  // Migrate to schema version 6 (readiness diagnostics cache)
+  if (!db.data.schemaVersion || db.data.schemaVersion < 6) {
+    await migrateToSchemaV6(db);
+  }
+
   if (!db.data.projects) {
     db.data.projects = [];
   }
@@ -168,6 +175,10 @@ export async function getDb(): Promise<Low<DatabaseSchema>> {
 
   if (!db.data.socialNetworkAnalysisCache) {
     db.data.socialNetworkAnalysisCache = {};
+  }
+
+  if (!db.data.readinessDiagnosticsCache) {
+    db.data.readinessDiagnosticsCache = {};
   }
 
   if (!db.data.ollamaSettings) {
@@ -287,6 +298,18 @@ export async function migrateToSchemaV5(db: Low<DatabaseSchema>): Promise<void> 
   db.data.schemaVersion = 5;
   await db.write();
   console.log('Added Ollama settings to database');
+}
+
+export async function migrateToSchemaV6(db: Low<DatabaseSchema>): Promise<void> {
+  console.log('Migrating database to schema version 6 (readiness diagnostics cache)...');
+
+  if (!db.data.readinessDiagnosticsCache) {
+    db.data.readinessDiagnosticsCache = {};
+  }
+
+  db.data.schemaVersion = 6;
+  await db.write();
+  console.log('Initialized readiness diagnostics cache');
 }
 
 // Reset database instance (useful for testing)

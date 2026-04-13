@@ -44,6 +44,8 @@ export {
   setCachedRepositoryEvolution,
   getCachedSocialNetworkAnalysis,
   setCachedSocialNetworkAnalysis,
+  getCachedReadinessDiagnostics,
+  setCachedReadinessDiagnostics,
   getCachedAIInsights,
   setCachedAIInsights,
   clearCachedAIInsights,

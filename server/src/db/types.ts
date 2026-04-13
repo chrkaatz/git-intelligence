@@ -73,6 +73,13 @@ export interface CachedSocialNetworkAnalysis {
   latestCommitHash?: string; // Latest commit hash when cached
 }
 
+export interface CachedReadinessDiagnostics {
+  diagnostics: any; // ReadinessDiagnostics structure
+  cachedAt: string;
+  repoPath: string;
+  latestCommitHash?: string; // Latest commit hash when cached
+}
+
 export interface CachedAIInsights {
   insights: string; // AI-generated insights
   cachedAt: string;
@@ -100,6 +107,7 @@ export interface DatabaseSchema {
   busFactorCache?: Record<string, CachedBusFactorAndOwnership>; // keyed by repository path
   repositoryEvolutionCache?: Record<string, CachedRepositoryEvolution>; // keyed by repository path
   socialNetworkAnalysisCache?: Record<string, CachedSocialNetworkAnalysis>; // keyed by repository path
+  readinessDiagnosticsCache?: Record<string, CachedReadinessDiagnostics>; // keyed by repository path
   aiInsightsCache?: Record<string, CachedAIInsights>; // keyed by `${repoPath}:${analysisType}`
   ollamaSettings?: OllamaSettings; // Ollama configuration settings
   schemaVersion?: number; // Track schema version for migrations

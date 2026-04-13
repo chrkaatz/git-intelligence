@@ -14,6 +14,7 @@ import {
   Shield,
   Wrench,
   RefreshCw,
+  ClipboardList,
 } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
 import { useNotifications } from '../context/NotificationContext';
@@ -59,7 +60,7 @@ export function ProjectsSidebar({
       }
       // Fallback: try to extract from pathname
       const pathMatch = location.pathname.match(
-        /\/(dashboard|developer-analytics|codebase-health|repository-evolution|bus-factor-and-ownership|social-network-analysis|risk-analytics|technical-debt-indicators)\/([^/]+)$/
+        /\/(dashboard|developer-analytics|codebase-health|repository-evolution|bus-factor-and-ownership|social-network-analysis|risk-analytics|technical-debt-indicators|readiness-diagnostics)\/([^/]+)$/
       );
       if (pathMatch && pathMatch[2]) {
         return pathMatch[2];
@@ -131,6 +132,11 @@ export function ProjectsSidebar({
     } else if (currentPath.startsWith('/technical-debt-indicators')) {
       navigate({
         to: '/technical-debt-indicators/$repoId',
+        params: { repoId: repo.id },
+      });
+    } else if (currentPath.startsWith('/readiness-diagnostics')) {
+      navigate({
+        to: '/readiness-diagnostics/$repoId',
         params: { repoId: repo.id },
       });
     } else {
@@ -484,6 +490,19 @@ export function ProjectsSidebar({
                           title="View Cross-Repo Technical Debt Indicators"
                         >
                           <Wrench className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate({
+                              to: '/cross-repo-readiness-diagnostics/$projectId',
+                              params: { projectId: project.id },
+                            });
+                          }}
+                          className="p-1 hover:bg-teal-50 dark:hover:bg-teal-900/20 text-gray-400 hover:text-teal-600 rounded transition-all"
+                          title="View Cross-Repo Readiness Diagnostics"
+                        >
+                          <ClipboardList className="w-3 h-3" />
                         </button>
                       </>
                     )}

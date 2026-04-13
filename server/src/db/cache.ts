@@ -484,6 +484,77 @@ export async function setCachedSocialNetworkAnalysis(
   await database.write();
 }
 
+export async function getCachedReadinessDiagnostics(
+  repoPath: string,
+  maxAgeMs: number = 2592000000
+): Promise<any | null> {
+  const database = await getDb();
+  const cached = database.data.readinessDiagnosticsCache?.[repoPath];
+
+  if (!cached) {
+    return null;
+  }
+
+  const currentCommitHash = await getLatestCommitHash(repoPath);
+
+  if (!currentCommitHash && cached.latestCommitHash) {
+    if (database.data.readinessDiagnosticsCache) {
+      delete database.data.readinessDiagnosticsCache[repoPath];
+      await database.write();
+    }
+    return null;
+  }
+
+  if (currentCommitHash && cached.latestCommitHash) {
+    if (currentCommitHash !== cached.latestCommitHash) {
+      if (database.data.readinessDiagnosticsCache) {
+        delete database.data.readinessDiagnosticsCache[repoPath];
+        await database.write();
+      }
+      return null;
+    }
+    return cached.diagnostics;
+  } else if (currentCommitHash && !cached.latestCommitHash) {
+    if (database.data.readinessDiagnosticsCache) {
+      delete database.data.readinessDiagnosticsCache[repoPath];
+      await database.write();
+    }
+    return null;
+  }
+
+  const cachedAt = new Date(cached.cachedAt).getTime();
+  const now = Date.now();
+  const age = now - cachedAt;
+
+  if (age > maxAgeMs) {
+    if (database.data.readinessDiagnosticsCache) {
+      delete database.data.readinessDiagnosticsCache[repoPath];
+      await database.write();
+    }
+    return null;
+  }
+
+  return cached.diagnostics;
+}
+
+export async function setCachedReadinessDiagnostics(
+  repoPath: string,
+  diagnostics: any
+): Promise<void> {
+  const database = await getDb();
+  if (!database.data.readinessDiagnosticsCache) {
+    database.data.readinessDiagnosticsCache = {};
+  }
+  const latestCommitHash = await getLatestCommitHash(repoPath);
+  database.data.readinessDiagnosticsCache[repoPath] = {
+    diagnostics,
+    cachedAt: new Date().toISOString(),
+    repoPath,
+    latestCommitHash: latestCommitHash || undefined,
+  };
+  await database.write();
+}
+
 export async function clearCache(repoPath?: string): Promise<void> {
   const database = await getDb();
   if (repoPath) {
@@ -506,6 +577,9 @@ export async function clearCache(repoPath?: string): Promise<void> {
     }
     if (database.data.socialNetworkAnalysisCache) {
       delete database.data.socialNetworkAnalysisCache[repoPath];
+    }
+    if (database.data.readinessDiagnosticsCache) {
+      delete database.data.readinessDiagnosticsCache[repoPath];
     }
     // Clear AI insights cache for this repository (all analysis types)
     if (database.data.aiInsightsCache) {
@@ -535,6 +609,9 @@ export async function clearCache(repoPath?: string): Promise<void> {
     }
     if (database.data.socialNetworkAnalysisCache) {
       database.data.socialNetworkAnalysisCache = {};
+    }
+    if (database.data.readinessDiagnosticsCache) {
+      database.data.readinessDiagnosticsCache = {};
     }
     if (database.data.aiInsightsCache) {
       database.data.aiInsightsCache = {};

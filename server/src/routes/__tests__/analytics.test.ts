@@ -10,6 +10,7 @@ import * as gitCodebaseHealth from '../../git/codebaseHealth';
 import * as gitRepositoryEvolution from '../../git/repositoryEvolution';
 import * as gitBusFactor from '../../git/busFactor';
 import * as gitSocialNetwork from '../../git/socialNetwork';
+import * as gitReadinessDiagnostics from '../../git/readinessDiagnostics';
 import { createTestDb } from '../../db/__tests__/helpers';
 import { getDb, resetDb } from '../../db/database';
 
@@ -52,6 +53,11 @@ vi.mock('../../git/socialNetwork', () => ({
   getCrossRepoSocialNetworkAnalysis: vi.fn(),
 }));
 
+vi.mock('../../git/readinessDiagnostics', () => ({
+  getReadinessDiagnostics: vi.fn(),
+  getCrossRepoReadinessDiagnostics: vi.fn(),
+}));
+
 const mockGetDb = vi.mocked(getDb);
 const mockGetStats = vi.mocked(gitStats.getStats);
 const mockGetDeveloperAnalytics = vi.mocked(gitDeveloperAnalytics.getDeveloperAnalytics);
@@ -71,6 +77,10 @@ const mockGetCrossRepoBusFactorAndOwnership = vi.mocked(
 const mockGetSocialNetworkAnalysis = vi.mocked(gitSocialNetwork.getSocialNetworkAnalysis);
 const mockGetCrossRepoSocialNetworkAnalysis = vi.mocked(
   gitSocialNetwork.getCrossRepoSocialNetworkAnalysis
+);
+const mockGetReadinessDiagnostics = vi.mocked(gitReadinessDiagnostics.getReadinessDiagnostics);
+const mockGetCrossRepoReadinessDiagnostics = vi.mocked(
+  gitReadinessDiagnostics.getCrossRepoReadinessDiagnostics
 );
 
 const app = express();
@@ -997,6 +1007,66 @@ describe('Analytics Routes', () => {
       });
 
       consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('GET /readiness-diagnostics', () => {
+    it('should return diagnostics for a repository', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      const payload = {
+        generatedAt: new Date().toISOString(),
+        windows: {
+          churnSince: '1 year ago',
+          firefightingSince: '1 year ago',
+          recentContributorsSince: '6 months ago',
+        },
+        topChurnFiles: [],
+        bugFixTouchFiles: [],
+        highRiskOverlap: [],
+        contributorsAllTime: [],
+        contributorsRecent: [],
+        dominantContributorSharePercent: 0,
+        topContributorInactiveRecently: false,
+        commitsByMonth: [],
+        firefightingCommits: [],
+        caveats: [],
+      };
+
+      mockGetReadinessDiagnostics.mockResolvedValue(payload as any);
+
+      const response = await request(app).get(`/readiness-diagnostics?repoId=${repo.id}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(payload);
+      expect(mockGetReadinessDiagnostics).toHaveBeenCalledWith('/path/to/repo', true, undefined);
+    });
+
+    it('should require repoId', async () => {
+      const response = await request(app).get('/readiness-diagnostics');
+      expect(response.status).toBe(400);
+    });
+  });
+
+  describe('GET /cross-repo-readiness-diagnostics', () => {
+    it('should return cross-repo payload', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const payload = {
+        repositories: [],
+        totalRepos: 0,
+        repoNames: [],
+        aggregatedCommitsByMonth: [],
+        aggregatedContributors: [],
+      };
+      mockGetCrossRepoReadinessDiagnostics.mockResolvedValue(payload as any);
+
+      const response = await request(app).get(
+        `/cross-repo-readiness-diagnostics?projectId=${project.id}`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(payload);
     });
   });
 });
