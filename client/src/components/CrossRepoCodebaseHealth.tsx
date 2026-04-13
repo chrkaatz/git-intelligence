@@ -150,11 +150,11 @@ export function CrossRepoCodebaseHealth({ health, loading }: CrossRepoCodebaseHe
                     border: '1px solid var(--tw-color-gray-700)',
                     borderRadius: '0.5rem',
                   }}
-                  formatter={(value: number | string | undefined, name: string | undefined) => {
-                    if (name === 'commits') return [(value ?? 0).toLocaleString(), 'Commits'];
-                    if (name === 'files') return [(value ?? 0).toLocaleString(), 'Files'];
-                    if (name === 'directories')
-                      return [(value ?? 0).toLocaleString(), 'Directories'];
+                  formatter={(value, name) => {
+                    const num = typeof value === 'number' ? value : Number(value) || 0;
+                    if (name === 'commits') return [num.toLocaleString(), 'Commits'];
+                    if (name === 'files') return [num.toLocaleString(), 'Files'];
+                    if (name === 'directories') return [num.toLocaleString(), 'Directories'];
                     return [value, name];
                   }}
                 />

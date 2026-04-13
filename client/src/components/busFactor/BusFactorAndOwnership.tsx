@@ -173,9 +173,10 @@ export function BusFactorAndOwnership({
                         border: '1px solid var(--tw-color-gray-700)',
                         borderRadius: '0.5rem',
                       }}
-                      formatter={(value: number | undefined, name: string | undefined) => {
+                      formatter={(value, name) => {
                         if (name === 'ownershipPercentage') {
-                          return [`${(value ?? 0).toFixed(1)}%`, 'Ownership'];
+                          const num = typeof value === 'number' ? value : Number(value) || 0;
+                          return [`${num.toFixed(1)}%`, 'Ownership'];
                         }
                         return [value, name];
                       }}

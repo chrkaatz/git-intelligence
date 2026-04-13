@@ -68,10 +68,16 @@ export function LongitudinalPatterns({
     ? patterns.authorActivityOverTime.find((a) => a.authorName === currentSelection)
     : null;
 
-  const activityData = selectedAuthorActivity
+  const activityData: { period: string; commits: number }[] = selectedAuthorActivity
     ? timeframe === 'weekly'
-      ? selectedAuthorActivity.weeklyActivity
-      : selectedAuthorActivity.monthlyActivity
+      ? selectedAuthorActivity.weeklyActivity.map((d) => ({
+          period: d.week,
+          commits: d.commits,
+        }))
+      : selectedAuthorActivity.monthlyActivity.map((d) => ({
+          period: d.month,
+          commits: d.commits,
+        }))
     : [];
 
   return (
@@ -202,12 +208,7 @@ export function LongitudinalPatterns({
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={activityData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey={timeframe === 'weekly' ? 'week' : 'month'}
-                angle={-45}
-                textAnchor="end"
-                height={80}
-              />
+              <XAxis dataKey="period" angle={-45} textAnchor="end" height={80} />
               <YAxis />
               <Tooltip />
               <Legend />
