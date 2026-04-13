@@ -1047,6 +1047,39 @@ describe('Analytics Routes', () => {
       const response = await request(app).get('/readiness-diagnostics');
       expect(response.status).toBe(400);
     });
+
+    it('should include AI insights when ai=true', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      const payload = {
+        generatedAt: new Date().toISOString(),
+        windows: {
+          churnSince: '1 year ago',
+          firefightingSince: '1 year ago',
+          recentContributorsSince: '6 months ago',
+        },
+        topChurnFiles: [],
+        bugFixTouchFiles: [],
+        highRiskOverlap: [],
+        contributorsAllTime: [],
+        contributorsRecent: [],
+        dominantContributorSharePercent: 0,
+        topContributorInactiveRecently: false,
+        commitsByMonth: [],
+        firefightingCommits: [],
+        caveats: [],
+        aiInsights: 'repo readiness ai',
+      };
+
+      mockGetReadinessDiagnostics.mockResolvedValue(payload as any);
+
+      const response = await request(app).get(`/readiness-diagnostics?repoId=${repo.id}&ai=true`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.aiInsights).toBe('repo readiness ai');
+      expect(mockGetReadinessDiagnostics).toHaveBeenCalledWith('/path/to/repo', true, true);
+    });
   });
 
   describe('GET /cross-repo-readiness-diagnostics', () => {
@@ -1067,6 +1100,27 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(payload);
+    });
+
+    it('should include cross-repo AI insights when ai=true', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const payload = {
+        repositories: [],
+        totalRepos: 0,
+        repoNames: [],
+        aggregatedCommitsByMonth: [],
+        aggregatedContributors: [],
+        aiInsights: 'cross readiness ai',
+      };
+      mockGetCrossRepoReadinessDiagnostics.mockResolvedValue(payload as any);
+
+      const response = await request(app).get(
+        `/cross-repo-readiness-diagnostics?projectId=${project.id}&ai=true`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.aiInsights).toBe('cross readiness ai');
+      expect(mockGetCrossRepoReadinessDiagnostics).toHaveBeenCalledWith(project.id, true, true);
     });
   });
 });

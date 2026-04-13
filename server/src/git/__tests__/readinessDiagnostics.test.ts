@@ -8,6 +8,7 @@ import {
   getOllamaSettings,
   setCachedAIInsights,
 } from '../../db';
+import { generateInsights } from '../../services/aiAnalysis';
 
 vi.mock('simple-git');
 vi.mock('../../db/cache', () => ({
@@ -26,6 +27,9 @@ vi.mock('../../db', () => ({
     timeout: 120000,
   }),
 }));
+vi.mock('../../services/aiAnalysis', () => ({
+  generateInsights: vi.fn(),
+}));
 
 const mockGetCached = vi.mocked(getCachedReadinessDiagnostics);
 const mockSetCached = vi.mocked(setCachedReadinessDiagnostics);
@@ -33,6 +37,7 @@ const mockClearCachedAIInsights = vi.mocked(clearCachedAIInsights);
 const mockGetCachedAIInsights = vi.mocked(getCachedAIInsights);
 const mockSetCachedAIInsights = vi.mocked(setCachedAIInsights);
 const mockGetOllamaSettings = vi.mocked(getOllamaSettings);
+const mockGenerateInsights = vi.mocked(generateInsights);
 
 describe('readinessDiagnostics', () => {
   beforeEach(() => {
@@ -49,6 +54,7 @@ describe('readinessDiagnostics', () => {
       model: 'llama3',
       timeout: 120000,
     });
+    mockGenerateInsights.mockResolvedValue('ai insights');
   });
 
   it('should throw when not a git repository', async () => {
@@ -89,5 +95,43 @@ describe('readinessDiagnostics', () => {
     expect(result.firefightingCommits[0].subject).toContain('hotfix');
 
     expect(mockSetCached).not.toHaveBeenCalled();
+  });
+
+  it('should include ai insights when requested and ollama is enabled', async () => {
+    const mockGit = {
+      checkIsRepo: vi.fn().mockResolvedValue(true),
+      raw: vi
+        .fn()
+        .mockResolvedValueOnce('src/a.ts\n\n')
+        .mockResolvedValueOnce('src/a.ts\n\n')
+        .mockResolvedValueOnce('2024-02-15T10:00:00+00:00|Alice Doe\n')
+        .mockResolvedValueOnce(
+          'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|2024-06-01T12:00:00+00:00|hotfix pipeline\n'
+        ),
+    };
+    vi.mocked(simpleGit).mockReturnValue(mockGit as any);
+    mockGetOllamaSettings.mockResolvedValue({
+      enabled: true,
+      host: 'localhost',
+      port: 11434,
+      model: 'llama3',
+      timeout: 120000,
+    });
+
+    const result = await getReadinessDiagnostics('/repo', false, true);
+
+    expect(result.aiInsights).toBe('ai insights');
+    expect(mockGenerateInsights).toHaveBeenCalledWith(
+      'readiness-diagnostics',
+      expect.objectContaining({
+        topChurnFiles: expect.any(Array),
+      }),
+      expect.objectContaining({ enabled: true })
+    );
+    expect(mockSetCachedAIInsights).toHaveBeenCalledWith(
+      '/repo',
+      'readiness-diagnostics',
+      'ai insights'
+    );
   });
 });
