@@ -36,7 +36,7 @@ export function SettingsPage() {
     enabled: false,
     host: 'localhost',
     port: 11434,
-    model: 'llama3',
+    model: 'gemma4:e2b',
     timeout: 120000 as number | undefined,
   });
   const [testingConnection, setTestingConnection] = useState(false);
@@ -248,7 +248,8 @@ export function SettingsPage() {
   };
 
   const modelSuggestions = [
-    'llama3',
+    'gemma4:e2b',
+    'llama3.2',
     'mistral',
     'codellama',
     'ministral-3:8b',
