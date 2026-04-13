@@ -25,7 +25,8 @@ export type AnalysisType =
   | 'risk-analytics'
   | 'technical-debt-indicators'
   | 'readiness-diagnostics'
-  | 'cross-repo-readiness-diagnostics';
+  | 'cross-repo-readiness-diagnostics'
+  | 'cross-repo-portfolio-analytics';
 
 /**
  * Generate AI insights for a specific analysis type
@@ -150,6 +151,25 @@ Format your response as clear, structured text with bullet points where appropri
               firefightingCommits: Array<{ hash: string; date: string; subject: string }>;
               caveats: string[];
             };
+          }>;
+        }
+      );
+
+    case 'cross-repo-portfolio-analytics':
+      return buildCrossRepoPortfolioAnalyticsPrompt(
+        data as {
+          totalRepos: number;
+          repoNames: string[];
+          authors: Array<{
+            name: string;
+            email: string;
+            commits: number;
+            percentage: string;
+            repoCount: number;
+            repoSpread: Array<{ repoName: string; commits: number }>;
+            fixCommitRatio: string;
+            revertCommitRatio: string;
+            churnRatio: string;
           }>;
         }
       );
@@ -833,4 +853,95 @@ Output format (strict):
 Style:
 - concise, decision-grade, evidence-linked.
 - no generic advice without tying to observed signals.`;
+}
+
+function buildCrossRepoPortfolioAnalyticsPrompt(data: {
+  totalRepos: number;
+  repoNames: string[];
+  authors: Array<{
+    name: string;
+    email: string;
+    commits: number;
+    percentage: string;
+    repoCount: number;
+    repoSpread: Array<{ repoName: string; commits: number }>;
+    fixCommitRatio: string;
+    revertCommitRatio: string;
+    churnRatio: string;
+  }>;
+}): string {
+  const topAuthors = data.authors.slice(0, 20);
+  const broadContributors = data.authors
+    .filter((a) => a.repoCount > 1)
+    .sort((a, b) => b.repoCount - a.repoCount || b.commits - a.commits)
+    .slice(0, 15);
+  const highChurn = data.authors
+    .filter((a) => parseFloat(a.churnRatio) >= 40)
+    .sort((a, b) => parseFloat(b.churnRatio) - parseFloat(a.churnRatio))
+    .slice(0, 12);
+  const highRevert = data.authors
+    .filter((a) => parseFloat(a.revertCommitRatio) >= 3)
+    .sort((a, b) => parseFloat(b.revertCommitRatio) - parseFloat(a.revertCommitRatio))
+    .slice(0, 12);
+
+  return `You are a senior engineering portfolio analyst. Produce an overarching AI assessment for cross-repository portfolio analytics.
+
+Objective:
+Summarize portfolio health, execution risk, and team scaling risks across repositories. Emphasize actionable leadership conclusions over per-repo minutiae.
+
+PORTFOLIO DATA
+- Total repositories: ${data.totalRepos}
+- Repository names: ${data.repoNames.join(', ')}
+
+TOP CONTRIBUTORS (portfolio-wide):
+${topAuthors
+  .map(
+    (a) =>
+      `- ${a.name}: ${a.commits} commits (${a.percentage}%), repoCount=${a.repoCount}, churn=${a.churnRatio}%, fix=${a.fixCommitRatio}%, revert=${a.revertCommitRatio}%`
+  )
+  .join('\n')}
+
+CONTRIBUTORS SPANNING MULTIPLE REPOS:
+${broadContributors
+  .map(
+    (a) =>
+      `- ${a.name}: ${a.repoCount} repos (${a.repoSpread
+        .slice(0, 4)
+        .map((r) => `${r.repoName}:${r.commits}`)
+        .join(', ')})`
+  )
+  .join('\n')}
+
+HIGH CHURN CONTRIBUTORS:
+${highChurn.length ? highChurn.map((a) => `- ${a.name}: churn ${a.churnRatio}%`).join('\n') : '- none above threshold'}
+
+HIGH REVERT CONTRIBUTORS:
+${highRevert.length ? highRevert.map((a) => `- ${a.name}: revert ${a.revertCommitRatio}%`).join('\n') : '- none above threshold'}
+
+Interpretation guardrails:
+1) Do not equate high commit volume with productivity without risk context.
+2) Treat high churn/revert clusters as process/code quality signals, not individual blame.
+3) Highlight concentration risk when a small group dominates multi-repo flow.
+4) Distinguish portfolio-level governance actions from repo-level interventions.
+
+Output format (strict):
+## Portfolio health rating
+- Low / Moderate / High risk with a one-paragraph rationale.
+
+## Key cross-repo patterns
+- 4-8 bullets with evidence from contributor spread, churn, revert/fix ratios, and ownership concentration.
+
+## Leadership risks
+- Talent concentration, continuity, coordination, and quality risks.
+
+## 30-day execution plan
+- 6-10 actions tagged P0/P1/P2.
+- Include owner role (Eng Manager, Tech Lead, Platform, etc.) and intended measurable outcome.
+
+## Confidence and caveats
+- Explicitly state uncertainty and potential data bias.
+
+Style:
+- concise, evidence-linked, and decision-focused.
+- avoid generic platitudes and avoid naming individuals in a punitive way.`;
 }

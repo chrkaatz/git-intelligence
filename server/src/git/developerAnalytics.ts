@@ -353,7 +353,8 @@ export async function getDeveloperAnalytics(
 
 export async function getCrossRepoDeveloperAnalytics(
   projectId: string,
-  useCache: boolean = true
+  useCache: boolean = true,
+  includeAIInsights?: boolean
 ): Promise<CrossRepoDeveloperAnalytics> {
   console.log(`Calculating cross-repo developer analytics for project ${projectId}`);
 
@@ -534,9 +535,27 @@ export async function getCrossRepoDeveloperAnalytics(
     })
     .sort((a, b) => b.commits - a.commits);
 
-  return {
+  const result: CrossRepoDeveloperAnalytics = {
     authors,
     totalRepos: repositories.length,
     repoNames: repositories.map((r) => r.name),
   };
+
+  if (includeAIInsights) {
+    try {
+      const ollamaSettings = await getOllamaSettings();
+      if (ollamaSettings.enabled) {
+        const insights = await generateInsights(
+          'cross-repo-portfolio-analytics',
+          result,
+          ollamaSettings
+        );
+        result.aiInsights = insights;
+      }
+    } catch (error) {
+      console.warn('Failed to generate AI insights for cross-repo portfolio analytics:', error);
+    }
+  }
+
+  return result;
 }

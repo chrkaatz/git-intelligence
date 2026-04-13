@@ -81,13 +81,14 @@ router.get('/developer-analytics', async (req: Request, res: Response) => {
 });
 
 router.get('/cross-repo-developer-analytics', async (req: Request, res: Response) => {
-  const { projectId, refresh } = req.query;
+  const { projectId, refresh, ai } = req.query;
   if (!projectId || typeof projectId !== 'string') {
     return res.status(400).json({ error: 'Project ID is required' });
   }
   try {
     const useCache = refresh !== 'true';
-    const analytics = await getCrossRepoDeveloperAnalytics(projectId, useCache);
+    const includeAIInsights = ai === 'true' ? true : undefined;
+    const analytics = await getCrossRepoDeveloperAnalytics(projectId, useCache, includeAIInsights);
     res.json(analytics);
   } catch (error) {
     console.error(error);

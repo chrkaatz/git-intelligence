@@ -6,6 +6,7 @@ import {
   getCrossRepoCodebaseHealth,
   getCrossRepoBusFactorAndOwnership,
   getCrossRepoSocialNetworkAnalysis,
+  getOllamaSettings,
   getRepositories,
   getStats,
   type CrossRepoDeveloperAnalytics,
@@ -41,6 +42,7 @@ import {
 import { useNotifications } from '../../context/NotificationContext';
 import { RecalculateButton } from '../common/RecalculateButton';
 import { useApp } from '../../hooks/useApp';
+import { AIInsightsPanel } from '../AIInsightsPanel';
 
 type LoadedData = {
   devAnalytics: CrossRepoDeveloperAnalytics | null;
@@ -64,9 +66,13 @@ export function CrossRepoAnalyticsPortfolioView() {
     social: null,
   });
   const [loading, setLoading] = useState(false);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
+  const [ollamaEnabled, setOllamaEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showNotification, removeNotification } = useNotifications();
   const loadingNotificationIdRef = useRef<string | null>(null);
+  const isFetchingAIInsightsRef = useRef(false);
 
   // Get project name from ID
   const project = projectId ? projects.find((p) => p.id === projectId) : null;
@@ -167,6 +173,60 @@ export function CrossRepoAnalyticsPortfolioView() {
   useEffect(() => {
     fetchAll(false);
   }, [fetchAll]);
+
+  const fetchPortfolioAIInsights = useCallback(async () => {
+    if (!projectId || !data.devAnalytics) {
+      return;
+    }
+
+    try {
+      const settings = await getOllamaSettings();
+      if (!settings.enabled) {
+        setOllamaEnabled(false);
+        return;
+      }
+      setOllamaEnabled(true);
+    } catch {
+      setOllamaEnabled(false);
+      return;
+    }
+
+    if (isFetchingAIInsightsRef.current) {
+      return;
+    }
+
+    isFetchingAIInsightsRef.current = true;
+    setAiInsightsLoading(true);
+    setAiInsightsError(null);
+
+    try {
+      const devAnalytics = await getCrossRepoDeveloperAnalytics(projectId, false, true);
+      setData((prev) => ({ ...prev, devAnalytics }));
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+          ?.error ||
+        (err as { message?: string })?.message ||
+        'Failed to generate portfolio AI insights';
+      setAiInsightsError(errorMessage);
+    } finally {
+      setAiInsightsLoading(false);
+      isFetchingAIInsightsRef.current = false;
+    }
+  }, [projectId, data.devAnalytics]);
+
+  useEffect(() => {
+    const checkOllama = async () => {
+      if (!data.devAnalytics) return;
+      try {
+        const settings = await getOllamaSettings();
+        setOllamaEnabled(settings.enabled);
+      } catch {
+        setOllamaEnabled(false);
+      }
+    };
+    checkOllama();
+  }, [data.devAnalytics]);
 
   const overallActivityData = useMemo(() => {
     if (!data.evolution)
@@ -453,6 +513,18 @@ export function CrossRepoAnalyticsPortfolioView() {
           <AlertCircle className="w-5 h-5" />
           {error}
         </div>
+      )}
+
+      {data.devAnalytics && (
+        <AIInsightsPanel
+          insights={data.devAnalytics.aiInsights}
+          loading={aiInsightsLoading}
+          error={aiInsightsError}
+          onRefresh={fetchPortfolioAIInsights}
+          onGenerate={fetchPortfolioAIInsights}
+          title="AI Insights - Cross-Repository Portfolio Analytics"
+          ollamaEnabled={ollamaEnabled}
+        />
       )}
 
       {data.devAnalytics && (

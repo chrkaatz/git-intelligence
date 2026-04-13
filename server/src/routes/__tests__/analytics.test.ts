@@ -326,7 +326,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockAnalytics);
-      expect(mockGetCrossRepoDeveloperAnalytics).toHaveBeenCalledWith(project.id, true);
+      expect(mockGetCrossRepoDeveloperAnalytics).toHaveBeenCalledWith(project.id, true, undefined);
     });
 
     it('should bypass cache when refresh=true', async () => {
@@ -349,7 +349,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockAnalytics);
-      expect(mockGetCrossRepoDeveloperAnalytics).toHaveBeenCalledWith(project.id, false);
+      expect(mockGetCrossRepoDeveloperAnalytics).toHaveBeenCalledWith(project.id, false, undefined);
     });
 
     it('should return 400 when projectId is missing', async () => {
@@ -370,6 +370,26 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({ error: 'Failed to get cross-repo developer analytics' });
+    });
+
+    it('should include AI insights when ai=true', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const mockAnalytics = {
+        authors: [],
+        totalRepos: 0,
+        repoNames: [],
+        aiInsights: 'portfolio-level ai insights',
+      };
+
+      mockGetCrossRepoDeveloperAnalytics.mockResolvedValue(mockAnalytics as any);
+
+      const response = await request(app).get(
+        `/cross-repo-developer-analytics?projectId=${project.id}&ai=true`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.aiInsights).toBe('portfolio-level ai insights');
+      expect(mockGetCrossRepoDeveloperAnalytics).toHaveBeenCalledWith(project.id, true, true);
     });
   });
 

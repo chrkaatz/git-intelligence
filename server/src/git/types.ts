@@ -73,6 +73,7 @@ export interface CrossRepoDeveloperAnalytics {
   authors: CrossRepoDeveloperStats[];
   totalRepos: number;
   repoNames: string[];
+  aiInsights?: string;
 }
 
 // Internal types (not exported)

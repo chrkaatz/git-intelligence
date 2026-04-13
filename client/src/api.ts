@@ -83,6 +83,7 @@ export interface CrossRepoDeveloperAnalytics {
   authors: CrossRepoDeveloperStats[];
   totalRepos: number;
   repoNames: string[];
+  aiInsights?: string;
 }
 
 export interface ActivityStats {
@@ -263,10 +264,15 @@ export const getDeveloperAnalytics = async (
 
 export const getCrossRepoDeveloperAnalytics = async (
   projectId: string,
-  refresh?: boolean
+  refresh?: boolean,
+  includeAIInsights?: boolean
 ): Promise<CrossRepoDeveloperAnalytics> => {
   const response = await api.get('/cross-repo-developer-analytics', {
-    params: { projectId, refresh: refresh ? 'true' : undefined },
+    params: {
+      projectId,
+      refresh: refresh ? 'true' : undefined,
+      ai: includeAIInsights ? 'true' : undefined,
+    },
   });
   return response.data;
 };
