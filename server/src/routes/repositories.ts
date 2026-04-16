@@ -9,6 +9,7 @@ import {
 import simpleGit from 'simple-git';
 import { clearCache } from '../db/cache.js';
 import fs from 'fs';
+import { classifyAnalysisStepError } from './analysisErrors.js';
 
 const router = Router();
 const ANALYZE_STEP_TIMEOUT_MS = 180000; // 3 minutes per step
@@ -343,11 +344,12 @@ router.post('/:id/analyze-all', async (req: Request, res: Response) => {
             );
             completedCount++;
           } catch (error: any) {
+            const classifiedError = classifyAnalysisStepError(error);
             console.error(
               `[Analyze All] ${step.name} failed for ${repository.name}:`,
-              error.message
+              classifiedError
             );
-            errors[step.name] = error.message || 'Analysis failed';
+            errors[step.name] = classifiedError;
             failedCount++;
           }
         }

@@ -138,6 +138,22 @@ export interface ChangeCoupling {
   pairs: ChangeCouplingPair[];
 }
 
+export interface ChangeCouplingDiagnostics {
+  commitsProcessed: number;
+  commitsSkippedByLimit: number;
+  largeCommitCountCapped: number;
+  pairLimitHit: boolean;
+  maxCommits: number;
+  maxFilesPerCommit: number;
+  maxPairKeys: number;
+  maxPairsReturned: number;
+  isTruncated: boolean;
+}
+
+export interface CodebaseHealthAnalysisDiagnostics {
+  changeCoupling: ChangeCouplingDiagnostics;
+}
+
 export interface StabilityFile {
   file: string;
   ageDays: number;
@@ -205,6 +221,7 @@ export interface CodebaseHealth {
   stability: Stability;
   complexity: Complexity;
   hygiene: RepositoryHygiene;
+  analysisDiagnostics?: CodebaseHealthAnalysisDiagnostics;
   aiInsights?: string;
 }
 
@@ -275,6 +292,7 @@ export interface RepositoryEvolution {
   averageCommitsPerDay: number;
   averageChurnRatio: number;
   refactorCount: number;
+  analysisWindowMonths?: number;
   aiInsights?: string;
 }
 

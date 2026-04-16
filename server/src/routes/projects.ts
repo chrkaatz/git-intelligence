@@ -7,6 +7,7 @@ import {
   removeProject,
   reorderProjects,
 } from '../db.js';
+import { classifyAnalysisStepError } from './analysisErrors.js';
 
 const router = Router();
 const ANALYZE_STEP_TIMEOUT_MS = 180000; // 3 minutes per step
@@ -213,9 +214,10 @@ router.post('/:id/analyze-all', async (req: Request, res: Response) => {
                 `${step.name} (${repo.name})`
               );
             } catch (error: any) {
+              const classifiedError = classifyAnalysisStepError(error);
               console.error(
                 `[Analyze All Project] ${step.name} failed for ${repo.name}:`,
-                error.message
+                classifiedError
               );
             }
             completedSteps++;
@@ -235,9 +237,10 @@ router.post('/:id/analyze-all', async (req: Request, res: Response) => {
               `${step.name} (${project.name})`
             );
           } catch (error: any) {
+            const classifiedError = classifyAnalysisStepError(error);
             console.error(
               `[Analyze All Project] ${step.name} failed for ${project.name}:`,
-              error.message
+              classifiedError
             );
           }
           completedSteps++;

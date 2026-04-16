@@ -121,6 +121,56 @@ describe('codebaseHealth', () => {
       expect(topFile.commits).toBe(3);
     });
 
+    it('should cap coupling work for very large commits and expose diagnostics', async () => {
+      mockGetCachedCodebaseHealth.mockResolvedValue(null);
+
+      const hash1 = 'a'.repeat(40);
+      const hugeCommitFiles = Array.from({ length: 200 }, (_, index) => {
+        return `1\t1\tsrc/file-${index}.ts`;
+      }).join('\n');
+
+      const mockGit = {
+        checkIsRepo: vi.fn().mockResolvedValue(true),
+        raw: vi.fn().mockResolvedValue(`${hash1}|2024-01-01T10:00:00Z\n${hugeCommitFiles}\n`),
+      };
+
+      vi.mocked(simpleGit).mockReturnValue(mockGit as any);
+
+      const result = await getCodebaseHealth('/test/repo', false);
+
+      expect(Array.isArray(result.changeCoupling.pairs)).toBe(true);
+      expect(result.analysisDiagnostics?.changeCoupling.largeCommitCountCapped).toBe(1);
+      expect(result.analysisDiagnostics?.changeCoupling.isTruncated).toBe(true);
+    });
+
+    it('should stop growing pair map when pair-key limit is reached', async () => {
+      mockGetCachedCodebaseHealth.mockResolvedValue(null);
+
+      const commitCount = 30;
+      const filesPerCommit = 120;
+      const commitBlocks = Array.from({ length: commitCount }, (_, commitIndex) => {
+        const hash = `${(commitIndex + 1).toString(16)}`.padStart(40, 'a');
+        const date = `2024-01-${String((commitIndex % 28) + 1).padStart(2, '0')}T10:00:00Z`;
+        const fileLines = Array.from({ length: filesPerCommit }, (_, fileIndex) => {
+          return `1\t1\tsrc/commit-${commitIndex}-file-${fileIndex}.ts`;
+        }).join('\n');
+        return `${hash}|${date}\n${fileLines}`;
+      }).join('\n');
+
+      const mockGit = {
+        checkIsRepo: vi.fn().mockResolvedValue(true),
+        raw: vi.fn().mockResolvedValue(commitBlocks),
+      };
+
+      vi.mocked(simpleGit).mockReturnValue(mockGit as any);
+
+      const result = await getCodebaseHealth('/test/repo', false);
+
+      expect(result.analysisDiagnostics?.changeCoupling.pairLimitHit).toBe(true);
+      expect(result.analysisDiagnostics?.changeCoupling.isTruncated).toBe(true);
+      expect(Array.isArray(result.changeCoupling.pairs)).toBe(true);
+    });
+
     it('should generate AI insights when includeAIInsights is true and Ollama is enabled', async () => {
       mockGetCachedCodebaseHealth.mockResolvedValue(null);
 

@@ -416,6 +416,7 @@ Identify potential issues and maintenance hotspots:
 - Files that change together (coupling)
 - File stability analysis
 - Complexity metrics
+- Large-repository coupling guardrails that cap pair generation and return stable, bounded results
 
 ### Repository Evolution
 
@@ -426,6 +427,7 @@ Track how your repository grows and changes:
 - Growth curves
 - Change bursts (periods of intense activity)
 - Churn metrics
+- Default analysis window is the last 12 months for stability on very large repositories (set `sinceMonths=0` for full history via API)
 
 ### Bus Factor & Ownership
 

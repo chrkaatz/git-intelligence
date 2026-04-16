@@ -568,7 +568,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockEvolution);
-      expect(mockGetRepositoryEvolution).toHaveBeenCalledWith('/path/to/repo', true, undefined);
+      expect(mockGetRepositoryEvolution).toHaveBeenCalledWith('/path/to/repo', true, undefined, 12);
     });
 
     it('should bypass cache when refresh=true', async () => {
@@ -591,7 +591,12 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockEvolution);
-      expect(mockGetRepositoryEvolution).toHaveBeenCalledWith('/path/to/repo', false, undefined);
+      expect(mockGetRepositoryEvolution).toHaveBeenCalledWith(
+        '/path/to/repo',
+        false,
+        undefined,
+        12
+      );
     });
 
     it('should return 400 when repoId is missing', async () => {
@@ -642,7 +647,29 @@ describe('Analytics Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockEvolution);
       expect(response.body.aiInsights).toBe('AI-generated insights for repository evolution');
-      expect(mockGetRepositoryEvolution).toHaveBeenCalledWith('/path/to/repo', true, true);
+      expect(mockGetRepositoryEvolution).toHaveBeenCalledWith('/path/to/repo', true, true, 12);
+    });
+
+    it('should pass through sinceMonths when provided', async () => {
+      const project = await projectsDb.addProject('Test Project');
+      const repo = await repositoriesDb.addRepository(project.id, '/path/to/repo', 'Test Repo');
+
+      const mockEvolution = {
+        commitFrequency: [],
+        releases: [],
+        growthCurve: [],
+        changeBursts: [],
+        churn: [],
+      };
+
+      mockGetRepositoryEvolution.mockResolvedValue(mockEvolution as any);
+
+      const response = await request(app).get(
+        `/repository-evolution?repoId=${repo.id}&sinceMonths=6`
+      );
+
+      expect(response.status).toBe(200);
+      expect(mockGetRepositoryEvolution).toHaveBeenCalledWith('/path/to/repo', true, undefined, 6);
     });
   });
 
@@ -666,7 +693,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockEvolution);
-      expect(mockGetCrossRepoRepositoryEvolution).toHaveBeenCalledWith(project.id, true);
+      expect(mockGetCrossRepoRepositoryEvolution).toHaveBeenCalledWith(project.id, true, 12);
     });
 
     it('should bypass cache when refresh=true', async () => {
@@ -688,7 +715,7 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockEvolution);
-      expect(mockGetCrossRepoRepositoryEvolution).toHaveBeenCalledWith(project.id, false);
+      expect(mockGetCrossRepoRepositoryEvolution).toHaveBeenCalledWith(project.id, false, 12);
     });
 
     it('should return 400 when projectId is missing', async () => {
@@ -711,6 +738,27 @@ describe('Analytics Routes', () => {
       expect(response.body).toEqual({
         error: 'Failed to get cross-repo repository evolution metrics',
       });
+    });
+
+    it('should pass sinceMonths to cross-repo evolution when provided', async () => {
+      const project = await projectsDb.addProject('Test Project');
+
+      const mockEvolution = {
+        commitFrequency: [],
+        releases: [],
+        growthCurve: [],
+        changeBursts: [],
+        churn: [],
+      };
+
+      mockGetCrossRepoRepositoryEvolution.mockResolvedValue(mockEvolution as any);
+
+      const response = await request(app).get(
+        `/cross-repo-repository-evolution?projectId=${project.id}&sinceMonths=24`
+      );
+
+      expect(response.status).toBe(200);
+      expect(mockGetCrossRepoRepositoryEvolution).toHaveBeenCalledWith(project.id, true, 24);
     });
   });
 

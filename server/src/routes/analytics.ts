@@ -29,6 +29,7 @@ import { jobQueue } from '../queue/jobQueue.js';
 import { generateInsights } from '../services/aiAnalysis.js';
 
 const router = Router();
+const DEFAULT_EVOLUTION_WINDOW_MONTHS = 12;
 
 // Helper function to resolve repository ID to path
 async function resolveRepositoryPath(repoId: string): Promise<string> {
@@ -37,6 +38,22 @@ async function resolveRepositoryPath(repoId: string): Promise<string> {
     throw new Error('Repository not found');
   }
   return repository.path;
+}
+
+function parseSinceMonths(
+  value: unknown,
+  defaultValue: number = DEFAULT_EVOLUTION_WINDOW_MONTHS
+): number {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return defaultValue;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return defaultValue;
+  }
+
+  return Math.floor(parsed);
 }
 
 // Basic statistics
@@ -134,7 +151,7 @@ router.get('/cross-repo-codebase-health', async (req: Request, res: Response) =>
 
 // Repository evolution
 router.get('/repository-evolution', async (req: Request, res: Response) => {
-  const { repoId, refresh, ai } = req.query;
+  const { repoId, refresh, ai, sinceMonths } = req.query;
   if (!repoId || typeof repoId !== 'string') {
     return res.status(400).json({ error: 'Repository ID is required' });
   }
@@ -142,7 +159,12 @@ router.get('/repository-evolution', async (req: Request, res: Response) => {
     const repoPath = await resolveRepositoryPath(repoId);
     const useCache = refresh !== 'true';
     const includeAIInsights = ai === 'true' ? true : undefined;
-    const evolution = await getRepositoryEvolution(repoPath, useCache, includeAIInsights);
+    const evolution = await getRepositoryEvolution(
+      repoPath,
+      useCache,
+      includeAIInsights,
+      parseSinceMonths(sinceMonths)
+    );
     res.json(evolution);
   } catch (error: any) {
     console.error(error);
@@ -154,13 +176,17 @@ router.get('/repository-evolution', async (req: Request, res: Response) => {
 });
 
 router.get('/cross-repo-repository-evolution', async (req: Request, res: Response) => {
-  const { projectId, refresh } = req.query;
+  const { projectId, refresh, sinceMonths } = req.query;
   if (!projectId || typeof projectId !== 'string') {
     return res.status(400).json({ error: 'Project ID is required' });
   }
   try {
     const useCache = refresh !== 'true';
-    const evolution = await getCrossRepoRepositoryEvolution(projectId, useCache);
+    const evolution = await getCrossRepoRepositoryEvolution(
+      projectId,
+      useCache,
+      parseSinceMonths(sinceMonths)
+    );
     res.json(evolution);
   } catch (error) {
     console.error(error);

@@ -22,15 +22,23 @@ import type {
 export async function getRepositoryEvolution(
   repoPath: string,
   useCache: boolean = true,
-  includeAIInsights?: boolean
+  includeAIInsights?: boolean,
+  sinceMonths: number = 12
 ): Promise<RepositoryEvolution> {
+  const normalizedSinceMonths = Number.isFinite(sinceMonths)
+    ? Math.max(0, Math.floor(sinceMonths))
+    : 12;
+  const useTimeWindow = normalizedSinceMonths > 0;
+  const sinceArg = useTimeWindow ? `--since=${normalizedSinceMonths} months ago` : null;
+  const allowCache = useCache && normalizedSinceMonths === 12;
+
   // If recalculating (useCache=false), clear AI insights cache for this analysis type
-  if (!useCache) {
+  if (!allowCache) {
     await clearCachedAIInsights(repoPath, 'repository-evolution');
   }
 
   // Check cache first
-  if (useCache) {
+  if (allowCache) {
     const cached = await getCachedRepositoryEvolution(repoPath); // Uses default 30-day TTL as fallback
     if (cached) {
       // If AI insights are requested, check cache first, then generate if needed
@@ -66,13 +74,11 @@ export async function getRepositoryEvolution(
     }
 
     // Get all commits with dates and numstat
-    const numstatRaw = await git.raw([
-      'log',
-      '--all',
-      '--numstat',
-      '--pretty=format:%H|%ad|%s',
-      '--date=iso',
-    ]);
+    const numstatArgs = ['log', '--all', '--numstat', '--pretty=format:%H|%ad|%s', '--date=iso'];
+    if (sinceArg) {
+      numstatArgs.push(sinceArg);
+    }
+    const numstatRaw = await git.raw(numstatArgs);
 
     // Get tags/releases
     // First get all tags
@@ -87,6 +93,7 @@ export async function getRepositoryEvolution(
           '-1',
           '--pretty=format:%H|%ad|%s',
           '--date=iso',
+          ...(sinceArg ? [sinceArg] : []),
           tagName,
         ]);
         const parts = tagInfo.trim().split('|');
@@ -291,6 +298,7 @@ export async function getRepositoryEvolution(
       averageCommitsPerDay,
       averageChurnRatio,
       refactorCount,
+      analysisWindowMonths: normalizedSinceMonths,
     };
 
     // Generate AI insights if requested
@@ -317,7 +325,7 @@ export async function getRepositoryEvolution(
     }
 
     // Cache the result (without AI insights to avoid caching them)
-    if (useCache) {
+    if (allowCache) {
       const resultToCache = { ...result };
       delete resultToCache.aiInsights;
       await setCachedRepositoryEvolution(repoPath, resultToCache);
@@ -332,7 +340,8 @@ export async function getRepositoryEvolution(
 
 export async function getCrossRepoRepositoryEvolution(
   projectId: string,
-  useCache: boolean = true
+  useCache: boolean = true,
+  sinceMonths: number = 12
 ): Promise<CrossRepoRepositoryEvolution> {
   console.log(`Calculating cross-repo repository evolution for project ${projectId}`);
 
@@ -352,7 +361,7 @@ export async function getCrossRepoRepositoryEvolution(
   const repoEvolutions = await Promise.all(
     repositories.map(async (repo) => {
       try {
-        const evolution = await getRepositoryEvolution(repo.path, useCache);
+        const evolution = await getRepositoryEvolution(repo.path, useCache, undefined, sinceMonths);
         return {
           repoName: repo.name,
           repoPath: repo.path,

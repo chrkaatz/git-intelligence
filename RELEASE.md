@@ -7,6 +7,12 @@
 - **JaCoCo Coverage Support**
   - Risk Analytics coverage overlay now supports JaCoCo XML reports in addition to LCOV.
   - Added common-path discovery for Maven/Gradle report locations plus recursive fallback search.
+- **Large-Repo Codebase Health Stability**
+  - Added guardrails to change-coupling analysis to cap pair generation for very large commit/file sets.
+  - Analyze-all now reports clearer timeout/resource-limit failure reasons instead of generic step errors.
+- **Repository Evolution Time Window**
+  - Added `sinceMonths` support to repository evolution endpoints.
+  - Default evolution analysis now uses the last 12 months to reduce memory pressure; `sinceMonths=0` enables full history.
 
 ---
 

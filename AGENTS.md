@@ -594,6 +594,13 @@ cd server && npm run build
 - Extension is last part after final dot (e.g., `file.test.js` → `js`)
 - Files without extensions categorized as `no-extension`
 
+### Large Repository Guardrails
+
+- Codebase health change-coupling uses bounded pair generation to avoid OOM on huge repositories.
+- For oversized commit/file combinations, coupling results may be truncated and should be treated as sampled/bounded output.
+- Analyze-all routes classify timeout/resource-limit failures with clearer error messages.
+- Repository evolution supports `sinceMonths` with a default 12-month analysis window for stability (`0` = full history).
+
 ### Port Configuration
 
 - Backend hardcoded to port 3001 in `server/src/index.ts`
@@ -732,11 +739,13 @@ When implementing new features or making significant changes, always update the 
 
 ---
 
-**Last Updated**: February 2026 - Updated to reflect:
+**Last Updated**: April 2026 - Updated to reflect:
 
 - Batch Analysis & Background Job Queue
 - Dedicated Settings Page migration
 - **Code Coverage Overlay** in Risk Analytics
+- Large-repository codebase-health coupling guardrails and clearer analyze-all failure classification
+- Repository evolution `sinceMonths` windowing with 12-month default
 - Enhanced Repository Evolution with trendlines
 - Documentation update requirements for AI assistants
 - Ollama integration for AI-powered analysis

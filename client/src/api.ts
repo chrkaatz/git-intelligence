@@ -465,6 +465,7 @@ export interface RepositoryEvolution {
   averageCommitsPerDay: number;
   averageChurnRatio: number;
   refactorCount: number;
+  analysisWindowMonths?: number;
   aiInsights?: string;
 }
 
@@ -537,13 +538,15 @@ export interface CrossRepoReadinessDiagnostics {
 export const getRepositoryEvolution = async (
   repoId: string,
   refresh?: boolean,
-  includeAIInsights?: boolean
+  includeAIInsights?: boolean,
+  sinceMonths?: number
 ): Promise<RepositoryEvolution> => {
   const response = await api.get('/repository-evolution', {
     params: {
       repoId,
       refresh: refresh ? 'true' : undefined,
       ai: includeAIInsights ? 'true' : undefined,
+      sinceMonths: sinceMonths !== undefined ? String(sinceMonths) : undefined,
     },
   });
   return response.data;
@@ -551,10 +554,15 @@ export const getRepositoryEvolution = async (
 
 export const getCrossRepoRepositoryEvolution = async (
   projectId: string,
-  refresh?: boolean
+  refresh?: boolean,
+  sinceMonths?: number
 ): Promise<CrossRepoRepositoryEvolution> => {
   const response = await api.get('/cross-repo-repository-evolution', {
-    params: { projectId, refresh: refresh ? 'true' : undefined },
+    params: {
+      projectId,
+      refresh: refresh ? 'true' : undefined,
+      sinceMonths: sinceMonths !== undefined ? String(sinceMonths) : undefined,
+    },
   });
   return response.data;
 };

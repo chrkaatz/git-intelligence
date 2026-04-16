@@ -70,6 +70,45 @@ describe('repositoryEvolution', () => {
       expect(result.totalCommits).toBeGreaterThan(0);
     });
 
+    it('should apply a since-months window to git log when configured', async () => {
+      const hash1 = 'a'.repeat(40);
+
+      const mockGit = {
+        checkIsRepo: vi.fn().mockResolvedValue(true),
+        raw: vi
+          .fn()
+          .mockResolvedValueOnce(`${hash1}|2024-01-01T10:00:00Z|Initial commit\n1\t1\tfile1.ts\n`),
+        tags: vi.fn().mockResolvedValue({ all: [] }),
+      };
+
+      vi.mocked(simpleGit).mockReturnValue(mockGit as any);
+
+      await getRepositoryEvolution('/test/repo', false, undefined, 6);
+
+      expect(mockGit.raw).toHaveBeenCalledWith(
+        expect.arrayContaining(['log', '--all', '--numstat', '--since=6 months ago'])
+      );
+    });
+
+    it('should use full history when sinceMonths is 0', async () => {
+      const hash1 = 'a'.repeat(40);
+
+      const mockGit = {
+        checkIsRepo: vi.fn().mockResolvedValue(true),
+        raw: vi
+          .fn()
+          .mockResolvedValueOnce(`${hash1}|2024-01-01T10:00:00Z|Initial commit\n1\t1\tfile1.ts\n`),
+        tags: vi.fn().mockResolvedValue({ all: [] }),
+      };
+
+      vi.mocked(simpleGit).mockReturnValue(mockGit as any);
+
+      await getRepositoryEvolution('/test/repo', false, undefined, 0);
+
+      const firstCallArgs = mockGit.raw.mock.calls[0][0] as string[];
+      expect(firstCallArgs.some((arg) => arg.includes('--since='))).toBe(false);
+    });
+
     it('should detect change bursts', async () => {
       const hash1 = 'a'.repeat(40);
       const hash2 = 'b'.repeat(40);

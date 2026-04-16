@@ -27,6 +27,11 @@ import type {
 import fs from 'fs';
 import path from 'path';
 
+const COUPLING_MAX_COMMITS = 20000;
+const COUPLING_MAX_FILES_PER_COMMIT = 120;
+const COUPLING_MAX_PAIR_KEYS = 100000;
+const COUPLING_MAX_RESULTS = 1000;
+
 /**
  * Analyze repository hygiene indicators:
  * - Branch count and lifetime
@@ -67,24 +72,32 @@ async function analyzeRepositoryHygiene(
 
     branchCount = branches.length;
 
-    // Get merged branches (branches that have been merged into main/master)
+    // Get merged branches (branches that have been merged into a default branch)
     let mergedBranches: Set<string> = new Set();
     try {
-      // Try to find main branch
-      const mainBranches = ['main', 'master', 'develop'];
-      let mainBranch = null;
-      for (const branch of mainBranches) {
+      // Resolve the first valid default branch ref (local first, then origin remote).
+      const candidateRefs = [
+        'main',
+        'master',
+        'develop',
+        'origin/main',
+        'origin/master',
+        'origin/develop',
+      ];
+      let mergedBaseRef: string | null = null;
+
+      for (const branchRef of candidateRefs) {
         try {
-          await git.raw(['show-ref', '--verify', '--quiet', `refs/heads/${branch}`]);
-          mainBranch = branch;
+          await git.raw(['rev-parse', '--verify', '--quiet', `${branchRef}^{commit}`]);
+          mergedBaseRef = branchRef;
           break;
         } catch {
-          // Branch doesn't exist, try next
+          // Branch ref doesn't exist, try next candidate
         }
       }
 
-      if (mainBranch) {
-        const mergedRaw = await git.raw(['branch', '-a', '--merged', mainBranch]);
+      if (mergedBaseRef) {
+        const mergedRaw = await git.raw(['branch', '-a', '--merged', mergedBaseRef]);
         mergedBranches = new Set(
           mergedRaw
             .split('\n')
@@ -296,12 +309,71 @@ export async function getCodebaseHealth(
     const fileDiffSizes = new Map<string, number[]>();
     const fileTotalLines = new Map<string, number>();
     const fileRewrittenLines = new Map<string, number>();
-    const commitFiles = new Map<string, Set<string>>(); // commit hash -> files changed
     const fileLargestDiff = new Map<string, { lines: number; commitHash: string }>();
+    const filePairs = new Map<string, number>(); // "file1|file2" -> count
+    const fileTotalCommits = new Map<string, number>(); // file -> total commits
+    const couplingDiagnostics = {
+      commitsProcessed: 0,
+      commitsSkippedByLimit: 0,
+      largeCommitCountCapped: 0,
+      pairLimitHit: false,
+      maxCommits: COUPLING_MAX_COMMITS,
+      maxFilesPerCommit: COUPLING_MAX_FILES_PER_COMMIT,
+      maxPairKeys: COUPLING_MAX_PAIR_KEYS,
+      maxPairsReturned: COUPLING_MAX_RESULTS,
+      isTruncated: false,
+    };
 
     const lines = numstatRaw.split('\n');
     let currentCommitHash = '';
     let currentDate: Date | null = null;
+    let currentCommitFiles = new Set<string>();
+
+    const finalizeCouplingForCommit = (files: Set<string>) => {
+      if (files.size === 0) {
+        return;
+      }
+
+      if (couplingDiagnostics.commitsProcessed >= COUPLING_MAX_COMMITS) {
+        couplingDiagnostics.commitsSkippedByLimit++;
+        couplingDiagnostics.isTruncated = true;
+        return;
+      }
+
+      let fileArray = Array.from(files);
+      if (fileArray.length > COUPLING_MAX_FILES_PER_COMMIT) {
+        fileArray = fileArray.slice(0, COUPLING_MAX_FILES_PER_COMMIT);
+        couplingDiagnostics.largeCommitCountCapped++;
+        couplingDiagnostics.isTruncated = true;
+      }
+
+      fileArray.forEach((file) => {
+        fileTotalCommits.set(file, (fileTotalCommits.get(file) || 0) + 1);
+      });
+
+      for (let i = 0; i < fileArray.length; i++) {
+        for (let j = i + 1; j < fileArray.length; j++) {
+          const file1 = fileArray[i];
+          const file2 = fileArray[j];
+          const pairKey = file1 < file2 ? `${file1}|${file2}` : `${file2}|${file1}`;
+          const existingCount = filePairs.get(pairKey);
+
+          if (existingCount === undefined && filePairs.size >= COUPLING_MAX_PAIR_KEYS) {
+            couplingDiagnostics.pairLimitHit = true;
+            couplingDiagnostics.isTruncated = true;
+            break;
+          }
+
+          filePairs.set(pairKey, (existingCount || 0) + 1);
+        }
+
+        if (couplingDiagnostics.pairLimitHit) {
+          break;
+        }
+      }
+
+      couplingDiagnostics.commitsProcessed++;
+    };
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -310,6 +382,9 @@ export async function getCodebaseHealth(
       // Check if this is a commit header line (hash|date)
       const commitMatch = line.match(/^([a-f0-9]{40})\|(.+)$/);
       if (commitMatch) {
+        finalizeCouplingForCommit(currentCommitFiles);
+        currentCommitFiles = new Set();
+
         const [, hash, dateStr] = commitMatch;
         currentCommitHash = hash;
         try {
@@ -320,7 +395,6 @@ export async function getCodebaseHealth(
         } catch {
           currentDate = new Date();
         }
-        commitFiles.set(currentCommitHash, new Set());
         continue;
       }
 
@@ -385,14 +459,13 @@ export async function getCodebaseHealth(
             fileTotalLines.set(filePath, (fileTotalLines.get(filePath) || 0) + totalChanged);
 
             // Track files in commit for coupling analysis
-            const commitFileSet = commitFiles.get(currentCommitHash);
-            if (commitFileSet) {
-              commitFileSet.add(filePath);
-            }
+            currentCommitFiles.add(filePath);
           }
         }
       }
     }
+
+    finalizeCouplingForCommit(currentCommitFiles);
 
     // 1. Hotspots
     const fileHotspots: FileHotspot[] = Array.from(fileCommits.entries())
@@ -404,26 +477,6 @@ export async function getCodebaseHealth(
       .sort((a, b) => b.commits - a.commits);
 
     // 2. Change Coupling
-    const filePairs = new Map<string, number>(); // "file1|file2" -> count
-    const fileTotalCommits = new Map<string, number>(); // file -> total commits
-
-    commitFiles.forEach((files, commitHash) => {
-      const fileArray = Array.from(files);
-      fileArray.forEach((file) => {
-        fileTotalCommits.set(file, (fileTotalCommits.get(file) || 0) + 1);
-      });
-
-      // Count pairs
-      for (let i = 0; i < fileArray.length; i++) {
-        for (let j = i + 1; j < fileArray.length; j++) {
-          const file1 = fileArray[i];
-          const file2 = fileArray[j];
-          const pairKey = file1 < file2 ? `${file1}|${file2}` : `${file2}|${file1}`;
-          filePairs.set(pairKey, (filePairs.get(pairKey) || 0) + 1);
-        }
-      }
-    });
-
     const couplingPairs: ChangeCouplingPair[] = Array.from(filePairs.entries())
       .map(([pairKey, coChanges]) => {
         const [file1, file2] = pairKey.split('|');
@@ -450,7 +503,8 @@ export async function getCodebaseHealth(
         // Only show pairs that changed together at least 3 times
         return pair.coChanges >= 3;
       })
-      .sort((a, b) => b.coChanges - a.coChanges);
+      .sort((a, b) => b.coChanges - a.coChanges)
+      .slice(0, COUPLING_MAX_RESULTS);
 
     // 3. Stability
     const now = new Date();
@@ -558,6 +612,13 @@ export async function getCodebaseHealth(
         mostRewritten,
       },
       hygiene,
+      analysisDiagnostics: {
+        changeCoupling: {
+          ...couplingDiagnostics,
+          isTruncated:
+            couplingDiagnostics.isTruncated || couplingPairs.length >= COUPLING_MAX_RESULTS,
+        },
+      },
     };
 
     // Generate AI insights if requested
