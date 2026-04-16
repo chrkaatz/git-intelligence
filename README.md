@@ -24,6 +24,11 @@ Currently it works only on local machines.
   - Code churn metrics
   - Longitudinal patterns (author activity over time, onboarding curves, dormancy detection)
 
+- **Readiness Diagnostics**:
+  - Repository-level readiness diagnostics combining churn, bug-fix activity, ownership concentration, and firefighting history
+  - Cross-repo readiness overview to spot portfolio outliers and systemic risk patterns
+  - Decision-grade summaries with 30-day action plans to guide engineering leads on where to look first
+
 - **Risk Analytics**:
   - High-risk hotspots combining churn, complexity proxies, and ownership concentration
   - **Code Coverage Overlay**: Identify under-tested critical files by overlaying LCOV or JaCoCo data
@@ -65,6 +70,7 @@ Currently it works only on local machines.
 - Cross-repo collaboration patterns
 - Repository clusters (repos worked on by same teams)
 - Synchronization patterns (commits across repos on same dates)
+- Cross-repo readiness and portfolio-level risk diagnostics to identify critical repositories and shared failure modes
 - Portfolio-level views of organization-wide activity, unstable/dying repositories, and overloaded contributors
 
 ### Batch Analysis & Jobs
