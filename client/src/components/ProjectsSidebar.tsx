@@ -15,6 +15,7 @@ import {
   Wrench,
   RefreshCw,
   ClipboardList,
+  AlertCircle,
 } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
 import { useNotifications } from '../context/NotificationContext';
@@ -38,7 +39,8 @@ export function ProjectsSidebar({
   isCollapsed = false,
   onExpand,
 }: ProjectsSidebarProps) {
-  const { projects, repositories, handleDeleteRepository } = useApp();
+  const { projects, repositories, handleDeleteRepository, loading, error, refreshData } =
+    useApp();
   const { showNotification } = useNotifications();
   const navigate = useNavigate();
   const router = useRouterState();
@@ -385,6 +387,23 @@ export function ProjectsSidebar({
           </Link>
         </div>
       </div>
+
+      {error && !loading && (
+        <div className="mb-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p>Couldn't reach the server to load your projects.</p>
+            <button
+              type="button"
+              onClick={() => refreshData()}
+              className="mt-1 inline-flex items-center gap-1 font-medium hover:underline"
+            >
+              <RefreshCw className="w-3 h-3" />
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-1 flex-1 overflow-y-auto">
         {projects.map((project) => {
