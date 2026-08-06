@@ -12,7 +12,7 @@ services:
     volumes:
       - server-data:/data
     ports:
-      - '3001:3000'
+      - '${SERVER_PORT:-3001}:3000'
 
   client:
     build:
@@ -24,7 +24,7 @@ services:
     depends_on:
       - server
     ports:
-      - '5173:80'
+      - '${CLIENT_PORT:-5173}:80'
 
 volumes:
   server-data:
