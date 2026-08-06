@@ -9,7 +9,7 @@ import settingsRouter from './routes/settings.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
-const port = 3001;
+const port = Number(process.env.PORT) || 3001;
 
 // Middleware
 app.use(cors());

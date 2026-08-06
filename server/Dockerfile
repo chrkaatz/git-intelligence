@@ -26,6 +26,7 @@ ENV NODE_ENV=production
 ENV DB_FILE_PATH=/data/db.json
 ENV UPLOAD_DIR=/data/uploads
 
-EXPOSE 3001
+ENV PORT=3000
+EXPOSE 3000
 
 CMD ["node", "dist/index.js"]
