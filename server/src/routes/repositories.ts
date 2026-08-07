@@ -160,24 +160,34 @@ router.post('/:id/fetch', async (req: Request, res: Response) => {
     // Get current commit hash before fetch
     const beforeHash = await git.revparse(['HEAD']);
 
-    // Fetch from all remotes
-    await git.fetch(['--all', '--prune']);
+    // Fetch from all remotes (gracefully handle unreachable remotes)
+    let fetched = false;
+    let fetchError: string | null = null;
+    try {
+      await git.fetch(['--all', '--prune']);
+      fetched = true;
+    } catch (error: any) {
+      fetchError = error.message || 'Fetch failed';
+      console.warn(`Remote fetch failed for ${repository.name}, continuing with local data: ${fetchError}`);
+    }
 
     // Get current branch
     const branch = await git.revparse(['--abbrev-ref', 'HEAD']);
 
-    // Try to pull changes for current branch (if it has an upstream)
+    // Try to pull changes for current branch (only if fetch succeeded)
     let pulled = false;
     let pullError: string | null = null;
-    try {
-      const pullResult = await git.pull();
-      pulled =
-        pullResult.summary.changes > 0 ||
-        pullResult.summary.insertions > 0 ||
-        pullResult.summary.deletions > 0;
-    } catch (error: any) {
-      // Pull might fail if there's no upstream or local changes
-      pullError = error.message || 'Pull failed';
+    if (fetched) {
+      try {
+        const pullResult = await git.pull();
+        pulled =
+          pullResult.summary.changes > 0 ||
+          pullResult.summary.insertions > 0 ||
+          pullResult.summary.deletions > 0;
+      } catch (error: any) {
+        // Pull might fail if there's no upstream or local changes
+        pullError = error.message || 'Pull failed';
+      }
     }
 
     // Get commit hash after fetch/pull
@@ -199,17 +209,20 @@ router.post('/:id/fetch', async (req: Request, res: Response) => {
         path: repository.path,
       },
       changes: {
-        fetched: true,
+        fetched,
         pulled,
         hasChanges,
         branch: branch.trim(),
         beforeHash: beforeHash.trim(),
         afterHash: afterHash.trim(),
       },
+      fetchError,
       pullError,
       message: hasChanges
         ? `Successfully fetched and updated ${repository.name}`
-        : `Repository ${repository.name} is already up to date`,
+        : fetched
+          ? `Repository ${repository.name} is already up to date`
+          : `Remote unreachable for ${repository.name}, using local data`,
     });
   } catch (error: any) {
     console.error('Error fetching repository:', error);
