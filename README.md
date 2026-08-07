@@ -239,6 +239,18 @@ To stop:
 docker compose down
 ```
 
+#### Overriding the Ports
+
+If `5173` or `3001` are already in use on your machine, override them without editing `docker-compose.yml`:
+
+```bash
+cp .env.example .env
+# then edit .env, or just export the values inline:
+SERVER_PORT=4001 CLIENT_PORT=8080 docker compose up --build
+```
+
+`docker compose` automatically reads a `.env` file in the project root, so a committed `.env` is never required. Only the host-side port changes - the containers still talk to each other over the internal Docker network regardless of what you choose here.
+
 ### Docker Compose with SSH Key for Git Pull
 
 If your repositories use SSH remotes (for example `git@github.com:...`), mount a private key into the server container:
@@ -339,11 +351,14 @@ cd server && npm run test:coverage
 
 ### Ports
 
-- Backend: `3001` (configured in `server/src/index.ts`)
+- Backend: `3001` (override with the `PORT` env var when running the server directly, e.g. `PORT=4001 npm run dev` in `server/`)
 - Frontend: `5173` (Vite default)
+
+Running via Docker Compose instead? See [Overriding the Ports](#overriding-the-ports) - use `SERVER_PORT`/`CLIENT_PORT` rather than `PORT`, since those control the host-side mapping while the containers keep talking to each other over the internal Docker network.
 
 ### Environment Variables
 
+- Server port: `PORT` (default: `3001`)
 - Frontend API base URL: `VITE_API_BASE_URL` (default: `http://localhost:3001`)
 - Server DB path: `DB_FILE_PATH` (default: `<server cwd>/db.json`)
 - Server upload directory: `UPLOAD_DIR` (default: `<server cwd>/uploads/`)
